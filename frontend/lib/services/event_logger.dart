@@ -2,7 +2,8 @@ import 'dart:async';
 import 'api_client.dart';
 
 /// Pencatat kejadian belajar (untuk Laporan Perkembangan & Pantau Langsung orang tua).
-/// Kejadian dikumpulkan lalu dikirim berkelompok tiap ~2 detik (hemat kuota).
+/// Kejadian dikirim hampir seketika (~0,3 detik; kejadian beruntun digabung) supaya
+/// halaman Pantau Langsung orang tua ikut berubah secara realtime.
 /// Kalau gagal (offline), disimpan sebentar dan dicoba lagi. Tidak pernah melempar error.
 ///
 /// Yang dicatat hanya aktivitas belajar (mis. "jawab huruf B: salah, memilih D"),
@@ -24,7 +25,8 @@ class EventLogger {
       'at': DateTime.now().toUtc().toIso8601String(),
     });
     if (_queue.length > _maxQueue) _queue.removeRange(0, _queue.length - _maxQueue);
-    _schedule(const Duration(seconds: 2));
+    // detak "aktif" tidak mendesak; kejadian belajar dikirim segera
+    _schedule(type == 'heartbeat' ? const Duration(seconds: 2) : const Duration(milliseconds: 300));
   }
 
   void _schedule(Duration delay) {

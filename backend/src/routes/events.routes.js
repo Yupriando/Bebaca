@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin } from '../config/supabase.js';
 import { must } from '../utils/errors.js';
+import { notifyMonitor } from '../services/realtimeService.js';
 
 const router = Router();
 
@@ -37,6 +38,10 @@ router.post('/', async (req, res) => {
     return { user_id: req.user.id, type: e.type, data, created_at: new Date(at).toISOString() };
   });
   must(await supabaseAdmin.from('learning_events').insert(rows), undefined, 'simpan kejadian');
+
+  // beri tahu halaman Pantau Langsung (realtime). Gagal = tidak apa-apa, halaman tetap
+  // memperbarui sendiri secara berkala.
+  await notifyMonitor(req.user.id).catch((e) => console.warn('[pantau] realtime gagal:', e.message));
   res.json({ saved: rows.length });
 });
 

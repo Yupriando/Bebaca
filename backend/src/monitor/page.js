@@ -43,18 +43,20 @@ export const PAGE_HTML = `<!doctype html>
   .feed .time { color:var(--muted); font-size:14px; white-space:nowrap; }
   .new { animation:flash 1.2s ease-out; }
   @keyframes flash { from { background:#FFF3C4; } to { background:transparent; } }
+  .live { margin-left:6px; font-size:13px; background:#FFD54F; color:#5A3A00; padding:1px 8px; border-radius:10px; display:none; }
+  .live.on { display:inline-block; }
   .error { text-align:center; padding:60px 20px; font-size:20px; }
   footer { text-align:center; color:var(--muted); font-size:13px; padding:10px 16px 24px; }
 </style>
 </head>
-<body>
+<body data-sb-url="__SB_URL__" data-sb-key="__SB_KEY__">
 <header>
   <div class="brand">📚 Bebaca · Pantau Belajar</div>
   <div class="child">
     <div class="avatar" id="avatar">🙂</div>
     <div>
       <div class="name" id="name">Memuat...</div>
-      <div class="status"><span class="dot" id="dot"></span><span id="status">Menghubungkan...</span></div>
+      <div class="status"><span class="dot" id="dot"></span><span id="status">Menghubungkan...</span><span class="live" id="live">⚡ Langsung</span></div>
     </div>
   </div>
 </header>
@@ -74,7 +76,8 @@ export const PAGE_HTML = `<!doctype html>
     <ul class="feed" id="feed"></ul>
   </div>
 </main>
-<footer>Diperbarui otomatis setiap beberapa detik. Hanya aktivitas belajar yang ditampilkan,<br>bukan isi layar, foto, atau suara anak.</footer>
+<footer>Diperbarui otomatis secara langsung. Hanya aktivitas belajar yang ditampilkan,<br>bukan isi layar, foto, atau suara anak.</footer>
+<script src="__SB_JS__"></script>
 <script src="/pantau/app.js"></script>
 </body>
 </html>`;
@@ -85,6 +88,9 @@ export const PAGE_JS = `(() => {
   let seen = new Set();
   let first = true;
   let timer = null;
+  let live = false; // tersambung ke realtime?
+  let pending = null;
+  let last = null;
 
   const ago = (iso) => {
     if (!iso) return '';
@@ -145,10 +151,21 @@ export const PAGE_JS = `(() => {
       seen.add(key);
     }
     first = false;
+    last = d;
+  }
+
+  // teks "x menit lalu" tetap segar walau belum ada data baru
+  function tickAgo() {
+    if (!last) return;
+    document.querySelectorAll('.feed .time').forEach((e, i) => {
+      if (last.feed[i]) e.textContent = ago(last.feed[i].at);
+    });
+    if (!last.online && last.lastSeen) $('status').textContent = 'Tidak aktif · terakhir ' + ago(last.lastSeen);
   }
 
   function showError(msg) {
     clearInterval(timer);
+    live = false;
     const main = $('main');
     main.textContent = '';
     main.appendChild(el('div', 'error', msg));
@@ -168,7 +185,38 @@ export const PAGE_JS = `(() => {
     }
   }
 
+  // Ambil data: segera saat ada sinyal realtime (digabung bila beruntun)
+  function soon() {
+    if (pending) return;
+    pending = setTimeout(() => { pending = null; load(); }, 250);
+  }
+
+  // Cadangan: tanpa realtime ambil tiap 3 detik; dengan realtime cukup tiap 20 detik
+  function schedule() {
+    clearInterval(timer);
+    timer = setInterval(load, live ? 20000 : 3000);
+  }
+
+  async function connectRealtime() {
+    const url = document.body.dataset.sbUrl, key = document.body.dataset.sbKey;
+    if (!window.supabase || !url || !key || !crypto.subtle) return;
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token));
+    const hash = [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    const client = window.supabase.createClient(url, key, { auth: { persistSession: false } });
+    client
+      .channel('pantau-' + hash.slice(0, 32))
+      .on('broadcast', { event: 'update' }, soon)
+      .subscribe((status) => {
+        live = status === 'SUBSCRIBED';
+        $('live').className = 'live' + (live ? ' on' : '');
+        schedule();
+        if (live) soon(); // susul data yang mungkin terlewat saat menyambung
+      });
+  }
+
   load();
-  timer = setInterval(load, 4000);
+  schedule();
+  setInterval(tickAgo, 10000);
+  connectRealtime().catch(() => {});
   document.addEventListener('visibilitychange', load);
 })();`;

@@ -5,6 +5,12 @@ import { HttpError, must } from '../utils/errors.js';
 import { buildLiveSnapshot } from '../services/reportService.js';
 import { hashToken } from './report.routes.js';
 import { PAGE_HTML, PAGE_JS } from '../monitor/page.js';
+import { env } from '../config/env.js';
+
+// Halaman pantau terhubung ke Supabase Realtime memakai anon key (memang publik; data
+// tetap terlindungi RLS). Yang diterima halaman hanya sinyal "ada data baru".
+const SUPABASE_JS = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js';
+const attr = (v) => String(v).replace(/[&"<>]/g, (c) => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' })[c]);
 
 // ======================================================================
 // Pantau Langsung: halaman web PUBLIK yang dibuka orang tua dengan scan QR.
@@ -53,12 +59,18 @@ router.get('/app.js', (req, res) => {
 
 // GET /pantau/:token -> halaman pantau
 router.get('/:token', (req, res) => {
+  const sb = new URL(env.supabaseUrl);
   res.set(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
-      "font-src https://fonts.gstatic.com; img-src 'self' https: data:; connect-src 'self'"
+    "default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; " +
+      `img-src 'self' https: data:; connect-src 'self' ${sb.origin} wss://${sb.host}`
   );
-  res.type('html').send(PAGE_HTML);
+  res.type('html').send(
+    PAGE_HTML.replace('__SB_URL__', attr(env.supabaseUrl))
+      .replace('__SB_KEY__', attr(env.supabaseAnonKey))
+      .replace('__SB_JS__', SUPABASE_JS)
+  );
 });
 
 // GET /pantau/:token/data -> data terbaru (diambil halaman tiap beberapa detik)
