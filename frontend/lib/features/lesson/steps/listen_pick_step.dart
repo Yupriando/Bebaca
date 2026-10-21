@@ -28,16 +28,17 @@ class _ListenPickStepState extends State<ListenPickStep>
   late final List<String> _letters;
   int? _correct;
   int? _wrong;
-  late final AnimationController _shake = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 400),
-  );
+  late final AnimationController _shake;
 
   String get _target => widget.step.letter.toUpperCase();
 
   @override
   void initState() {
     super.initState();
+    _shake = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     final random = Random();
     _letters = [
       _target,

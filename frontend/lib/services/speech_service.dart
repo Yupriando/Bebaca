@@ -179,20 +179,41 @@ class SpeechService {
     return _sttReady;
   }
 
-  /// Dengarkan anak berbicara. Bawaan cocok untuk 1 huruf; untuk membaca kalimat
-  /// (Baca Bersama) pakai [listenFor] & [pauseFor] yang lebih panjang.
+  /// Dengarkan anak berbicara.
+  /// - Bawaan cocok untuk 1 huruf; untuk kalimat (Baca Bersama) pakai [listenFor] & [pauseFor] panjang.
+  /// - [alternates]: [onResult] menerima SEMUA tebakan pengenal suara (dipisah spasi),
+  ///   berguna untuk ucapan sangat pendek seperti satu huruf ("a" bisa terbaca "ah", "aa", ...).
+  /// - [onError]: tidak ada yang dikenali / mikrofon bermasalah. [onDone]: selesai mendengarkan.
   Future<void> listen({
     required void Function(String words, bool isFinal) onResult,
     Duration listenFor = const Duration(seconds: 6),
     Duration pauseFor = const Duration(seconds: 3),
+    bool alternates = false,
+    List<String>? hints,
+    void Function(String error)? onError,
+    void Function()? onDone,
   }) async {
     await stopSpeaking();
+    _stt.errorListener = (e) => onError?.call(e.errorMsg);
+    _stt.statusListener = (status) {
+      if (status == SpeechToText.doneStatus) onDone?.call();
+    };
     await _stt.listen(
-      onResult: (SpeechRecognitionResult r) =>
-          onResult(r.recognizedWords, r.finalResult),
-      listenFor: listenFor,
-      pauseFor: pauseFor,
-      localeId: _localeId,
+      onResult: (SpeechRecognitionResult r) {
+        final words = alternates && r.alternates.isNotEmpty
+            ? r.alternates.map((a) => a.recognizedWords).join(' ')
+            : r.recognizedWords;
+        onResult(words, r.finalResult);
+      },
+      listenOptions: SpeechListenOptions(
+        listenFor: listenFor,
+        pauseFor: pauseFor,
+        localeId: _localeId,
+        partialResults: true,
+        cancelOnError: true,
+        listenMode: alternates ? ListenMode.confirmation : ListenMode.dictation,
+        contextualPhrases: hints,
+      ),
     );
   }
 
@@ -209,14 +230,32 @@ class SpeechService {
   }
 }
 
-/// Apakah ucapan [heard] cocok dengan huruf [letter]? (dibuat longgar,
-/// karena pengenalan suara untuk 1 huruf sering berupa "a", "ah", "be", dst.)
+/// Apakah ucapan [heard] cocok dengan huruf [letter]? Dibuat longgar, karena pengenal
+/// suara untuk 1 huruf sering menulis "a" sebagai "ah", "aa", "A.", "ha"; "be" sebagai
+/// "bé", "beh", "b"; dan sebagainya. [heard] boleh berisi beberapa tebakan sekaligus.
 bool spokenLetterMatches(String heard, String letter) {
-  final h = heard.trim().toLowerCase();
-  if (h.isEmpty) return false;
   final l = letter.toLowerCase();
   final name = SpeechService.letterName(letter);
-  return h
-      .split(RegExp(r'\s+'))
-      .any((w) => w == l || w == name || (w.length <= 3 && w.startsWith(l)));
+  const accents = {'é': 'e', 'è': 'e', 'ê': 'e', 'á': 'a', 'à': 'a'};
+  final words = heard
+      .toLowerCase()
+      .split('')
+      .map((c) => accents[c] ?? c)
+      .join()
+      .split(RegExp(r'[^a-z]+'))
+      .where((w) => w.isNotEmpty);
+
+  for (final w in words) {
+    if (w == l || w == name) return true;
+    // "huruf a" / "hurufa"
+    if (w == 'huruf$l' || w == 'huruf$name') return true;
+    // nama huruf dengan bunyi tambahan: "beh", "bee", "ef" -> "eff"
+    if (w.length <= name.length + 2 && w.startsWith(name)) return true;
+    // vokal yang dipanjangkan / ber-h: "aa", "ah", "aah", "ha", "uu", "oh"
+    if ('aiueo'.contains(l) && w.length <= 4 && w.replaceAll('h', '').split('').every((c) => c == l)) {
+      return true;
+    }
+    if (w.length <= 3 && w.startsWith(l)) return true;
+  }
+  return false;
 }

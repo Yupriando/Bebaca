@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'core/config/app_orientation.dart';
 import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
+import 'core/widgets/adaptive_scale.dart';
 import 'services/api_client.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await applyAppSystemUi(); // landscape + layar penuh
+
   // Sesi habis (refresh token gagal) -> kembali ke halaman awal.
   ApiClient.onSessionExpired = () {
     navigatorKey.currentState
@@ -26,6 +31,8 @@ class BebacaApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       initialRoute: AppRoutes.splash,
       routes: AppRoutes.routes,
+      // HP s.d. tablet: tampilan diperkecil proporsional di layar pendek agar semua terlihat
+      builder: (context, child) => AdaptiveScale(child: child!),
     );
   }
 }

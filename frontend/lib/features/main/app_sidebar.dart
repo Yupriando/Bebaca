@@ -12,7 +12,11 @@ class NavItem {
 /// Daftar menu utama. Urutan harus sama dengan halaman di MainShell.
 const navItems = [
   NavItem('Belajar', 'assets/images/nav_belajar.png', Icons.school_rounded),
-  NavItem('Dongeng', 'assets/images/nav_dongeng.png', Icons.auto_stories_rounded),
+  NavItem(
+    'Dongeng',
+    'assets/images/nav_dongeng.png',
+    Icons.auto_stories_rounded,
+  ),
   NavItem('Profile', 'assets/images/nav_profile.png', Icons.person_rounded),
   NavItem('Settings', 'assets/images/nav_settings.png', Icons.settings_rounded),
 ];
@@ -30,8 +34,9 @@ class NavIcon extends StatelessWidget {
       height: size,
       fit: BoxFit.contain,
       filterQuality: FilterQuality.medium,
-      errorBuilder: (_, __, ___) =>
-          Icon(item.fallback, size: size * 0.8, color: AppColors.primary),
+      errorBuilder:
+          (_, __, ___) =>
+              Icon(item.fallback, size: size * 0.8, color: AppColors.primary),
     );
   }
 }
@@ -48,49 +53,61 @@ class AppSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // HP dalam posisi landscape: layar pendek -> sidebar lebih ringkas
+    final compact = MediaQuery.of(context).size.height < 560;
     return Container(
-      width: 250,
+      width: compact ? 210 : 250,
       decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(right: BorderSide(color: AppColors.divider, width: 4)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
-            child: Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    'assets/images/logo_icon.png',
-                    width: 48,
-                    height: 48,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(
-                        Icons.menu_book_rounded,
-                        size: 48,
-                        color: AppColors.primary),
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding:
+                  compact
+                      ? const EdgeInsets.fromLTRB(16, 12, 10, 8)
+                      : const EdgeInsets.fromLTRB(20, 20, 12, 20),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.asset(
+                      'assets/images/logo_icon.png',
+                      width: compact ? 38 : 48,
+                      height: compact ? 38 : 48,
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (_, __, ___) => const Icon(
+                            Icons.menu_book_rounded,
+                            size: 48,
+                            color: AppColors.primary,
+                          ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 10),
-                Text('Bebaca',
+                  const SizedBox(width: 10),
+                  Text(
+                    'Bebaca',
                     style: GoogleFonts.itim(
-                      fontSize: 38,
+                      fontSize: compact ? 30 : 38,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
-                    )),
-              ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          for (var i = 0; i < navItems.length; i++)
-            _SidebarTile(
-              item: navItems[i],
-              selected: i == selectedIndex,
-              onTap: () => onSelected(i),
-            ),
-        ],
+            for (var i = 0; i < navItems.length; i++)
+              _SidebarTile(
+                item: navItems[i],
+                selected: i == selectedIndex,
+                compact: compact,
+                onTap: () => onSelected(i),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -99,14 +116,19 @@ class AppSidebar extends StatelessWidget {
 class _SidebarTile extends StatelessWidget {
   final NavItem item;
   final bool selected;
+  final bool compact;
   final VoidCallback onTap;
-  const _SidebarTile(
-      {required this.item, required this.selected, required this.onTap});
+  const _SidebarTile({
+    required this.item,
+    required this.selected,
+    required this.compact,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: compact ? 3 : 8),
       child: Material(
         color: selected ? AppColors.primary : Colors.transparent,
         borderRadius: BorderRadius.circular(16),
@@ -114,19 +136,23 @@ class _SidebarTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+            padding: EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: compact ? 6 : 10,
+            ),
             child: Row(
               children: [
-                NavIcon(item: item),
+                NavIcon(item: item, size: compact ? 38 : 52),
                 const SizedBox(width: 14),
                 Text(
                   item.label,
                   style: GoogleFonts.itim(
-                    fontSize: 30,
+                    fontSize: compact ? 24 : 30,
                     fontWeight: FontWeight.bold,
-                    color: selected
-                        ? const Color(0xFF1F5F85)
-                        : const Color(0xFF808080),
+                    color:
+                        selected
+                            ? const Color(0xFF1F5F85)
+                            : const Color(0xFF808080),
                   ),
                 ),
               ],

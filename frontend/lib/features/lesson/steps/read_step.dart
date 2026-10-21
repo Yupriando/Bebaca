@@ -9,7 +9,7 @@ import '../widgets/effects.dart';
 import '../widgets/step_common.dart';
 import '../widgets/wood_tile.dart';
 
-enum _Phase { idle, listening, success, failed, unavailable }
+enum _Phase { idle, listening, success, failed, notHeard, unavailable }
 
 /// "Baca huruf ini": anak mengucapkan huruf, dikenali lewat mikrofon.
 /// Kalau mikrofon tidak tersedia, anak bisa menekan "Aku sudah membaca".
@@ -22,7 +22,8 @@ class ReadStep extends StatefulWidget {
   State<ReadStep> createState() => _ReadStepState();
 }
 
-class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin {
+class _ReadStepState extends State<ReadStep>
+    with SingleTickerProviderStateMixin {
   static const _green = Color(0xFF2ECC71);
   static const _red = Color(0xFFE74C3C);
 
@@ -30,15 +31,23 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
   _Phase _phase = _Phase.idle;
   String _heard = '';
   bool _finished = false;
+  int _misses =
+      0; // berapa kali tidak terdengar / belum tepat -> tampilkan tombol lanjut
   Timer? _timeout;
 
   // gelombang yang memancar dari tombol mikrofon saat mendengarkan
-  late final AnimationController _ripple = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1500),
-  );
+  late final AnimationController _ripple;
 
   String get _letter => widget.step.letter.toUpperCase();
+
+  @override
+  void initState() {
+    super.initState();
+    _ripple = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1500),
+    );
+  }
 
   @override
   void dispose() {
@@ -84,15 +93,36 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
     setState(() => _heard = '');
     _setPhase(_Phase.listening);
 
-    // Batas waktu: kalau tidak ada suara sama sekali, kembali ke awal.
+    // Batas waktu: kalau tidak ada suara sama sekali, beri tahu anak.
     _timeout?.cancel();
     _timeout = Timer(const Duration(seconds: 8), () async {
       if (_phase != _Phase.listening) return;
       await _speech.stopListening();
-      if (mounted) _setPhase(_Phase.idle);
+      _notHeard();
     });
 
-    await _speech.listen(onResult: _onResult);
+    final name = SpeechService.letterName(_letter);
+    await _speech.listen(
+      onResult: _onResult,
+      alternates: true, // 1 huruf sering salah tulis: periksa semua tebakan
+      hints: [name, _letter.toLowerCase(), 'huruf $name'],
+      onError: (_) => _notHeard(),
+      onDone: () {
+        // selesai tanpa hasil yang cocok -> jangan diam saja
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (mounted && _phase == _Phase.listening) _notHeard();
+        });
+      },
+    );
+  }
+
+  /// Tidak ada suara yang dikenali (umum untuk ucapan 1 huruf yang sangat pendek).
+  void _notHeard() {
+    if (!mounted || _phase != _Phase.listening) return;
+    _timeout?.cancel();
+    _speech.cancelListening();
+    _misses++;
+    _setPhase(_Phase.notHeard);
   }
 
   void _onResult(String words, bool isFinal) {
@@ -109,11 +139,12 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
     } else if (isFinal) {
       _timeout?.cancel();
       if (words.trim().isEmpty) {
-        _setPhase(_Phase.idle);
+        _notHeard();
       } else {
+        _misses++;
         widget.env.sfx(Sfx.wrong, volume: 0.6);
         widget.env.onMistake();
-        setState(() => _heard = words);
+        setState(() => _heard = words.split(' ').first);
         _setPhase(_Phase.failed);
       }
     } else {
@@ -131,6 +162,8 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
         return 'Bagus sekali!';
       case _Phase.failed:
         return 'Hampir! Coba lagi ya';
+      case _Phase.notHeard:
+        return 'Aku belum mendengar suaramu. Ketuk mikrofon, lalu ucapkan "${SpeechService.letterName(_letter)}" dengan keras ya!';
       case _Phase.unavailable:
         return 'Mikrofon tidak tersedia. Bacalah hurufnya dengan suara keras, lalu ketuk tombol di bawah.';
     }
@@ -142,6 +175,8 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
         return _green;
       case _Phase.failed:
         return _red;
+      case _Phase.notHeard:
+        return const Color(0xFFE67E22);
       default:
         return const Color(0xFF777777);
     }
@@ -156,7 +191,11 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
         color: _finished ? _green : (listening ? _red : AppColors.primary),
         borderRadius: BorderRadius.circular(24),
         boxShadow: const [
-          BoxShadow(color: Color(0x33000000), blurRadius: 8, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Color(0x33000000),
+            blurRadius: 8,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Icon(
@@ -179,12 +218,31 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
             Positioned.fill(
               child: AnimatedBuilder(
                 animation: _ripple,
-                builder: (context, _) =>
-                    CustomPaint(painter: _RipplePainter(_ripple.value)),
+                builder:
+                    (context, _) =>
+                        CustomPaint(painter: _RipplePainter(_ripple.value)),
               ),
             ),
           GestureDetector(onTap: _onMic, child: button),
         ],
+      ),
+    );
+  }
+
+  Widget _doneButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: ElevatedButton(
+        onPressed: () => _finish(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: _green,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+        ),
+        child: const Text('Aku sudah membaca', style: TextStyle(fontSize: 20)),
       ),
     );
   }
@@ -216,46 +274,48 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
                 letter: _letter,
                 size: 140,
                 outline: _phase == _Phase.success ? _green : null,
-                badge: const Icon(Icons.volume_up_rounded, color: Colors.white, size: 28),
+                badge: const Icon(
+                  Icons.volume_up_rounded,
+                  color: Colors.white,
+                  size: 28,
+                ),
               ),
             ),
             if (_phase == _Phase.success && widget.env.animate)
               const Positioned.fill(
-                child: IgnorePointer(child: SparkleBurst(radius: 110, count: 16)),
+                child: IgnorePointer(
+                  child: SparkleBurst(radius: 110, count: 16),
+                ),
               ),
           ],
         ),
         const SizedBox(height: 10),
         if (_phase == _Phase.unavailable && !_finished)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 30),
-            child: ElevatedButton(
-              onPressed: () => _finish(),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: _green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              ),
-              child: const Text('Aku sudah membaca', style: TextStyle(fontSize: 20)),
-            ),
-          )
-        else
+          _doneButton()
+        else ...[
           _micButton(listening),
+          // 2x tidak terdengar / belum tepat: anak boleh lanjut (dinilai orang tua)
+          if (_misses >= 2 && !_finished && !listening) _doneButton(),
+        ],
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 380),
           child: Text(
             _status,
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.bold, color: _statusColor),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: _statusColor,
+            ),
           ),
         ),
         if (_heard.isNotEmpty && _phase != _Phase.success)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text('Terdengar: "$_heard"',
-                style: const TextStyle(fontSize: 16, color: Color(0xFF999999))),
+            child: Text(
+              'Terdengar: "$_heard"',
+              style: const TextStyle(fontSize: 16, color: Color(0xFF999999)),
+            ),
           ),
         if (!_finished)
           TextButton(
@@ -263,8 +323,10 @@ class _ReadStepState extends State<ReadStep> with SingleTickerProviderStateMixin
               widget.env.onMistake();
               _finish();
             },
-            child: const Text('Lewati',
-                style: TextStyle(fontSize: 18, color: Color(0xFF888888))),
+            child: const Text(
+              'Lewati',
+              style: TextStyle(fontSize: 18, color: Color(0xFF888888)),
+            ),
           ),
       ],
     );

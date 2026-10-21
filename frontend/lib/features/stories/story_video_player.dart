@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
+import '../../core/config/app_orientation.dart';
 import '../../core/theme/app_colors.dart';
 
 /// Pemutar video dongeng.
@@ -10,7 +11,7 @@ import '../../core/theme/app_colors.dart';
 /// - Kontrol ala YouTube: jeda/lanjut, mundur & maju 10 detik, ketuk dua kali
 ///   sisi kiri/kanan untuk mundur/maju, geser bar di bawah untuk loncat.
 ///   Kontrol hilang sendiri 3 detik setelah video berjalan; ketuk untuk memunculkan.
-/// - Tombol full layar: layar dimiringkan (landscape) dan bar sistem disembunyikan.
+/// - Tombol full layar: video memenuhi layar dan bar sistem disembunyikan.
 ///   Pemutar yang sama dipakai, jadi video lanjut dari detik yang sama.
 class StoryVideoPlayer extends StatefulWidget {
   final String videoUrl;
@@ -146,7 +147,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
   }
 }
 
-/// Halaman full layar: hitam penuh, layar miring, bar sistem disembunyikan.
+/// Halaman full layar: hitam penuh, bar sistem disembunyikan.
 /// Tombol back HP atau tombol ⛶ untuk keluar.
 class _FullscreenVideoPage extends StatefulWidget {
   final VideoPlayerController controller;
@@ -160,22 +161,14 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
   @override
   void initState() {
     super.initState();
+    // aplikasi sudah selalu landscape; cukup sembunyikan bar sistem
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    // video tegak (jarang) tidak perlu dimiringkan
-    if (widget.controller.value.aspectRatio >= 1) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-    }
   }
 
   @override
   void dispose() {
-    // kembalikan seperti semula: bar sistem tampil, bebas berputar
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual,
-        overlays: SystemUiOverlay.values);
-    SystemChrome.setPreferredOrientations([]);
+    // kembali ke tampilan aplikasi biasa (landscape + layar penuh)
+    applyAppSystemUi();
     super.dispose();
   }
 

@@ -188,19 +188,29 @@ class _LessonPageState extends State<LessonPage> {
     );
     switch (step.type) {
       case LessonStepType.intro:
-        return IntroStep(step: step, env: env);
+        return _fit(IntroStep(step: step, env: env));
       case LessonStepType.find:
-        return FindStep(step: step, env: env);
+        return _fit(FindStep(step: step, env: env));
       case LessonStepType.listenPick:
-        return ListenPickStep(step: step, env: env);
+        return _fit(ListenPickStep(step: step, env: env));
+      // menulis sudah menyesuaikan sendiri (kanvas ikut mengecil)
       case LessonStepType.traceUpper:
         return TraceStep(step: step, env: env, upper: true);
       case LessonStepType.traceLower:
         return TraceStep(step: step, env: env, upper: false);
       case LessonStepType.read:
-        return ReadStep(step: step, env: env);
+        return _fit(ReadStep(step: step, env: env));
     }
   }
+
+  /// Layar pendek (HP landscape): kalau isi soal lebih tinggi dari ruang yang ada,
+  /// soal diperkecil sedikit supaya tetap terlihat utuh, tidak terpotong.
+  Widget _fit(Widget step) => LayoutBuilder(
+        builder: (context, box) => FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(width: box.maxWidth, child: step),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {

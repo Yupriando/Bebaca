@@ -28,16 +28,17 @@ class _FindStepState extends State<FindStep>
   late final List<double> _angles;
   final Set<int> _found = {};
   int? _wrong;
-  late final AnimationController _shake = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 400),
-  );
+  late final AnimationController _shake;
 
   bool get _complete => _found.length >= _targets;
 
   @override
   void initState() {
     super.initState();
+    _shake = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 400),
+    );
     final random = Random();
     final target = widget.step.letter.toUpperCase();
     _letters = [

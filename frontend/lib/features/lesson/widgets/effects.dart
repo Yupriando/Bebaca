@@ -155,14 +155,13 @@ class Bob extends StatefulWidget {
 }
 
 class _BobState extends State<Bob> with SingleTickerProviderStateMixin {
-  late final AnimationController _c = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1800),
-  );
+  // dibuat di initState (bukan lazy): kalau animasi mati, dispose() tidak boleh membuatnya
+  late final AnimationController _c;
 
   @override
   void initState() {
     super.initState();
+    _c = AnimationController(vsync: this, duration: const Duration(milliseconds: 1800));
     if (widget.enabled) {
       _c.value = widget.phase;
       _c.repeat(reverse: true);
