@@ -76,7 +76,18 @@ Endpoint simulasi otomatis ditolak saat `NODE_ENV=production`.
 Nanti saat memakai Google Play Billing / Apple In-App Purchase, ganti `activate()` di
 `src/services/subscriptionService.js` dengan verifikasi pembelian ke toko.
 
-## 5. Catatan
+## 5. Deploy ke Vercel
+File yang dipakai: `vercel.json` (semua request -> `api/index.js` -> aplikasi Express yang sama).
+1. vercel.com -> **Add New -> Project** -> import repo GitHub -> **Root Directory: `backend`**
+   (Framework Preset: Other, Build/Output command dikosongkan).
+2. **Environment Variables**: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   (isi sama dengan `.env`). Opsional: `ALLOW_PREMIUM_SIMULATION=true` selama masa uji coba premium.
+3. Deploy, lalu cek `https://<nama-project>.vercel.app/health` -> `{"status":"ok"}` dan `/docs`.
+4. Flutter: isi `API_BASE_URL` di `frontend/config/dart_defines.json` dengan URL Vercel tadi.
+Setiap `git push` ke branch utama otomatis men-deploy ulang. Server berada di Singapura (`sin1`).
+Catatan: `/health/db` hanya aktif di lokal; batas percobaan PIN dihitung per server (bukan global).
+
+## 6. Catatan
 - Aturan lesson: lesson berikutnya otomatis terbuka setelah lesson sebelumnya selesai
   (urut lintas unit). Lesson terkunci tidak bisa diselesaikan (403).
 - Konten premium untuk akun gratis ditolak dengan status 402 (lesson & isi dongeng).

@@ -105,8 +105,9 @@ class StoryDetail {
             .whereType<Map<String, dynamic>>()
             .map(QuizQuestion.fromJson)
             .toList(),
+        // halaman yang dikosongkan (null) -> '' = pakai gambar sampul
         pageImages: ((j['pageImages'] as List<dynamic>?) ?? const [])
-            .map((e) => e.toString())
+            .map((e) => e?.toString() ?? '')
             .toList(),
         progress: StoryProgress.fromJson(j['progress']),
       );

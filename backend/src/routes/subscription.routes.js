@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { activate, deactivate, getEntitlement } from '../services/subscriptionService.js';
 import { HttpError } from '../utils/errors.js';
+import { env } from '../config/env.js';
 
 const router = Router();
 
@@ -10,9 +11,10 @@ router.get('/', async (req, res) => {
   res.json(await getEntitlement(req.user.id));
 });
 
-// ---- MODE SIMULASI: tanpa pembayaran sungguhan. Dimatikan saat NODE_ENV=production. ----
+// ---- MODE SIMULASI: tanpa pembayaran sungguhan. ----
+// Mati saat NODE_ENV=production (termasuk Vercel), kecuali ALLOW_PREMIUM_SIMULATION=true.
 router.use((req, res, next) => {
-  if (process.env.NODE_ENV === 'production') {
+  if (!env.allowPremiumSimulation) {
     throw new HttpError(403, 'Mode simulasi premium tidak tersedia di produksi');
   }
   next();
