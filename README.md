@@ -221,6 +221,27 @@ tambahkan paket `flutter_native_splash` (opsional).
 menyala) splash menampilkan "Ketuk layar untuk mulai" dan baru memutar animasi + nada setelah diketuk. Di HP/emulator langsung berbunyi.
 Splash mengikuti pengaturan Sound Effect & Animation terakhir (disimpan di perangkat).
 
+## Deploy aplikasi Android (APK)
+Nama aplikasi **Bebaca**, ID `id.bebaca.app` (jangan diganti setelah upload pertama ke Play Store).
+Ikon dari logo maskot: sumber di `frontend/assets/icon/` (dibuat `tool/generate_icons.py`),
+dipasang ke semua platform dengan `dart run flutter_launcher_icons`.
+
+1. Backend sudah online (Vercel). Isi `frontend/config/dart_defines.json`:
+   `{ "API_BASE_URL": "https://<nama-project>.vercel.app" }`
+2. Pastikan disk punya ruang kosong minimal ~5 GB, lalu:
+   ```bash
+   cd frontend
+   flutter build apk --release --split-per-abi --dart-define-from-file=config/dart_defines.json
+   ```
+   Hasil: `frontend/build/app/outputs/flutter-apk/app-arm64-v8a-release.apk` (untuk hampir semua HP sekarang).
+   Tanpa `--split-per-abi` -> satu file `app-release.apk` untuk semua HP (lebih besar).
+3. Kirim APK ke HP (Drive/WhatsApp/kabel), buka, izinkan "Instal aplikasi tidak dikenal".
+4. Versi berikutnya: naikkan `version:` di `pubspec.yaml` (mis. `1.0.1+2`), build ulang, pasang menimpa.
+
+**Kunci tanda tangan** (`frontend/android/upload-keystore.jks` + `key.properties`, tidak ikut git):
+SIMPAN CADANGANNYA di tempat aman. Kalau hilang, APK baru tidak bisa meng-update aplikasi yang
+sudah terpasang, dan tidak bisa dipakai untuk update di Play Store.
+
 ## Masalah umum
 | Gejala | Penyebab / solusi |
 |---|---|

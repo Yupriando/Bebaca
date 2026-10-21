@@ -3,6 +3,9 @@
 Membuat ikon Bebaca (PNG) -> assets/images/
   - logo_icon.png  : logo persegi 1:1 (diambil dari logo.png tanpa tulisan "Bebaca")
   - nav_belajar.png, nav_dongeng.png, nav_profile.png, nav_settings.png : ikon menu berwarna
+  - assets/icon/app_icon.png            : ikon aplikasi (iPhone/iPad, Android lama, web)
+  - assets/icon/app_icon_foreground.png : ikon Android modern (maskot diperkecil agar tidak terpotong)
+  Setelah itu pasang ke semua platform:  dart run flutter_launcher_icons
 Jalankan ulang bila ingin mengubah gambar:   pip install pillow && python3 tool/generate_icons.py
 Mau pakai gambar sendiri? Ganti file di assets/images/ dengan nama yang sama (.png).
 """
@@ -37,9 +40,10 @@ def shadow(img, offset=(0, 18), blur=22, alpha=70):
 
 
 # ---------------------------------------------------------------- logo 1:1
-def make_logo_icon():
+def logo_square(art_width=1000):
+    """Logo maskot (tanpa tulisan) di kanvas persegi S x S, dengan latar gradien
+    yang meniru latar logo asli. art_width kecil = maskot lebih kecil di tengah."""
     src = Image.open(os.path.join(OUT, 'logo.png')).convert('RGB')
-    # latar gradien radial yang meniru latar logo asli
     bg = Image.new('RGB', (S, S))
     px = bg.load()
     c_in, c_out = (16, 52, 118), (2, 4, 48)
@@ -49,15 +53,29 @@ def make_logo_icon():
             px[x, y] = lerp(c_in, c_out, d)
     # potong bagian gambar (tanpa tulisan), lalu letakkan di tengah dengan tepi menyatu
     art = src.crop((50, 25, 974, 785))
-    w = 1000
+    w = art_width
     h = round(art.height * w / art.width)
     art = art.resize((w, h), Image.LANCZOS)
+    edge = max(12, w // 25)
     mask = Image.new('L', (w, h), 0)
-    ImageDraw.Draw(mask).rectangle((40, 40, w - 40, h - 40), fill=255)
-    mask = mask.filter(ImageFilter.GaussianBlur(28))
+    ImageDraw.Draw(mask).rectangle((edge, edge, w - edge, h - edge), fill=255)
+    mask = mask.filter(ImageFilter.GaussianBlur(edge * 0.7))
     bg.paste(art, ((S - w) // 2, (S - h) // 2), mask)
-    bg.resize((512, 512), Image.LANCZOS).save(os.path.join(OUT, 'logo_icon.png'))
+    return bg
+
+
+def make_logo_icon():
+    logo_square().resize((512, 512), Image.LANCZOS).save(os.path.join(OUT, 'logo_icon.png'))
     print('ok logo_icon.png')
+
+
+def make_app_icons():
+    out = os.path.join(OUT, '..', 'icon')
+    os.makedirs(out, exist_ok=True)
+    logo_square(960).save(os.path.join(out, 'app_icon.png'))
+    # Android adaptive: hanya ~66% tengah yang terlihat -> maskot dikecilkan ke area aman
+    logo_square(640).save(os.path.join(out, 'app_icon_foreground.png'))
+    print('ok assets/icon/app_icon.png, app_icon_foreground.png')
 
 
 # ---------------------------------------------------------------- Belajar
@@ -214,6 +232,7 @@ def make_settings():
 if __name__ == '__main__':
     os.makedirs(OUT, exist_ok=True)
     make_logo_icon()
+    make_app_icons()
     make_belajar()
     make_dongeng()
     make_profile()
