@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorial Bebaca - Panduan Lengkap Membuka Aplikasi</title>
+  <meta name="description" content="Panduan lengkap cara menjalankan aplikasi Bebaca: setup Supabase, backend Node.js, Flutter frontend, Google Login, dan Midtrans Payment." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #21262d;
+      --border: #30363d;
+      --accent: #2563eb;
+      --accent2: #3b82f6;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --code-bg: #161b22;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    /* ─── HERO ─── */
+    .hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d1117 60%);
+      padding: 80px 24px 60px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(37,99,235,0.15) 0%, transparent 70%);
+      top: -200px; left: 50%; transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .hero .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(37,99,235,0.2); border: 1px solid rgba(59,130,246,0.4);
+      border-radius: 999px; padding: 6px 16px; font-size: 13px;
+      color: var(--accent2); margin-bottom: 20px;
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #60a5fa, #c084fc, #fb923c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 16px;
+    }
+    .hero p {
+      font-size: 1.1rem; color: var(--text-muted);
+      max-width: 600px; margin: 0 auto 32px;
+    }
+    .hero .pills {
+      display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+    }
+    .pill {
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 999px; padding: 6px 14px; font-size: 13px;
+      color: var(--text-muted); display: flex; align-items: center; gap: 6px;
+    }
+    .pill .dot { width: 8px; height: 8px; border-radius: 50%; }
+    .dot-green { background: var(--green); }
+    .dot-blue { background: var(--accent2); }
+    .dot-yellow { background: var(--yellow); }
+    .dot-purple { background: var(--purple); }
+
+    /* ─── LAYOUT ─── */
+    .container { max-width: 900px; margin: 0 auto; padding: 48px 24px; }
+
+    /* ─── PROGRESS NAV ─── */
+    .progress-nav {
+      display: flex; gap: 0; margin-bottom: 48px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+      flex-wrap: wrap;
+    }
+    .progress-nav a {
+      flex: 1; min-width: 120px; padding: 14px 12px;
+      text-align: center; text-decoration: none;
+      color: var(--text-muted); font-size: 13px; font-weight: 500;
+      border-right: 1px solid var(--border); transition: all 0.2s;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .progress-nav a:last-child { border-right: none; }
+    .progress-nav a:hover { background: var(--surface2); color: var(--text); }
+    .progress-nav a .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--surface2); border: 2px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; color: var(--text-muted);
+    }
+
+    /* ─── SECTIONS ─── */
+    .section {
+      margin-bottom: 56px;
+      scroll-margin-top: 24px;
+    }
+
+    .section-header {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+    }
+    .section-number {
+      width: 48px; height: 48px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: white;
+      flex-shrink: 0;
+    }
+    .section h2 {
+      font-size: 1.5rem; font-weight: 700; color: var(--text);
+    }
+    .section h2 small {
+      display: block; font-size: 0.85rem; font-weight: 400;
+      color: var(--text-muted); margin-top: 2px;
+    }
+
+    /* ─── CARD ─── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 24px; margin-bottom: 16px;
+    }
+    .card h3 {
+      font-size: 1rem; font-weight: 600; margin-bottom: 12px;
+      color: var(--text);
+    }
+    .card p { color: var(--text-muted); font-size: 0.95rem; margin-bottom: 8px; }
+    .card p:last-child { margin-bottom: 0; }
+
+    /* ─── STEPS ─── */
+    .steps { display: flex; flex-direction: column; gap: 0; }
+    .step {
+      display: flex; gap: 16px; position: relative; padding-bottom: 24px;
+    }
+    .step:last-child { padding-bottom: 0; }
+    .step-left {
+      display: flex; flex-direction: column; align-items: center; gap: 0;
+    }
+    .step-circle {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), #6366f1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700; color: white;
+      flex-shrink: 0; z-index: 1;
+    }
+    .step-line {
+      width: 2px; flex: 1; background: var(--border);
+      margin-top: 4px; min-height: 20px;
+    }
+    .step:last-child .step-line { display: none; }
+    .step-content { padding-top: 6px; flex: 1; }
+    .step-content h4 { font-size: 1rem; font-weight: 600; margin-bottom: 6px; }
+    .step-content p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 8px; }
+
+    /* ─── CODE BLOCK ─── */
+    .code-block {
+      background: var(--code-bg); border: 1px solid var(--border);
+      border-radius: 10px; overflow: hidden; margin: 12px 0;
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.03);
+    }
+    .code-lang {
+      font-size: 12px; color: var(--text-muted); font-weight: 500;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .code-dots { display: flex; gap: 6px; }
+    .code-dots span {
+      width: 12px; height: 12px; border-radius: 50%;
+    }
+    .code-dots span:nth-child(1) { background: #ff5f57; }
+    .code-dots span:nth-child(2) { background: #febc2e; }
+    .code-dots span:nth-child(3) { background: #28c840; }
+    pre {
+      padding: 20px; overflow-x: auto; font-family: 'Fira Code', monospace;
+      font-size: 13px; line-height: 1.6; color: #c9d1d9;
+    }
+    code { font-family: 'Fira Code', monospace; }
+    .hl { color: #79c0ff; }      /* blue - commands */
+    .hl-g { color: #56d364; }    /* green - values */
+    .hl-y { color: #e3b341; }    /* yellow - keys */
+    .hl-p { color: #d2a8ff; }    /* purple - special */
+    .hl-r { color: #ffa198; }    /* red - danger */
+    .hl-c { color: #8b949e; }    /* gray - comments */
+
+    /* ─── ALERT ─── */
+    .alert {
+      display: flex; gap: 14px; padding: 16px 20px;
+      border-radius: 10px; margin: 16px 0; border: 1px solid;
+      font-size: 0.92rem;
+    }
+    .alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+    .alert-content h4 { font-weight: 600; margin-bottom: 4px; }
+    .alert-content p { color: inherit; opacity: 0.85; font-size: 0.9rem; }
+    .alert-info { background: rgba(37,99,235,0.1); border-color: rgba(37,99,235,0.3); color: #93c5fd; }
+    .alert-warn { background: rgba(245,158,11,0.1); border-color: rgba(245,158,11,0.3); color: #fcd34d; }
+    .alert-success { background: rgba(34,197,94,0.1); border-color: rgba(34,197,94,0.3); color: #86efac; }
+    .alert-danger { background: rgba(239,68,68,0.1); border-color: rgba(239,68,68,0.3); color: #fca5a5; }
+
+    /* ─── TABLE ─── */
+    .table-wrap { overflow-x: auto; margin: 12px 0; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th {
+      background: var(--surface2); color: var(--text-muted);
+      font-weight: 600; text-align: left; padding: 12px 16px;
+      border-bottom: 2px solid var(--border); font-size: 0.85rem;
+    }
+    td {
+      padding: 12px 16px; border-bottom: 1px solid var(--border);
+      color: var(--text-muted); vertical-align: top;
+    }
+    td code {
+      background: var(--surface2); padding: 2px 6px;
+      border-radius: 4px; font-size: 0.85rem; color: #79c0ff;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* ─── TAG ─── */
+    .tag {
+      display: inline-block; padding: 2px 8px; border-radius: 999px;
+      font-size: 12px; font-weight: 600; margin-right: 4px;
+    }
+    .tag-new { background: rgba(34,197,94,0.2); color: #86efac; }
+    .tag-optional { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .tag-required { background: rgba(239,68,68,0.2); color: #fca5a5; }
+
+    /* ─── CHECKLIST ─── */
+    .checklist { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .checklist li {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 16px;
+      font-size: 0.9rem; color: var(--text-muted);
+    }
+    .check-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      text-align: center; padding: 40px 24px;
+      border-top: 1px solid var(--border);
+      color: var(--text-muted); font-size: 0.9rem;
+    }
+    footer a { color: var(--accent2); text-decoration: none; }
+
+    @media (max-width: 640px) {
+      .progress-nav a .label { display: none; }
+      .section-header { flex-direction: column; align-items: flex-start; gap: 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="badge">📚 Bebaca App • Panduan Lengkap</div>
+  <h1>Tutorial Membuka Aplikasi Bebaca</h1>
+  <p>Panduan langkah demi langkah dari nol sampai aplikasi berjalan di emulator, HP, atau web.</p>
+  <div class="pills">
+    <span class="pill"><span class="dot dot-green"></span>Node.js Backend</span>
+    <span class="pill"><span class="dot dot-blue"></span>Flutter Frontend</span>
+    <span class="pill"><span class="dot dot-yellow"></span>Supabase Database</span>
+    <span class="pill"><span class="dot dot-purple"></span>Google Login + Midtrans</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- PROGRESS NAV -->
+  <nav class="progress-nav">
+    <a href="#step0"><div class="step-num">0</div><span class="label">Prasyarat</span></a>
+    <a href="#step1"><div class="step-num">1</div><span class="label">Supabase</span></a>
+    <a href="#step2"><div class="step-num">2</div><span class="label">Backend</span></a>
+    <a href="#step3"><div class="step-num">3</div><span class="label">Flutter</span></a>
+    <a href="#step4"><div class="step-num">4</div><span class="label">Google</span></a>
+    <a href="#step5"><div class="step-num">5</div><span class="label">Midtrans</span></a>
+    <a href="#step6"><div class="step-num">6</div><span class="label">Materi</span></a>
+  </nav>
+
+  <!-- ═══════════════ STEP 0 ═══════════════ -->
+  <section class="section" id="step0">
+    <div class="section-header">
+      <div class="section-number">0</div>
+      <h2>Prasyarat<small>Install tool yang dibutuhkan sebelum mulai</small></h2>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-content">
+        <h4>Sistem Operasi</h4>
+        <p>Tutorial ini cocok untuk Windows 10/11, macOS, dan Linux.</p>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Tool</th>
+            <th>Versi</th>
+            <th>Download</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Node.js</strong> (untuk backend)</td>
+            <td><code>≥ 18</code></td>
+            <td><a href="https://nodejs.org" style="color:#60a5fa">nodejs.org</a></td>
+          </tr>
+          <tr>
+            <td><strong>Flutter SDK</strong> (untuk frontend)</td>
+            <td><code>≥ 3.7</code></td>
+            <td><a href="https://flutter.dev/docs/get-started/install" style="color:#60a5fa">flutter.dev</a></td>
+          </tr>
+          <tr>
+            <td><strong>Android Studio</strong> (untuk emulator Android)</td>
+            <td>Latest</td>
+            <td><a href="https://developer.android.com/studio" style="color:#60a5fa">developer.android.com</a></td>
+          </tr>
+          <tr>
+            <td><strong>Git</strong></td>
+            <td>Any</td>
+            <td><a href="https://git-scm.com" style="color:#60a5fa">git-scm.com</a></td>
+          </tr>
+          <tr>
+            <td><strong>VS Code</strong> <span class="tag tag-optional">Opsional</span></td>
+            <td>Any</td>
+            <td><a href="https://code.visualstudio.com" style="color:#60a5fa">code.visualstudio.com</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>Cek apakah sudah terinstall:</h3>
+      <div class="code-block">
+        <div class="code-header">
+          <div class="code-dots"><span></span><span></span><span></span></div>
+          <span class="code-lang">Terminal / PowerShell</span>
+        </div>
+        <pre><span class="hl">node</span> <span class="hl-p">--version</span>    <span class="hl-c"># Harusnya: v18.x.x atau lebih</span>
+<span class="hl">flutter</span> <span class="hl-p">--version</span> <span class="hl-c"># Harusnya: Flutter 3.7.x atau lebih</span>
+<span class="hl">git</span> <span class="hl-p">--version</span>      <span class="hl-c"># Harusnya: git version 2.x.x</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 1 ═══════════════ -->
+  <section class="section" id="step1">
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <h2>Setup Supabase<small>Database + Auth (gratis, sekali saja)</small></h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Buat Akun & Project Supabase</h4>
+          <p>Buka <a href="https://supabase.com" style="color:#60a5fa">supabase.com</a> → Sign Up → New Project → isi nama project dan password database.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Jalankan Schema & Seed SQL</h4>
+          <p>Di Supabase Dashboard → <strong>SQL Editor</strong> → paste dan jalankan file-file ini secara berurutan:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Urutan SQL</span>
+            </div>
+            <pre><span class="hl-c"># 1. Schema utama (tabel, index, RLS)</span>
+<span class="hl-g">backend/supabase/schema.sql</span>
+
+<span class="hl-c"># 2. Data awal (huruf, dongeng)</span>
+<span class="hl-g">backend/supabase/seed.sql</span>
+
+<span class="hl-c"># 3. Migrasi (jalankan satu per satu)</span>
+<span class="hl-g">backend/supabase/migrations/001_story_video.sql</span>
+<span class="hl-g">backend/supabase/migrations/002_lesson_content.sql</span>
+<span class="hl-g">backend/supabase/migrations/003_premium.sql</span>
+<span class="hl-g">backend/supabase/migrations/004_materi_dongeng.sql</span>  <span class="hl-c"># Materi baru!</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Salin API Keys</h4>
+          <p>Supabase Dashboard → <strong>Project Settings → API</strong> → salin:</p>
+          <ul style="margin: 8px 0 0 16px; color: var(--text-muted); font-size: 0.9rem; line-height: 2;">
+            <li><code>Project URL</code> → untuk <code>SUPABASE_URL</code></li>
+            <li><code>anon public</code> key → untuk <code>SUPABASE_ANON_KEY</code></li>
+            <li><code>service_role secret</code> key → untuk <code>SUPABASE_SERVICE_ROLE_KEY</code></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Matikan Verifikasi Email <span class="tag tag-optional">Disarankan untuk dev</span></h4>
+          <p>Authentication → Providers → Email → <strong>matikan "Confirm email"</strong> supaya tidak perlu verifikasi saat testing.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 2 ═══════════════ -->
+  <section class="section" id="step2">
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <h2>Jalankan Backend<small>Node.js + Express API Server</small></h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Masuk ke folder backend & isi .env</h4>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">PowerShell / Terminal</span>
+            </div>
+            <pre><span class="hl">cd</span> backend
+
+<span class="hl-c"># Salin file contoh .env</span>
+<span class="hl">copy</span> .env.example .env    <span class="hl-c"># Windows</span>
+<span class="hl">cp</span> .env.example .env      <span class="hl-c"># Mac/Linux</span></pre>
+          </div>
+          <p>Buka file <code>backend/.env</code> dan isi nilai-nilai ini:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">.env</span>
+            </div>
+            <pre><span class="hl-y">SUPABASE_URL</span>=<span class="hl-g">https://xxxxxx.supabase.co</span>
+<span class="hl-y">SUPABASE_ANON_KEY</span>=<span class="hl-g">sb_publishable_xxxxx</span>
+<span class="hl-y">SUPABASE_SERVICE_ROLE_KEY</span>=<span class="hl-g">sb_secret_xxxxx</span>
+
+<span class="hl-y">PORT</span>=<span class="hl-g">3000</span>
+<span class="hl-y">CORS_ORIGIN</span>=<span class="hl-g">*</span>
+<span class="hl-y">APP_URL</span>=<span class="hl-g">http://localhost:3000</span>
+
+<span class="hl-c"># Midtrans (opsional - untuk pembayaran nyata)</span>
+<span class="hl-y">MIDTRANS_SERVER_KEY</span>=<span class="hl-g">SB-Mid-server-xxxxx</span>
+<span class="hl-y">MIDTRANS_CLIENT_KEY</span>=<span class="hl-g">SB-Mid-client-xxxxx</span>
+<span class="hl-y">MIDTRANS_ENV</span>=<span class="hl-g">sandbox</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Install dependencies & jalankan</h4>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Terminal</span>
+            </div>
+            <pre><span class="hl">npm install</span>
+<span class="hl">npm run dev</span></pre>
+          </div>
+          <p>Jika berhasil, terminal akan menampilkan:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Output</span>
+            </div>
+            <pre><span class="hl-g">Bebaca API berjalan di http://localhost:3000</span>
+<span class="hl-g">Dokumentasi Swagger: http://localhost:3000/docs</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Verifikasi backend berjalan</h4>
+          <p>Buka browser dan cek URL ini:</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>URL</th><th>Hasil yang Diharapkan</th></tr></thead>
+              <tbody>
+                <tr><td><code>http://localhost:3000/health</code></td><td><code>{"status":"ok"}</code></td></tr>
+                <tr><td><code>http://localhost:3000/health/db</code></td><td><code>{"ok":true,...}</code></td></tr>
+                <tr><td><code>http://localhost:3000/docs</code></td><td>Halaman Swagger UI</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-warn">
+      <span class="alert-icon">⚠️</span>
+      <div class="alert-content">
+        <h4>Jangan tutup terminal backend!</h4>
+        <p>Backend harus terus berjalan selama kamu menggunakan aplikasi. Buka terminal terpisah untuk Flutter.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 3 ═══════════════ -->
+  <section class="section" id="step3">
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <h2>Jalankan Flutter<small>Aplikasi mobile/web</small></h2>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Masuk ke folder frontend & install packages</h4>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Terminal Baru</span>
+            </div>
+            <pre><span class="hl">cd</span> frontend
+<span class="hl">flutter pub get</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Pilih cara menjalankan</h4>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Platform</th><th>Perintah</th><th>Catatan</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td>Emulator Android</td>
+                  <td><code>flutter run</code></td>
+                  <td>Backend otomatis di <code>10.0.2.2:3000</code></td>
+                </tr>
+                <tr>
+                  <td>HP Android (WiFi sama)</td>
+                  <td><code>flutter run --dart-define=API_BASE_URL=http://IP_PC:3000</code></td>
+                  <td>Cari IP PC: <code>ipconfig</code></td>
+                </tr>
+                <tr>
+                  <td>Web browser</td>
+                  <td><code>flutter run -d chrome</code></td>
+                  <td>Backend di <code>localhost:3000</code></td>
+                </tr>
+                <tr>
+                  <td>Windows desktop</td>
+                  <td><code>flutter run -d windows</code></td>
+                  <td>Backend di <code>localhost:3000</code></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Izin jaringan Android <span class="tag tag-required">Wajib</span></h4>
+          <p>Edit file <code>frontend/android/app/src/main/AndroidManifest.xml</code> — tambahkan di dalam tag <code>&lt;manifest&gt;</code>:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">AndroidManifest.xml</span>
+            </div>
+            <pre><span class="hl-p">&lt;uses-permission</span> android:name=<span class="hl-g">"android.permission.INTERNET"</span><span class="hl-p">/&gt;</span>
+<span class="hl-p">&lt;uses-permission</span> android:name=<span class="hl-g">"android.permission.RECORD_AUDIO"</span><span class="hl-p">/&gt;</span>
+<span class="hl-p">&lt;queries&gt;</span>
+  <span class="hl-p">&lt;intent&gt;&lt;action</span> android:name=<span class="hl-g">"android.speech.RecognitionService"</span><span class="hl-p">/&gt;&lt;/intent&gt;</span>
+  <span class="hl-p">&lt;intent&gt;&lt;action</span> android:name=<span class="hl-g">"android.intent.action.TTS_SERVICE"</span><span class="hl-p">/&gt;&lt;/intent&gt;</span>
+  <span class="hl-c">&lt;!-- Untuk url_launcher (Google Login & Midtrans) --&gt;</span>
+  <span class="hl-p">&lt;intent&gt;&lt;action</span> android:name=<span class="hl-g">"android.intent.action.VIEW"</span><span class="hl-p">/&gt;&lt;/intent&gt;</span>
+<span class="hl-p">&lt;/queries&gt;</span>
+
+<span class="hl-c">&lt;!-- Di dalam &lt;application&gt; --&gt;</span>
+<span class="hl-y">android:usesCleartextTraffic</span>=<span class="hl-g">"true"</span>  <span class="hl-c">&lt;!-- Hapus saat produksi --&gt;</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-success">
+      <span class="alert-icon">✅</span>
+      <div class="alert-content">
+        <h4>Aplikasi berhasil jalan!</h4>
+        <p>Landing Page → Buat Akun → Login → Main Menu. Selamat mencoba semua fitur Bebaca!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 4 ═══════════════ -->
+  <section class="section" id="step4">
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <h2>Setup Login Google <span class="tag tag-new">Baru</span><small>Lewat Supabase Google OAuth</small></h2>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">ℹ️</span>
+      <div class="alert-content">
+        <h4>Tanpa Google Login pun app tetap berjalan</h4>
+        <p>Login email/password tetap bekerja normal. Google Login adalah fitur tambahan.</p>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Buat Google OAuth Client ID</h4>
+          <p>1. Buka <a href="https://console.cloud.google.com" style="color:#60a5fa">console.cloud.google.com</a></p>
+          <p>2. Buat project baru atau pilih yang ada</p>
+          <p>3. APIs & Services → Credentials → Create Credentials → <strong>OAuth Client ID</strong></p>
+          <p>4. Application type: <strong>Web application</strong></p>
+          <p>5. Authorized redirect URIs — tambahkan:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Redirect URI</span>
+            </div>
+            <pre>https://<span class="hl-g">PROJECT-ID</span>.supabase.co/auth/v1/callback</pre>
+          </div>
+          <p>6. Salin <strong>Client ID</strong> dan <strong>Client Secret</strong></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Aktifkan di Supabase</h4>
+          <p>Supabase Dashboard → Authentication → Providers → <strong>Google</strong> → Enable</p>
+          <p>Isi Client ID dan Client Secret dari langkah 1.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Coba Login Google</h4>
+          <p>Di aplikasi Flutter: Login Page → tombol <strong>"Lanjutkan dengan Google"</strong> → browser terbuka → login dengan akun Google → kembali ke app.</p>
+          <div class="alert alert-warn" style="margin-top:8px;">
+            <span class="alert-icon">⚠️</span>
+            <div class="alert-content">
+              <h4>Catatan untuk Mobile</h4>
+              <p>Login Google membuka browser eksternal. Setelah selesai, pengguna perlu kembali manual ke aplikasi dan login ulang menggunakan email/password yang sudah terdaftar via Google (atau gunakan link penuh dengan deep link scheme).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 5 ═══════════════ -->
+  <section class="section" id="step5">
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <h2>Setup Midtrans Payment <span class="tag tag-new">Baru</span><small>Gateway pembayaran Indonesia</small></h2>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div class="alert-content">
+        <h4>Tanpa Midtrans, mode simulasi tetap aktif</h4>
+        <p>Jika MIDTRANS_SERVER_KEY tidak diisi, tombol Langganan akan langsung mengaktifkan premium tanpa pembayaran (untuk testing).</p>
+      </div>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-left"><div class="step-circle">1</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Daftar Midtrans</h4>
+          <p>Buka <a href="https://dashboard.midtrans.com" style="color:#60a5fa">dashboard.midtrans.com</a> → daftar akun → pilih Sandbox untuk testing.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">2</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Ambil API Keys</h4>
+          <p>Midtrans Dashboard → Settings → Access Keys → salin:</p>
+          <ul style="margin: 8px 0 0 16px; color: var(--text-muted); font-size: 0.9rem; line-height: 2;">
+            <li><strong>Server Key</strong> → <code>MIDTRANS_SERVER_KEY</code> di .env</li>
+            <li><strong>Client Key</strong> → <code>MIDTRANS_CLIENT_KEY</code> di .env</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">3</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Setup Notification URL (Webhook)</h4>
+          <p>Midtrans harus bisa mengirim notifikasi ke backend kamu setelah pembayaran berhasil.</p>
+          <p>Untuk <strong>lokal</strong>: gunakan <a href="https://ngrok.com" style="color:#60a5fa">ngrok</a> untuk tunnel:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Terminal</span>
+            </div>
+            <pre><span class="hl">ngrok http 3000</span>
+<span class="hl-c"># Salin URL yang diberikan, contoh: https://abc123.ngrok.io</span></pre>
+          </div>
+          <p>Midtrans Dashboard → Settings → Configuration → Payment Notification URL:</p>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">Notification URL</span>
+            </div>
+            <pre>https://<span class="hl-g">abc123.ngrok.io</span>/api/payment/notification</pre>
+          </div>
+          <p>Untuk <strong>produksi</strong>: ganti dengan URL server yang sudah di-deploy.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-left"><div class="step-circle">4</div><div class="step-line"></div></div>
+        <div class="step-content">
+          <h4>Isi .env dan restart backend</h4>
+          <div class="code-block">
+            <div class="code-header">
+              <div class="code-dots"><span></span><span></span><span></span></div>
+              <span class="code-lang">.env</span>
+            </div>
+            <pre><span class="hl-y">MIDTRANS_SERVER_KEY</span>=<span class="hl-g">SB-Mid-server-xxxxxxxxxxxx</span>
+<span class="hl-y">MIDTRANS_CLIENT_KEY</span>=<span class="hl-g">SB-Mid-client-xxxxxxxxxxxx</span>
+<span class="hl-y">MIDTRANS_ENV</span>=<span class="hl-g">sandbox</span>  <span class="hl-c"># Ganti ke "production" saat live</span></pre>
+          </div>
+          <p>Lalu restart backend: <code>npm run dev</code></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>💳 Metode Pembayaran Midtrans yang Didukung</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Kategori</th><th>Metode</th></tr></thead>
+          <tbody>
+            <tr><td>Transfer Bank</td><td>BCA, BNI, BRI, Mandiri, Permata, CIMB</td></tr>
+            <tr><td>E-Wallet</td><td>GoPay, OVO, DANA, ShopeePay, LinkAja</td></tr>
+            <tr><td>Kartu Kredit/Debit</td><td>Visa, Mastercard, JCB, Amex</td></tr>
+            <tr><td>Minimarket</td><td>Indomaret, Alfamart</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ STEP 6 ═══════════════ -->
+  <section class="section" id="step6">
+    <div class="section-header">
+      <div class="section-number">6</div>
+      <h2>Materi & Dongeng Baru <span class="tag tag-new">Baru</span><small>Konten tambahan yang sudah ditambahkan</small></h2>
+    </div>
+
+    <div class="card">
+      <h3>📚 Materi Belajar Baru (Migration 004)</h3>
+      <ul class="checklist" style="margin-top:12px;">
+        <li><span class="check-icon">✅</span><div><strong>Huruf Konsonan Lanjutan:</strong> H, J, K, L, M, N, P, R, S, T (order 9-18 di Unit 2 Section 1)</div></li>
+        <li><span class="check-icon">✅</span><div><strong>Unit 2, Section 2 (Premium):</strong> Konsonan Langka V, W, X, Y, Z</div></li>
+        <li><span class="check-icon">✅</span><div><strong>Unit 3 (Premium):</strong> Suku Kata Dasar BA-BI-BU, CA-CI-CU, dsb.</div></li>
+      </ul>
+    </div>
+
+    <div class="card" style="margin-top:16px;">
+      <h3>📖 Dongeng Baru dengan Teks Lengkap</h3>
+      <ul class="checklist" style="margin-top:12px;">
+        <li><span class="check-icon">✅</span>Timun Mas - cerita rakyat Jawa Tengah</li>
+        <li><span class="check-icon">✅</span>Bawang Merah Bawang Putih - cerita rakyat</li>
+        <li><span class="check-icon">✅</span>Si Kancil dan Buaya - fabel kecerdikan</li>
+        <li><span class="check-icon">✅</span>Kura-kura dan Kelinci - fabel kesabaran</li>
+        <li><span class="check-icon">✅</span>Semut dan Belalang - fabel ketekunan</li>
+        <li><span class="check-icon">✅</span>Cinderella - dongeng dunia</li>
+        <li><span class="check-icon">✅</span>Asal Usul Danau Toba - legenda Sumatera</li>
+        <li><span class="check-icon">✅</span>Gagak dan Kendi Air - fabel baru</li>
+      </ul>
+    </div>
+
+    <div class="alert alert-info">
+      <span class="alert-icon">💡</span>
+      <div class="alert-content">
+        <h4>Cara menambah materi/dongeng sendiri</h4>
+        <p>Jalankan SQL di Supabase Editor atau edit langsung di Table Editor. Lihat README untuk contoh SQL insert lesson dan update dongeng.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ TROUBLESHOOTING ═══════════════ -->
+  <section class="section" id="troubleshoot">
+    <div class="section-header">
+      <div class="section-number">?</div>
+      <h2>Troubleshooting<small>Masalah umum dan solusinya</small></h2>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Masalah</th><th>Solusi</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Backend tidak jalan / port sudah dipakai</td>
+            <td>Ganti PORT di .env, atau matikan proses lain: <code>netstat -ano | findstr 3000</code></td>
+          </tr>
+          <tr>
+            <td>Flutter: "Tidak bisa terhubung ke server"</td>
+            <td>Pastikan backend sudah jalan. Cek <code>http://localhost:3000/health</code></td>
+          </tr>
+          <tr>
+            <td>Cleartext HTTP not permitted (Android)</td>
+            <td>Tambahkan <code>android:usesCleartextTraffic="true"</code> di AndroidManifest</td>
+          </tr>
+          <tr>
+            <td>Login Google tidak bekerja</td>
+            <td>Cek Supabase Google Provider sudah diaktifkan dan redirect URI benar</td>
+          </tr>
+          <tr>
+            <td>Midtrans: "Gagal membuat transaksi"</td>
+            <td>Pastikan MIDTRANS_SERVER_KEY terisi benar dan format "SB-Mid-server-..."</td>
+          </tr>
+          <tr>
+            <td>Premium tidak aktif setelah bayar</td>
+            <td>Cek webhook URL di Midtrans Dashboard. Gunakan ngrok untuk localhost.</td>
+          </tr>
+          <tr>
+            <td>Health/db: "hint: Jalankan migrasi"</td>
+            <td>Jalankan semua file migration 001-004 di Supabase SQL Editor</td>
+          </tr>
+          <tr>
+            <td>url_launcher tidak bisa compile</td>
+            <td>Jalankan <code>flutter pub get</code> di folder frontend</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <p>🐛 <strong>Bebaca</strong> — Aplikasi Belajar Baca yang Menyenangkan</p>
+  <p style="margin-top:8px;">Backend: <a href="http://localhost:3000/docs">localhost:3000/docs</a> • Health: <a href="http://localhost:3000/health">localhost:3000/health</a></p>
+</footer>
+
+</body>
+</html>

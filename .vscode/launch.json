@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Bebaca (Flutter)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "frontend",
+      "program": "lib/main.dart",
+      "args": ["--dart-define-from-file=config/dart_defines.json"]
+    }
+  ]
+}
