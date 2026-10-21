@@ -68,7 +68,7 @@ class _ListenPickStepState extends State<ListenPickStep>
     } else {
       HapticFeedback.mediumImpact();
       widget.env.sfx(Sfx.wrong, volume: 0.6);
-      widget.env.onMistake();
+      widget.env.onMistake(_letters[i]);
       setState(() => _wrong = i);
       if (widget.env.animate) _shake.forward(from: 0);
       Future.delayed(const Duration(milliseconds: 600), () {

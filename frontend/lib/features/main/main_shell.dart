@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../services/event_logger.dart';
 import '../../services/premium_store.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
@@ -41,6 +42,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
     _loadSettings();
     _startTimer();
     PremiumStore.instance.init();
+    EventLogger.instance.log('app_open');
   }
 
   @override
@@ -53,12 +55,14 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      EventLogger.instance.log('app_open');
       _loadSettings();
       PremiumStore.instance.refresh(); // mis. baru saja dibatalkan di toko
       _startTimer();
       if (mounted) setState(() {}); // jam malam bisa saja sudah tiba
     } else {
       _timer?.cancel();
+      EventLogger.instance.flush(); // kirim sisa kejadian sebelum aplikasi ditinggal
     }
   }
 
@@ -78,6 +82,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   Future<void> _tick() async {
     // waktu saat layar terkunci tidak dihitung sebagai waktu belajar
     if (_store.lockReason == LockReason.none) {
+      EventLogger.instance.log('heartbeat'); // "sedang aktif" untuk Pantau Langsung
       try {
         await _store.addUsage(1);
       } catch (_) {}
@@ -86,7 +91,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
   }
 
   void _select(int i) {
-    if (i != _index) SoundService.instance.play(Sfx.tap, volume: 0.5);
+    if (i != _index) {
+      SoundService.instance.play(Sfx.tap, volume: 0.5);
+      EventLogger.instance.log('tab', {'index': i, 'name': navItems[i].label});
+    }
     setState(() => _index = i);
   }
 

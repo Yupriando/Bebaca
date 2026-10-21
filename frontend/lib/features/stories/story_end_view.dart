@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../models/story.dart';
+import '../../services/event_logger.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
 import '../../services/speech_service.dart';
@@ -96,6 +97,7 @@ class _StoryEndViewState extends State<StoryEndView> {
     SoundService.instance.play(Sfx.fanfare);
     if (_saved) return;
     _saved = true;
+    EventLogger.instance.log('story_complete', {'title': widget.story.title, 'stars': _stars});
     StoryService()
         .saveProgress(widget.story.id, page: widget.lastPage, completed: true, stars: _stars)
         .catchError((_) => null);

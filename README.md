@@ -163,6 +163,20 @@ Migrasi: `backend/supabase/migrations/005_story_reader.sql` (kolom `moral`, `qui
   `cd frontend; $env:ELEVENLABS_API_KEY="sk_..."; python tool/generate_story_voice.py --voice <VOICE_ID> --title "Malin Kundang"`
   Hasil: `frontend/assets/stories/st_*.mp3` + `.json` (waktu tiap kata). Kalau isi cerita diubah, jalankan lagi.
 
+## Untuk Orang Tua: Laporan Perkembangan & Pantau Langsung (QR)
+Migrasi: `backend/supabase/migrations/006_parent_report.sql` (tabel `learning_events` & `parent_links`).
+Settings -> **Untuk Orang Tua** (dibuka dengan PIN orang tua):
+- **Laporan Perkembangan** (`GET /api/report?week=0`): waktu belajar, hari aktif, hari beruntun, lesson & dongeng
+  selesai, ketepatan jawaban, aktivitas terbaru. **Premium**: grafik harian, penguasaan tiap huruf
+  (dikuasai / sedang belajar / perlu latihan, termasuk "sering tertukar dengan"), dan saran otomatis.
+- **Pantau Langsung**: aplikasi menampilkan QR. Orang tua scan dengan kamera HP -> halaman web
+  `https://<backend>/pantau/<token>` yang diperbarui tiap 4 detik (sedang belajar apa, langkah ke berapa,
+  jawaban benar/salah, waktu hari ini). Tanpa memasang aplikasi. "Ganti QR" membuat token baru
+  (yang lama tidak berlaku), "Matikan" mencabut akses. Hanya hash token yang disimpan di database.
+- Aplikasi anak mengirim **kejadian belajar** (`POST /api/events`, dikumpulkan tiap ~2 detik): buka aplikasi,
+  pindah menu, mulai/selesai lesson, tiap jawaban (huruf, jenis soal, benar/salah, huruf yang dipilih),
+  buka/halaman/selesai dongeng, dan detak "aktif" tiap menit. **Tidak** ada isi layar, foto, atau suara.
+
 ## Efek suara & animasi
 Semua efek mengikuti pengaturan **Sound Effect** dan **Animation** di Settings (mati = tidak ada suara / animasi diam).
 

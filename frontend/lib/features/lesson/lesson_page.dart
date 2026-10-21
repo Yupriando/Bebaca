@@ -5,6 +5,7 @@ import '../../core/widgets/primary_button.dart';
 import '../../models/app_settings.dart';
 import '../../models/lesson.dart';
 import '../../services/api_client.dart';
+import '../../services/event_logger.dart';
 import '../../services/lesson_service.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
@@ -86,6 +87,28 @@ class _LessonPageState extends State<LessonPage> {
         pool: pool,
       );
     });
+    EventLogger.instance.log('lesson_start', {
+      'lessonId': widget.lesson.id,
+      'title': widget.lesson.title,
+      'unit': widget.section.unit,
+      'section': widget.section.section,
+      'steps': _steps.length,
+      'stepIndex': 0,
+    });
+  }
+
+  /// Catat jawaban untuk laporan & pantau langsung orang tua.
+  void _logAnswer(int index, {required bool correct, String? picked}) {
+    final step = _steps[index];
+    EventLogger.instance.log('answer', {
+      'lessonTitle': widget.lesson.title,
+      'letter': step.letter.toUpperCase(),
+      'step': step.type.name,
+      'correct': correct,
+      if (picked != null) 'picked': picked.toUpperCase(),
+      'stepIndex': index,
+      'steps': _steps.length,
+    });
   }
 
   /// Maskot bereaksi sebentar, lalu kembali santai.
@@ -106,11 +129,13 @@ class _LessonPageState extends State<LessonPage> {
 
   void _onCorrect(int index) {
     if (index != _index) return;
+    _logAnswer(index, correct: true);
     _react(MascotMood.cheer);
   }
 
-  void _onMistake(int index) {
+  void _onMistake(int index, [String? picked]) {
     if (index != _index) return;
+    _logAnswer(index, correct: false, picked: picked);
     _mistakes++;
     _react(MascotMood.sad);
   }
@@ -135,6 +160,7 @@ class _LessonPageState extends State<LessonPage> {
       _finished = true;
       _stars = stars;
     });
+    EventLogger.instance.log('lesson_complete', {'title': widget.lesson.title, 'stars': stars});
     _save();
   }
 
@@ -175,7 +201,14 @@ class _LessonPageState extends State<LessonPage> {
         animate: _settings?.animation ?? true,
       ),
     );
-    if (leave == true && mounted) Navigator.pop(context, false);
+    if (leave == true && mounted) {
+      EventLogger.instance.log('lesson_exit', {
+        'title': widget.lesson.title,
+        'stepIndex': _index,
+        'steps': _steps.length,
+      });
+      Navigator.pop(context, false);
+    }
   }
 
   Widget _buildStep(LessonStep step, int index) {
@@ -183,7 +216,7 @@ class _LessonPageState extends State<LessonPage> {
       sound: _settings!.soundEffect,
       animate: _settings!.animation,
       onDone: () => _onStepDone(index),
-      onMistake: () => _onMistake(index),
+      onMistake: ([picked]) => _onMistake(index, picked),
       onCorrect: () => _onCorrect(index),
     );
     switch (step.type) {

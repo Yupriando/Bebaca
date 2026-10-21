@@ -56,6 +56,7 @@ export const openapi = {
     { name: 'Dongeng', description: 'Kategori dan cerita' },
     { name: 'Profile', description: 'Data profil pengguna' },
     { name: 'Settings', description: 'Preferensi dan parental control' },
+    { name: 'Orang Tua', description: 'Kejadian belajar, Laporan Perkembangan, tautan QR Pantau Langsung' },
     { name: 'Premium', description: 'Bebaca Premium (sementara mode simulasi, tanpa pembayaran)' },
     { name: 'System', description: 'Health check' },
   ],
@@ -357,6 +358,32 @@ export const openapi = {
       },
     },
 
+    // ================= ORANG TUA =================
+    '/api/events': {
+      post: {
+        tags: ['Orang Tua'],
+        summary: 'Kirim kejadian belajar dari aplikasi anak (maks. 50 per kiriman)',
+        requestBody: json('#/components/schemas/EventBatch', {
+          events: [{ type: 'answer', data: { letter: 'B', step: 'find', correct: false, picked: 'D' } }],
+        }),
+        responses: { 200: { description: 'Tersimpan' }, 400: common[400], 401: common[401] },
+      },
+    },
+    '/api/report': {
+      get: {
+        tags: ['Orang Tua'],
+        summary: 'Laporan Perkembangan mingguan',
+        description: 'Akun gratis: ringkasan & aktivitas. Premium: + grafik harian (days), penguasaan huruf (letters), saran.',
+        parameters: [{ name: 'week', in: 'query', schema: { type: 'integer', minimum: 0, default: 0 }, description: '0 = minggu ini, 1 = minggu lalu' }],
+        responses: { 200: { description: 'Laporan' }, 401: common[401] },
+      },
+    },
+    '/api/report/monitor-link': {
+      get: { tags: ['Orang Tua'], summary: 'Status tautan Pantau Langsung', responses: { 200: { description: '{ active }' }, 401: common[401] } },
+      post: { tags: ['Orang Tua'], summary: 'Buat tautan/QR Pantau Langsung baru (yang lama tidak berlaku)', responses: { 200: { description: '{ active, url }' }, 401: common[401] } },
+      delete: { tags: ['Orang Tua'], summary: 'Cabut akses Pantau Langsung', responses: { 200: { description: '{ active: false }' }, 401: common[401] } },
+    },
+
     // ================= PREMIUM =================
     '/api/subscription': {
       get: {
@@ -650,6 +677,25 @@ export const openapi = {
         type: 'object',
         required: ['pin'],
         properties: { pin: { type: 'string', pattern: '^\d{4}$', example: '2580' } },
+      },
+      EventBatch: {
+        type: 'object',
+        required: ['events'],
+        properties: {
+          events: {
+            type: 'array',
+            maxItems: 50,
+            items: {
+              type: 'object',
+              required: ['type'],
+              properties: {
+                type: { type: 'string', enum: ['app_open', 'tab', 'heartbeat', 'lesson_start', 'answer', 'lesson_complete', 'lesson_exit', 'story_open', 'story_page', 'story_complete'] },
+                data: { type: 'object' },
+                at: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
       },
       UsageRequest: {
         type: 'object',

@@ -13,6 +13,9 @@ import storyRoutes from './routes/stories.routes.js';
 import profileRoutes from './routes/profile.routes.js';
 import settingsRoutes from './routes/settings.routes.js';
 import subscriptionRoutes from './routes/subscription.routes.js';
+import eventRoutes from './routes/events.routes.js';
+import reportRoutes from './routes/report.routes.js';
+import monitorRoutes from './routes/monitor.routes.js';
 
 const app = express();
 
@@ -53,6 +56,8 @@ if (process.env.NODE_ENV !== 'production') {
       ['story_categories', 'id,name,sort_order'],
       ['stories', 'id,category_id,title,cover_url,video_url,content,is_premium,moral,quiz,page_images'],
       ['story_progress', 'user_id,story_id,last_page,completed_at,stars'],
+      ['learning_events', 'id,user_id,type,data,created_at'],
+      ['parent_links', 'user_id,token_hash,created_at'],
       ['subscriptions', 'user_id,platform,product_id,store_id,expires_at,auto_renew,checked_at'],
     ];
     const problems = [];
@@ -77,7 +82,7 @@ if (process.env.NODE_ENV !== 'production') {
       ok: problems.length === 0,
       problems,
       hint: problems.length
-        ? 'Jalankan schema.sql (instalasi baru) atau migrations/001 sampai 005 di Supabase SQL Editor.'
+        ? 'Jalankan schema.sql (instalasi baru) atau migrations/001 sampai 006 di Supabase SQL Editor.'
         : 'Skema database lengkap.',
     });
   });
@@ -89,6 +94,10 @@ app.use('/api/stories', requireAuth, storyRoutes);
 app.use('/api/profile', requireAuth, profileRoutes);
 app.use('/api/settings', requireAuth, settingsRoutes);
 app.use('/api/subscription', requireAuth, subscriptionRoutes);
+app.use('/api/events', requireAuth, eventRoutes);
+app.use('/api/report', requireAuth, reportRoutes);
+// halaman web Pantau Langsung untuk orang tua (publik, akses lewat token di QR)
+app.use('/pantau', monitorRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

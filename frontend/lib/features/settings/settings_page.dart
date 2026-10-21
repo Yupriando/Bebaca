@@ -6,9 +6,12 @@ import '../../models/app_settings.dart';
 import '../../models/subscription.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
+import '../../services/event_logger.dart';
 import '../../services/premium_store.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
+import '../parent/monitor_page.dart';
+import '../parent/parent_report_page.dart';
 import '../premium/premium_prompt.dart';
 import 'parental_gate.dart';
 
@@ -136,6 +139,7 @@ class _SettingsPageState extends State<SettingsPage> {
     );
     if (confirm != true) return;
 
+    EventLogger.instance.clear();
     await AuthService().logout();
     PremiumStore.instance.reset();
     if (!mounted) return;
@@ -183,6 +187,8 @@ class _SettingsPageState extends State<SettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const _PremiumCard(),
+          const SizedBox(height: 16),
+          const _ParentTools(),
           const SizedBox(height: 28),
           const Text('Preferences',
               style: TextStyle(
@@ -335,6 +341,70 @@ class _PremiumCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Untuk Orang Tua: Laporan Perkembangan & Pantau Langsung (QR). Dibuka lewat PIN.
+class _ParentTools extends StatelessWidget {
+  const _ParentTools();
+
+  Future<void> _open(BuildContext context, Widget page) async {
+    if (!await showParentalGate(context)) return;
+    if (!context.mounted) return;
+    await Navigator.of(context, rootNavigator: true)
+        .push(MaterialPageRoute(builder: (_) => page));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    Widget tile(IconData icon, Color color, String title, String subtitle, Widget page) => Expanded(
+          child: Material(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            elevation: 1,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: () => _open(context, page),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(children: [
+                  Container(
+                    width: 56,
+                    height: 56,
+                    decoration: BoxDecoration(color: color.withAlpha(30), borderRadius: BorderRadius.circular(16)),
+                    child: Icon(icon, color: color, size: 32),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+                      Text(subtitle, style: const TextStyle(fontSize: 15, color: Color(0xFF888888))),
+                    ]),
+                  ),
+                  const Icon(Icons.chevron_right_rounded, size: 30, color: Color(0xFFAAAAAA)),
+                ]),
+              ),
+            ),
+          ),
+        );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Untuk Orang Tua',
+            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+        const SizedBox(height: 10),
+        Row(children: [
+          tile(Icons.insights_rounded, const Color(0xFF2E7FB8), 'Laporan Perkembangan',
+              'Waktu belajar, huruf yang dikuasai, saran', const ParentReportPage()),
+          const SizedBox(width: 14),
+          tile(Icons.qr_code_2_rounded, const Color(0xFF2E9E5B), 'Pantau Langsung',
+              'Scan QR, lihat si kecil belajar dari HP Ayah/Ibu', const MonitorPage()),
+        ]),
+      ],
     );
   }
 }

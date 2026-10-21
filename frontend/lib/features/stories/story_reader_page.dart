@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/story.dart';
+import '../../services/event_logger.dart';
 import '../../services/sound_service.dart';
 import '../../services/speech_service.dart';
 import '../../services/story_service.dart';
@@ -47,6 +48,12 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     super.initState();
     _page = widget.startPage.clamp(0, _pages.isEmpty ? 0 : _pages.length - 1);
     _controller = PageController(initialPage: _page);
+    EventLogger.instance.log('story_open', {
+      'storyId': widget.story.id,
+      'title': widget.story.title,
+      'page': _page,
+      'pages': _pages.length,
+    });
   }
 
   @override
@@ -66,6 +73,11 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _page = i;
       _readCount = 0;
       _tappedWord = null;
+    });
+    EventLogger.instance.log('story_page', {
+      'title': widget.story.title,
+      'page': i,
+      'pages': _pages.length,
     });
     // simpan halaman terakhir (ditunda sebentar supaya tidak tiap geser)
     _saveTimer?.cancel();

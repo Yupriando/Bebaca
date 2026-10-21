@@ -122,6 +122,23 @@ create table public.subscriptions (
 );
 create index subscriptions_user_idx on public.subscriptions(user_id, expires_at desc);
 
+-- Kejadian belajar dari aplikasi anak (Laporan Perkembangan & Pantau Langsung)
+create table public.learning_events (
+  id bigint generated always as identity primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  type text not null,
+  data jsonb not null default '{}',
+  created_at timestamptz not null default now()
+);
+create index learning_events_user_time_idx on public.learning_events(user_id, created_at desc);
+
+-- Tautan QR "Pantau Langsung" (hanya hash token yang disimpan)
+create table public.parent_links (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  token_hash text not null unique,
+  created_at timestamptz not null default now()
+);
+
 -- Tambah waktu belajar secara atomik
 create or replace function public.add_usage(p_user uuid, p_date date, p_minutes int)
 returns void
@@ -149,3 +166,5 @@ alter table public.story_categories enable row level security;
 alter table public.stories enable row level security;
 alter table public.subscriptions enable row level security;
 alter table public.story_progress enable row level security;
+alter table public.learning_events enable row level security;
+alter table public.parent_links enable row level security;

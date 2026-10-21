@@ -9,7 +9,9 @@ class StepEnv {
   final bool sound; // pengaturan "Sound Effect"
   final bool animate; // pengaturan "Animation"
   final VoidCallback onDone; // langkah selesai -> tombol Next aktif
-  final VoidCallback onMistake; // salah / dilewati -> mengurangi bintang
+  /// salah / dilewati -> mengurangi bintang. [picked] = huruf yang (salah) dipilih anak,
+  /// untuk laporan orang tua ("B sering tertukar dengan D").
+  final void Function([String? picked]) onMistake;
   final VoidCallback onCorrect; // jawaban benar -> maskot bersorak
 
   const StepEnv({
