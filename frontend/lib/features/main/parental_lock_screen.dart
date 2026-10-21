@@ -5,6 +5,7 @@ import '../../services/api_client.dart';
 import '../../services/settings_store.dart';
 import '../lesson/widgets/effects.dart';
 import '../settings/parental_gate.dart';
+import '../settings/settings_page.dart' show formatDuration, formatMinutes;
 
 /// Layar penuh yang menutup aplikasi saat waktu belajar habis atau sudah jam malam.
 /// Orang tua bisa membukanya dengan PIN orang tua.
@@ -102,7 +103,7 @@ class ParentalLockScreen extends StatelessWidget {
                   child: Text(
                     isCurfew
                         ? 'Sekarang sudah lewat jam malam (${s.curfew}). Belajar lagi besok pagi ya!'
-                        : 'Hari ini kamu sudah belajar ${s.timespentMinutes} menit dari batas ${s.timeLimitMinutes} menit. Sampai jumpa besok!',
+                        : 'Hari ini kamu sudah belajar ${formatDuration(s.timespentMinutes)} dari batas ${formatMinutes(s.timeLimitMinutes)}. Sampai jumpa besok!',
                     textAlign: TextAlign.center,
                     style: const TextStyle(fontSize: 22, color: Color(0xFF555555)),
                   ),

@@ -17,6 +17,30 @@ const STEP_NAMES = {
   read: 'Baca huruf',
 };
 const TAB_NAMES = { 0: 'Belajar', 1: 'Dongeng', 2: 'Profil', 3: 'Pengaturan' };
+const TAB_ACTIVITY = {
+  0: 'Melihat daftar pelajaran',
+  1: 'Memilih dongeng',
+  2: 'Melihat halaman profil',
+  3: 'Membuka pengaturan',
+};
+
+/** Kalimat perintah yang dilihat anak di layar untuk tiap jenis langkah. */
+function stepPrompt(step, letter = '') {
+  switch (step) {
+    case 'intro': return `Ini huruf ${letter}`;
+    case 'find': return `Carilah huruf ${letter}`;
+    case 'listenPick': return `Huruf apa yang kamu dengar? (jawabannya ${letter})`;
+    case 'traceUpper': return `Gambarkan huruf ${letter.toUpperCase()}`;
+    case 'traceLower': return `Gambarkan huruf ${letter.toLowerCase()}`;
+    case 'read': return `Baca huruf ${letter}`;
+    default: return '';
+  }
+}
+const STORY_MODES = {
+  browse: '👀 Melihat-lihat halaman',
+  listen: '🔊 Mendengarkan narasi',
+  read: '🎤 Membaca sendiri (mikrofon)',
+};
 
 /** Awal hari (WIB) sebagai ISO UTC, untuk filter kolom timestamptz. */
 const wibStart = (date) => new Date(`${date}T00:00:00+07:00`).toISOString();
@@ -50,11 +74,19 @@ export function describe(ev) {
     case 'answer': {
       const step = STEP_NAMES[d.step] ?? 'Soal';
       if (d.correct) return { icon: '✅', text: `${step} ${d.letter ?? ''}: benar` };
-      const picked = d.picked ? ` (memilih ${d.picked})` : d.heard ? ` (terdengar "${d.heard}")` : '';
+      const picked = !d.picked
+        ? ''
+        : d.step === 'read' ? ` (terdengar "${d.picked}")` : ` (memilih ${d.picked})`;
       return { icon: '❌', text: `${step} ${d.letter ?? ''}: belum tepat${picked}` };
     }
     case 'story_open':
       return { icon: '📖', text: `Membuka dongeng "${d.title ?? ''}"` };
+    case 'step':
+      return d.note ? { icon: '📝', text: `${STEP_NAMES[d.step] ?? 'Soal'} ${d.letter ?? ''}: ${d.note}` } : null;
+    case 'story_read':
+      return d.good
+        ? { icon: '🎤', text: `Membaca sendiri hal. ${(d.page ?? 0) + 1}: ${d.read}/${d.total} kata ✅` }
+        : { icon: '🎤', text: `Membaca sendiri hal. ${(d.page ?? 0) + 1}: baru ${d.read}/${d.total} kata` };
     case 'story_complete':
       return { icon: '🌟', text: `Selesai membaca "${d.title ?? ''}" ${'⭐'.repeat(d.stars ?? 0)}` };
     case 'tab':
@@ -222,6 +254,112 @@ export async function buildReport(userId, { detailed = true, weekOffset = 0 } = 
   };
 }
 
+/**
+ * "Sedang apa" sekarang, sedetail mungkin, dari kejadian hari ini (urut terbaru dulu).
+ * - lesson : langkah ke berapa, jenis soal, huruf, perintah, pilihan di layar (benar/salah yang
+ *            dipilih), jumlah benar/salah di lesson ini, catatan (mis. mikrofon belum menangkap suara)
+ * - dongeng: halaman ke berapa, kalimat yang sedang dibaca, mode (dengar/baca sendiri), hasil membaca
+ * - menu   : layar yang sedang dibuka
+ */
+export function currentActivity(events) {
+  const meaningful = events.find((e) => e.type !== 'heartbeat');
+  if (!meaningful) return null;
+  const since = (ev) => ev?.created_at ?? null;
+
+  const startIdx = events.findIndex((e) => e.type === 'lesson_start');
+  const endIdx = events.findIndex((e) => ['lesson_complete', 'lesson_exit'].includes(e.type));
+  const storyIdx = events.findIndex((e) => e.type === 'story_open');
+  const tabIdx = events.findIndex((e) => e.type === 'tab');
+  // indeks lebih kecil = lebih baru. "Masih berjalan" = tidak ada kejadian penutup yang lebih baru.
+  const newer = (i, j) => i >= 0 && i < j;
+
+  // ---- lesson yang sedang berjalan
+  const lessonRunning =
+    startIdx >= 0 && !newer(endIdx, startIdx) && !newer(storyIdx, startIdx) && !newer(tabIdx, startIdx);
+  if (lessonRunning) {
+    const inLesson = events.slice(0, startIdx);
+    const start = events[startIdx].data || {};
+    const steps = inLesson.filter((e) => e.type === 'step');
+    const cur = steps[0]?.data ?? { stepIndex: 0, steps: start.steps };
+    const sameStep = (e) => (e.data?.stepIndex ?? -1) === cur.stepIndex;
+    const options = steps.find((e) => sameStep(e) && Array.isArray(e.data.options))?.data.options ?? null;
+    const note = steps.find((e) => sameStep(e) && e.data.note)?.data.note ?? null;
+    const lessonAnswers = inLesson.filter((e) => e.type === 'answer');
+    const stepAnswers = lessonAnswers.filter(sameStep);
+
+    let optionStates = null;
+    if (options) {
+      const target = String(cur.letter ?? '').toUpperCase();
+      let correctLeft = stepAnswers.filter((a) => a.data.correct).length;
+      const wrong = new Set(
+        stepAnswers.filter((a) => !a.data.correct).map((a) => String(a.data.picked ?? '').toUpperCase())
+      );
+      optionStates = options.map((o) => {
+        const letter = String(o).toUpperCase();
+        if (letter === target && correctLeft > 0) {
+          correctLeft--;
+          return { letter, state: 'correct' };
+        }
+        return { letter, state: wrong.has(letter) ? 'wrong' : '' };
+      });
+    }
+    const last = stepAnswers[0];
+    return {
+      kind: 'lesson',
+      title: start.title ?? cur.lessonTitle ?? 'Lesson',
+      subtitle: start.unit ? `Unit ${start.unit}, Section ${start.section}` : null,
+      step: (cur.stepIndex ?? 0) + 1,
+      steps: cur.steps ?? start.steps ?? null,
+      stepName: STEP_NAMES[cur.step] ?? null,
+      letter: cur.letter ?? null,
+      prompt: cur.step ? stepPrompt(cur.step, cur.letter ?? '') : null,
+      options: optionStates,
+      lastAnswer: last
+        ? { correct: Boolean(last.data.correct), picked: last.data.picked ?? null, read: cur.step === 'read', at: last.created_at }
+        : null,
+      correct: lessonAnswers.filter((a) => a.data?.correct).length,
+      wrong: lessonAnswers.filter((a) => !a.data?.correct).length,
+      note,
+      since: since(events[startIdx]),
+    };
+  }
+
+  // ---- dongeng yang sedang dibaca
+  const storyRunning =
+    storyIdx >= 0 && !newer(tabIdx, storyIdx) && !newer(startIdx, storyIdx) &&
+    !events.slice(0, storyIdx).some((e) => e.type === 'story_complete');
+  if (storyRunning) {
+    const inStory = events.slice(0, storyIdx);
+    const open = events[storyIdx].data || {};
+    const page = inStory.find((e) => e.type === 'story_page')?.data ?? {};
+    const pageNo = page.page ?? open.page ?? 0;
+    const read = inStory.find((e) => e.type === 'story_read' && e.data?.page === pageNo)?.data;
+    return {
+      kind: 'story',
+      title: open.title ?? page.title ?? 'Dongeng',
+      page: pageNo + 1,
+      pages: page.pages ?? open.pages ?? null,
+      text: page.text ?? null,
+      mode: STORY_MODES[page.mode] ?? STORY_MODES.browse,
+      readResult: read ? { read: read.read, total: read.total, good: Boolean(read.good) } : null,
+      since: since(events[storyIdx]),
+    };
+  }
+
+  // ---- sedang di menu / baru saja selesai
+  if (meaningful.type === 'tab') {
+    const i = meaningful.data?.index;
+    return {
+      kind: 'menu',
+      title: `Menu ${TAB_NAMES[i] ?? meaningful.data?.name ?? ''}`,
+      detail: TAB_ACTIVITY[i] ?? 'Sedang memilih',
+      since: since(meaningful),
+    };
+  }
+  const d = describe(meaningful);
+  return d ? { kind: 'menu', title: d.text, detail: 'Baru saja', since: since(meaningful) } : null;
+}
+
 /** Data halaman Pantau Langsung: sedang apa sekarang + kejadian terbaru hari ini. */
 export async function buildLiveSnapshot(userId) {
   const today = jakartaDate(0);
@@ -236,32 +374,7 @@ export async function buildLiveSnapshot(userId) {
   const lastAt = events[0]?.created_at ?? null;
   const online = lastAt ? Date.now() - Date.parse(lastAt) < 150_000 : false;
 
-  // "Sedang apa": kejadian bermakna terakhir (bukan heartbeat)
-  let activity = null;
-  for (const ev of events) {
-    const d = ev.data || {};
-    if (ev.type === 'heartbeat') continue;
-    if (['lesson_start', 'answer'].includes(ev.type)) {
-      activity = {
-        kind: 'lesson',
-        title: d.lessonTitle ?? d.title ?? 'Lesson',
-        detail: d.steps
-          ? `Langkah ${(d.stepIndex ?? 0) + 1} dari ${d.steps}${d.step ? ` · ${STEP_NAMES[d.step] ?? ''}` : ''}`
-          : 'Baru dimulai',
-      };
-    } else if (['story_open', 'story_page'].includes(ev.type)) {
-      activity = {
-        kind: 'story',
-        title: d.title ?? 'Dongeng',
-        detail: d.pages ? `Halaman ${(d.page ?? 0) + 1} dari ${d.pages}` : 'Baru dibuka',
-      };
-    } else if (ev.type === 'tab') {
-      activity = { kind: 'menu', title: `Menu ${TAB_NAMES[d.index] ?? d.name ?? ''}`, detail: 'Sedang memilih' };
-    } else if (['lesson_complete', 'lesson_exit', 'story_complete', 'app_open'].includes(ev.type)) {
-      activity = { kind: 'menu', title: describe(ev).text, detail: 'Baru saja' };
-    }
-    if (activity) break;
-  }
+  const activity = currentActivity(events);
 
   const answers = events.filter((e) => e.type === 'answer');
   return {

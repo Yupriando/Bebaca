@@ -44,6 +44,7 @@ class _ListenPickStepState extends State<ListenPickStep>
       _target,
       ...pickDistractors(_target, widget.step.pool, 2, random),
     ]..shuffle(random);
+    widget.env.report({'options': _letters});
 
     // Latihan mendengar: suara selalu diputar di awal.
     Future.delayed(const Duration(milliseconds: 450), () {

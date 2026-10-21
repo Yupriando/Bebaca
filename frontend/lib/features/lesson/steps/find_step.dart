@@ -49,6 +49,7 @@ class _FindStepState extends State<FindStep>
     _angles = [
       for (var i = 0; i < _letters.length; i++) (random.nextDouble() - 0.5) * 0.7,
     ];
+    widget.env.report({'options': _letters});
   }
 
   @override

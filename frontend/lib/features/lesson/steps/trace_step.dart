@@ -443,6 +443,9 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
     }
 
     _attempts++;
+    widget.env.report({
+      'note': 'Tulisan belum tepat (percobaan ke-$_attempts, ${(e.coverage * 100).round()}% tertelusuri)',
+    });
     setState(() {
       _coverage = e.coverage;
       _hints = e.hints;

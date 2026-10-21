@@ -54,6 +54,20 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       'page': _page,
       'pages': _pages.length,
     });
+    _logPage('browse');
+  }
+
+  /// Halaman yang sedang dibuka + kalimatnya + mode (untuk Pantau Langsung).
+  /// mode: browse = melihat-lihat | listen = mendengarkan narasi | read = membaca sendiri
+  void _logPage(String mode) {
+    if (_pages.isEmpty) return;
+    EventLogger.instance.log('story_page', {
+      'title': widget.story.title,
+      'page': _page,
+      'pages': _pages.length,
+      'text': _pages[_page],
+      'mode': mode,
+    });
   }
 
   @override
@@ -74,11 +88,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _readCount = 0;
       _tappedWord = null;
     });
-    EventLogger.instance.log('story_page', {
-      'title': widget.story.title,
-      'page': i,
-      'pages': _pages.length,
-    });
+    _logPage(_autoRead ? 'listen' : 'browse');
     // simpan halaman terakhir (ditunda sebentar supaya tidak tiap geser)
     _saveTimer?.cancel();
     _saveTimer = Timer(const Duration(milliseconds: 800), () {
@@ -131,6 +141,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _narrator.stop();
     } else {
       setState(() => _autoRead = true);
+      _logPage('listen');
       _narrate();
     }
   }
@@ -172,6 +183,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _listening = true;
       _readCount = 0;
     });
+    _logPage('read');
 
     final words = wordsOf(_pages[_page]);
     final page = _page;
@@ -191,6 +203,14 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     if (!_listening) return;
     _stopListening();
     final good = total == 0 || _readCount / total >= 0.7;
+    EventLogger.instance.log('story_read', {
+      'title': widget.story.title,
+      'page': _page,
+      'pages': _pages.length,
+      'read': _readCount,
+      'total': total,
+      'good': good,
+    });
     SoundService.instance.play(good ? Sfx.correct : Sfx.wrong, volume: good ? 0.8 : 0.4);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()

@@ -14,12 +14,18 @@ class StepEnv {
   final void Function([String? picked]) onMistake;
   final VoidCallback onCorrect; // jawaban benar -> maskot bersorak
 
+  /// Detail untuk Pantau Langsung orang tua, mis. {'options': [...]} atau {'note': '...'}.
+  final void Function(Map<String, Object?> detail) report;
+
+  static void _noReport(Map<String, Object?> _) {}
+
   const StepEnv({
     required this.sound,
     required this.animate,
     required this.onDone,
     required this.onMistake,
     required this.onCorrect,
+    this.report = _noReport,
   });
 
   /// Putar efek suara (hanya jika "Sound Effect" menyala).

@@ -43,6 +43,28 @@ export const PAGE_HTML = `<!doctype html>
   .feed .time { color:var(--muted); font-size:14px; white-space:nowrap; }
   .new { animation:flash 1.2s ease-out; }
   @keyframes flash { from { background:#FFF3C4; } to { background:transparent; } }
+  .act-head { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .act-title { font-size:24px; font-weight:bold; line-height:1.15; }
+  .act-sub { font-size:14px; color:var(--muted); }
+  .act-step { font-size:15px; color:var(--blue); font-weight:bold; text-align:right; white-space:nowrap; }
+  .bar { height:10px; background:#EDF2F6; border-radius:6px; margin:10px 0 12px; overflow:hidden; }
+  .bar > div { height:100%; background:var(--gold); border-radius:6px; transition:width .4s; }
+  .prompt { display:flex; align-items:center; gap:14px; margin:6px 0 10px; }
+  .tile { width:64px; height:64px; flex:none; border-radius:14px; background:linear-gradient(135deg,#D9963F,#B8702A);
+          color:#fff; font-size:38px; font-weight:bold; display:flex; align-items:center; justify-content:center;
+          box-shadow:0 3px 0 #8A5320; }
+  .prompt-text { font-size:21px; }
+  .opts { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 10px; }
+  .opt { min-width:44px; padding:6px 10px; border-radius:12px; border:2px solid #DDE6EE; background:#fff;
+         font-size:22px; font-weight:bold; text-align:center; }
+  .opt.correct { border-color:var(--green); background:#E3F5EA; color:#1E7A43; }
+  .opt.wrong { border-color:var(--red); background:#FDE4E1; color:#B3261E; }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; font-size:15px; }
+  .chip { background:#F1F5F8; border-radius:10px; padding:4px 10px; }
+  .note { margin-top:10px; background:#FFF4D6; color:#6B4A00; border-radius:12px; padding:8px 12px; font-size:16px; }
+  .quote { margin:6px 0 10px; padding:12px 14px; background:#FFFBF2; border-left:4px solid var(--gold);
+           border-radius:10px; font-size:20px; line-height:1.4; }
+  .mode { font-size:16px; font-weight:bold; }
   .live { margin-left:6px; font-size:13px; background:#FFD54F; color:#5A3A00; padding:1px 8px; border-radius:10px; display:none; }
   .live.on { display:inline-block; }
   .error { text-align:center; padding:60px 20px; font-size:20px; }
@@ -123,15 +145,7 @@ export const PAGE_JS = `(() => {
       ? 'Sedang memakai Bebaca'
       : d.lastSeen ? 'Tidak aktif · terakhir ' + ago(d.lastSeen) : 'Belum membuka Bebaca hari ini';
 
-    const now = $('now');
-    now.textContent = '';
-    if (d.activity) {
-      const icon = d.activity.kind === 'lesson' ? '📘 ' : d.activity.kind === 'story' ? '📖 ' : '👆 ';
-      now.appendChild(el('div', 'now-title', icon + d.activity.title));
-      now.appendChild(el('div', 'now-detail', d.activity.detail));
-    } else {
-      now.appendChild(el('div', 'idle', d.online ? 'Membuka aplikasi' : 'Sedang tidak belajar'));
-    }
+    renderActivity(d);
 
     $('minutes').textContent = d.today.minutes + ' mnt';
     $('correct').textContent = d.today.answers ? d.today.correct + '/' + d.today.answers : '-';
@@ -152,6 +166,82 @@ export const PAGE_JS = `(() => {
     }
     first = false;
     last = d;
+  }
+
+  function head(icon, title, sub, right) {
+    const h = el('div', 'act-head');
+    const left = el('div');
+    left.appendChild(el('div', 'act-title', icon + ' ' + title));
+    if (sub) left.appendChild(el('div', 'act-sub', sub));
+    h.appendChild(left);
+    if (right) h.appendChild(el('div', 'act-step', right));
+    return h;
+  }
+
+  function bar(value, total) {
+    const b = el('div', 'bar');
+    const fill = el('div');
+    fill.style.width = (total ? Math.min(100, Math.round((value / total) * 100)) : 0) + '%';
+    b.appendChild(fill);
+    return b;
+  }
+
+  function renderActivity(d) {
+    const now = $('now');
+    now.textContent = '';
+    const a = d.activity;
+    if (!a) {
+      now.appendChild(el('div', 'idle', d.online ? 'Membuka aplikasi' : 'Sedang tidak belajar'));
+      return;
+    }
+    const sinceText = a.since ? 'mulai ' + ago(a.since) : null;
+
+    if (a.kind === 'lesson') {
+      now.appendChild(head('📘', a.title, a.subtitle, a.steps ? 'Langkah ' + a.step + '/' + a.steps : null));
+      if (a.steps) now.appendChild(bar(a.step - 1, a.steps));
+      const p = el('div', 'prompt');
+      if (a.letter) p.appendChild(el('div', 'tile', a.letter));
+      const pt = el('div');
+      if (a.stepName) pt.appendChild(el('div', 'act-sub', a.stepName));
+      if (a.prompt) pt.appendChild(el('div', 'prompt-text', '"' + a.prompt + '"'));
+      p.appendChild(pt);
+      now.appendChild(p);
+      if (a.options && a.options.length) {
+        now.appendChild(el('div', 'act-sub', 'Pilihan di layar anak:'));
+        const o = el('div', 'opts');
+        for (const x of a.options) {
+          o.appendChild(el('div', 'opt ' + x.state, x.letter + (x.state === 'correct' ? ' ✓' : x.state === 'wrong' ? ' ✗' : '')));
+        }
+        now.appendChild(o);
+      }
+      const c = el('div', 'chips');
+      c.appendChild(el('span', 'chip', '✅ ' + a.correct + ' benar'));
+      c.appendChild(el('span', 'chip', '❌ ' + a.wrong + ' salah'));
+      if (a.lastAnswer) {
+        const la = a.lastAnswer;
+        c.appendChild(el('span', 'chip', 'Jawaban terakhir: ' + (la.correct ? 'benar 👍' :
+          la.picked ? (la.read ? 'terdengar "' + la.picked + '"' : 'memilih ' + la.picked) : 'belum tepat')));
+      }
+      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      now.appendChild(c);
+      if (a.note) now.appendChild(el('div', 'note', '📝 ' + a.note));
+      return;
+    }
+
+    if (a.kind === 'story') {
+      now.appendChild(head('📖', a.title, a.mode, a.pages ? 'Halaman ' + a.page + '/' + a.pages : null));
+      if (a.pages) now.appendChild(bar(a.page, a.pages));
+      if (a.text) now.appendChild(el('div', 'quote', a.text));
+      const c = el('div', 'chips');
+      if (a.readResult) {
+        c.appendChild(el('span', 'chip', '🎤 Terbaca ' + a.readResult.read + '/' + a.readResult.total + ' kata ' + (a.readResult.good ? '✅' : '— belum lancar')));
+      }
+      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      now.appendChild(c);
+      return;
+    }
+
+    now.appendChild(head('👆', a.title, a.detail, null));
   }
 
   // teks "x menit lalu" tetap segar walau belum ada data baru

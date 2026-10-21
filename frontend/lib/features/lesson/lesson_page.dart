@@ -95,6 +95,21 @@ class _LessonPageState extends State<LessonPage> {
       'steps': _steps.length,
       'stepIndex': 0,
     });
+    _logStep(0); // sesudah lesson_start, supaya urutannya benar di Pantau Langsung
+  }
+
+  /// Langkah yang sedang dikerjakan (untuk Pantau Langsung), plus detail dari langkah itu.
+  void _logStep(int index, [Map<String, Object?> extra = const {}]) {
+    if (index >= _steps.length) return;
+    final step = _steps[index];
+    EventLogger.instance.log('step', {
+      'lessonTitle': widget.lesson.title,
+      'letter': step.letter.toUpperCase(),
+      'step': step.type.name,
+      'stepIndex': index,
+      'steps': _steps.length,
+      ...extra,
+    });
   }
 
   /// Catat jawaban untuk laporan & pantau langsung orang tua.
@@ -150,6 +165,7 @@ class _LessonPageState extends State<LessonPage> {
         _stepDone = false;
         _mood = MascotMood.idle;
       });
+      _logStep(_index);
     }
   }
 
@@ -217,6 +233,9 @@ class _LessonPageState extends State<LessonPage> {
       animate: _settings!.animation,
       onDone: () => _onStepDone(index),
       onMistake: ([picked]) => _onMistake(index, picked),
+      report: (detail) {
+        if (index == _index) _logStep(index, detail);
+      },
       onCorrect: () => _onCorrect(index),
     );
     switch (step.type) {

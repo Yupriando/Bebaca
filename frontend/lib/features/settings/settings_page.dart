@@ -89,17 +89,7 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     final picked = await showDialog<int>(
       context: context,
-      builder: (ctx) => SimpleDialog(
-        title: const Text('Batas waktu belajar per hari'),
-        children: [
-          for (final m in [0, 15, 30, 45, 60, 90, 120])
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(ctx, m),
-              child: Text(m == 0 ? 'Tanpa batas' : '$m menit',
-                  style: const TextStyle(fontSize: 18)),
-            ),
-        ],
-      ),
+      builder: (_) => _TimeLimitDialog(current: _store.value.timeLimitMinutes),
     );
     if (picked != null) await _update(_store.value.copyWith(timeLimitMinutes: picked));
   }
@@ -225,7 +215,7 @@ class _SettingsPageState extends State<SettingsPage> {
           _ParentalPanel(
             enabled: s.parentalControl,
             timespent: '${s.timespentMinutes} menit',
-            timeLimit: s.timeLimitMinutes == 0 ? 'Tanpa batas' : '${s.timeLimitMinutes} menit',
+            timeLimit: formatMinutes(s.timeLimitMinutes),
             curfew: s.curfew,
             onTimeLimitTap: _pickTimeLimit,
             onCurfewTap: _pickCurfew,
@@ -341,6 +331,118 @@ class _PremiumCard extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// Batas waktu: "1 jam 30 menit", "45 menit", 0 = "Tanpa batas".
+String formatMinutes(int m) => m <= 0 ? 'Tanpa batas' : formatDuration(m);
+
+/// Lama waktu: "0 menit", "45 menit", "2 jam", "1 jam 30 menit".
+String formatDuration(int m) {
+  final h = m ~/ 60, r = m % 60;
+  if (h == 0) return '$r menit';
+  return r == 0 ? '$h jam' : '$h jam $r menit';
+}
+
+/// Pilih batas waktu belajar per hari: pilihan cepat, atau atur sendiri (jam + menit).
+class _TimeLimitDialog extends StatefulWidget {
+  final int current;
+  const _TimeLimitDialog({required this.current});
+
+  @override
+  State<_TimeLimitDialog> createState() => _TimeLimitDialogState();
+}
+
+class _TimeLimitDialogState extends State<_TimeLimitDialog> {
+  static const _presets = [0, 15, 30, 45, 60, 90, 120];
+  late int _hours = widget.current > 0 ? widget.current ~/ 60 : 0;
+  late int _minutes = widget.current > 0 ? widget.current % 60 : 30;
+  late bool _custom = widget.current > 0 && !_presets.contains(widget.current);
+
+  int get _total => _hours * 60 + _minutes;
+
+  Widget _stepper(String label, int value, int max, int step, ValueChanged<int> onChanged) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF777777))),
+      const SizedBox(height: 4),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton.filledTonal(
+          onPressed: value > 0 ? () => onChanged((value - step).clamp(0, max)) : null,
+          icon: const Icon(Icons.remove_rounded),
+        ),
+        SizedBox(
+          width: 64,
+          child: Text('$value',
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
+        ),
+        IconButton.filledTonal(
+          onPressed: value < max ? () => onChanged((value + step).clamp(0, max)) : null,
+          icon: const Icon(Icons.add_rounded),
+        ),
+      ]),
+    ]);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Batas waktu belajar per hari'),
+      content: SizedBox(
+        width: 460,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Wrap(spacing: 8, runSpacing: 8, children: [
+                for (final m in _presets)
+                  ChoiceChip(
+                    label: Text(formatMinutes(m), style: const TextStyle(fontSize: 16)),
+                    selected: !_custom && widget.current == m,
+                    onSelected: (_) => Navigator.pop(context, m),
+                  ),
+                ChoiceChip(
+                  avatar: const Icon(Icons.tune_rounded, size: 18),
+                  label: const Text('Atur sendiri…', style: TextStyle(fontSize: 16)),
+                  selected: _custom,
+                  onSelected: (_) => setState(() => _custom = true),
+                ),
+              ]),
+              if (_custom) ...[
+                const SizedBox(height: 20),
+                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+                  _stepper('Jam', _hours, 24, 1, (v) => setState(() {
+                        _hours = v;
+                        if (_hours == 24) _minutes = 0;
+                      })),
+                  _stepper('Menit', _minutes, _hours == 24 ? 0 : 55, 5,
+                      (v) => setState(() => _minutes = v)),
+                ]),
+                const SizedBox(height: 12),
+                Center(
+                  child: Text(
+                    _total == 0 ? 'Pilih minimal 5 menit' : 'Batas: ${formatMinutes(_total)} per hari',
+                    style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: _total == 0 ? Colors.redAccent : AppColors.textDark),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        if (_custom)
+          FilledButton(
+            onPressed: _total == 0 ? null : () => Navigator.pop(context, _total),
+            child: const Text('Simpan'),
+          ),
+      ],
     );
   }
 }

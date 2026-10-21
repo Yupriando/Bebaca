@@ -173,7 +173,9 @@ Settings -> **Untuk Orang Tua** (dibuka dengan PIN orang tua):
   `https://<backend>/pantau/<token>` yang diperbarui **realtime** (Supabase Realtime Broadcast: setiap kejadian
   baru -> backend mengirim sinyal ke channel `pantau-<hash token>` -> halaman langsung mengambil data, < 1 detik;
   cadangan: cek ulang tiap 20 detik, atau tiap 3 detik bila realtime terputus) (sedang belajar apa, langkah ke berapa,
-  jawaban benar/salah, waktu hari ini). Tanpa memasang aplikasi. "Ganti QR" membuat token baru
+  jawaban benar/salah, waktu hari ini). Detail: langkah ke berapa + jenis soal, huruf & perintah di layar,
+  pilihan huruf yang tampil (mana yang dipilih benar/salah), yang terdengar mikrofon, percobaan menulis, kalimat
+  dongeng yang sedang dibaca + mode (dengar narasi / baca sendiri) dan hasil membacanya. Tanpa memasang aplikasi. "Ganti QR" membuat token baru
   (yang lama tidak berlaku), "Matikan" mencabut akses. Hanya hash token yang disimpan di database.
 - Aplikasi anak mengirim **kejadian belajar** (`POST /api/events`, ~0,3 detik setelah terjadi): buka aplikasi,
   pindah menu, mulai/selesai lesson, tiap jawaban (huruf, jenis soal, benar/salah, huruf yang dipilih),

@@ -92,6 +92,7 @@ class _ReadStepState extends State<ReadStep>
     widget.env.sfx(Sfx.micOn, volume: 0.6);
     setState(() => _heard = '');
     _setPhase(_Phase.listening);
+    widget.env.report({'note': 'Mikrofon aktif, sedang mengucapkan huruf'});
 
     // Batas waktu: kalau tidak ada suara sama sekali, beri tahu anak.
     _timeout?.cancel();
@@ -123,6 +124,7 @@ class _ReadStepState extends State<ReadStep>
     _speech.cancelListening();
     _misses++;
     _setPhase(_Phase.notHeard);
+    widget.env.report({'note': 'Mikrofon belum menangkap suara (percobaan ke-$_misses)'});
   }
 
   void _onResult(String words, bool isFinal) {
@@ -143,7 +145,7 @@ class _ReadStepState extends State<ReadStep>
       } else {
         _misses++;
         widget.env.sfx(Sfx.wrong, volume: 0.6);
-        widget.env.onMistake();
+        widget.env.onMistake(words.split(' ').first); // yang terdengar mikrofon
         setState(() => _heard = words.split(' ').first);
         _setPhase(_Phase.failed);
       }

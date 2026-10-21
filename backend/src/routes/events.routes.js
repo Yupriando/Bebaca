@@ -8,8 +8,8 @@ const router = Router();
 
 const TYPES = [
   'app_open', 'tab', 'heartbeat',
-  'lesson_start', 'answer', 'lesson_complete', 'lesson_exit',
-  'story_open', 'story_page', 'story_complete',
+  'lesson_start', 'step', 'answer', 'lesson_complete', 'lesson_exit',
+  'story_open', 'story_page', 'story_read', 'story_complete',
 ];
 
 const batchSchema = z.object({
