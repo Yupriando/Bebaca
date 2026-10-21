@@ -40,6 +40,7 @@ class _LessonPageState extends State<LessonPage> {
   int _index = 0;
   bool _stepDone = false;
   int _mistakes = 0;
+  final _startedAt = DateTime.now();
 
   MascotMood _mood = MascotMood.idle;
   int _moodToken = 0;
@@ -176,7 +177,12 @@ class _LessonPageState extends State<LessonPage> {
       _finished = true;
       _stars = stars;
     });
-    EventLogger.instance.log('lesson_complete', {'title': widget.lesson.title, 'stars': stars});
+    EventLogger.instance.log('lesson_complete', {
+      'title': widget.lesson.title,
+      'stars': stars,
+      'mistakes': _mistakes,
+      'seconds': DateTime.now().difference(_startedAt).inSeconds,
+    });
     _save();
   }
 

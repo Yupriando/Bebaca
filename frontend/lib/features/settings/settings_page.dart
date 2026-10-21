@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
@@ -362,29 +363,6 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
 
   int get _total => _hours * 60 + _minutes;
 
-  Widget _stepper(String label, int value, int max, int step, ValueChanged<int> onChanged) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(label, style: const TextStyle(fontSize: 16, color: Color(0xFF777777))),
-      const SizedBox(height: 4),
-      Row(mainAxisSize: MainAxisSize.min, children: [
-        IconButton.filledTonal(
-          onPressed: value > 0 ? () => onChanged((value - step).clamp(0, max)) : null,
-          icon: const Icon(Icons.remove_rounded),
-        ),
-        SizedBox(
-          width: 64,
-          child: Text('$value',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold)),
-        ),
-        IconButton.filledTonal(
-          onPressed: value < max ? () => onChanged((value + step).clamp(0, max)) : null,
-          icon: const Icon(Icons.add_rounded),
-        ),
-      ]),
-    ]);
-  }
-
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
@@ -413,17 +391,32 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
               if (_custom) ...[
                 const SizedBox(height: 20),
                 Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  _stepper('Jam', _hours, 24, 1, (v) => setState(() {
-                        _hours = v;
-                        if (_hours == 24) _minutes = 0;
-                      })),
-                  _stepper('Menit', _minutes, _hours == 24 ? 0 : 55, 5,
-                      (v) => setState(() => _minutes = v)),
+                  _NumberField(
+                    label: 'Jam',
+                    value: _hours,
+                    max: 24,
+                    onChanged: (v) => setState(() {
+                      _hours = v;
+                      if (_hours == 24) _minutes = 0;
+                    }),
+                  ),
+                  _NumberField(
+                    key: ValueKey('menit-${_hours == 24}'),
+                    label: 'Menit',
+                    value: _minutes,
+                    max: _hours == 24 ? 0 : 59,
+                    onChanged: (v) => setState(() => _minutes = v),
+                  ),
                 ]),
+                const SizedBox(height: 4),
+                const Center(
+                  child: Text('Ketuk angkanya untuk mengetik langsung',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                ),
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    _total == 0 ? 'Pilih minimal 5 menit' : 'Batas: ${formatMinutes(_total)} per hari',
+                    _total == 0 ? 'Pilih minimal 1 menit' : 'Batas: ${formatMinutes(_total)} per hari',
                     style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -444,6 +437,88 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
           ),
       ],
     );
+  }
+}
+
+/// Angka yang bisa diketik langsung, dengan tombol - / + (naik-turun 1).
+class _NumberField extends StatefulWidget {
+  final String label;
+  final int value;
+  final int max;
+  final ValueChanged<int> onChanged;
+  const _NumberField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.max,
+    required this.onChanged,
+  });
+
+  @override
+  State<_NumberField> createState() => _NumberFieldState();
+}
+
+class _NumberFieldState extends State<_NumberField> {
+  late final _c = TextEditingController(text: '${widget.value}');
+
+  @override
+  void didUpdateWidget(covariant _NumberField old) {
+    super.didUpdateWidget(old);
+    // nilai berubah dari luar (mis. jam = 24 -> menit 0): samakan teksnya
+    if (int.tryParse(_c.text) != widget.value) _c.text = '${widget.value}';
+  }
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  void _set(int v) {
+    final clamped = v.clamp(0, widget.max);
+    _c.text = '$clamped';
+    widget.onChanged(clamped);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      Text(widget.label, style: const TextStyle(fontSize: 16, color: Color(0xFF777777))),
+      const SizedBox(height: 4),
+      Row(mainAxisSize: MainAxisSize.min, children: [
+        IconButton.filledTonal(
+          onPressed: widget.value > 0 ? () => _set(widget.value - 1) : null,
+          icon: const Icon(Icons.remove_rounded),
+        ),
+        SizedBox(
+          width: 72,
+          child: TextField(
+            controller: _c,
+            enabled: widget.max > 0,
+            textAlign: TextAlign.center,
+            keyboardType: TextInputType.number,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(2),
+            ],
+            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+            decoration: const InputDecoration(isDense: true, border: UnderlineInputBorder()),
+            onChanged: (t) {
+              final v = int.tryParse(t) ?? 0;
+              if (v > widget.max) {
+                _set(widget.max);
+              } else {
+                widget.onChanged(v);
+              }
+            },
+          ),
+        ),
+        IconButton.filledTonal(
+          onPressed: widget.value < widget.max ? () => _set(widget.value + 1) : null,
+          icon: const Icon(Icons.add_rounded),
+        ),
+      ]),
+    ]);
   }
 }
 

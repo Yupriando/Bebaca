@@ -60,8 +60,9 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       PremiumStore.instance.refresh(); // mis. baru saja dibatalkan di toko
       _startTimer();
       if (mounted) setState(() {}); // jam malam bisa saja sudah tiba
-    } else {
+    } else if (state == AppLifecycleState.paused || state == AppLifecycleState.hidden) {
       _timer?.cancel();
+      EventLogger.instance.log('app_pause'); // diminimize / pindah aplikasi / layar mati
       EventLogger.instance.flush(); // kirim sisa kejadian sebelum aplikasi ditinggal
     }
   }
@@ -88,6 +89,20 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       } catch (_) {}
     }
     if (mounted) setState(() {}); // cek ulang jam malam
+  }
+
+  LockReason? _loggedLock;
+
+  /// Catat saat layar terkunci / terbuka lagi (untuk Pantau Langsung).
+  void _logLock(LockReason reason) {
+    if (reason == _loggedLock) return;
+    final first = _loggedLock == null;
+    _loggedLock = reason;
+    if (reason != LockReason.none) {
+      EventLogger.instance.ui('locked', {'reason': reason.name});
+    } else if (!first) {
+      EventLogger.instance.ui('unlocked');
+    }
   }
 
   void _select(int i) {
@@ -136,6 +151,7 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
         animation: _store,
         builder: (context, _) {
           final reason = _store.lockReason;
+          _logLock(reason);
           return Stack(
             children: [
               shell,

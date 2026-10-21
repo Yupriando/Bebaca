@@ -39,6 +39,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
 
   // mode "Aku baca"
   bool _listening = false;
+  DateTime? _lastReadReport;
   int _readCount = 0; // kata halaman ini yang sudah terbaca anak
   int? _tappedWord;
   Timer? _saveTimer;
@@ -139,6 +140,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     if (_narrator.playing || _autoRead) {
       setState(() => _autoRead = false);
       _narrator.stop();
+      EventLogger.instance.ui('narration', {'on': false, 'page': _page});
     } else {
       setState(() => _autoRead = true);
       _logPage('listen');
@@ -154,6 +156,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     });
     _narrator.stop();
     final clean = word.replaceAll(RegExp(r'[^\p{L}\p{N}-]', unicode: true), '');
+    EventLogger.instance.ui('word', {'word': clean, 'page': _page});
     if (clean.isNotEmpty) SpeechService.instance.speak(clean);
     Future.delayed(const Duration(milliseconds: 900), () {
       if (mounted && _tappedWord == i) setState(() => _tappedWord = null);
@@ -193,7 +196,14 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       onResult: (heard, isFinal) {
         if (!mounted || page != _page) return;
         final n = matchReadWords(words, heard);
-        if (n > _readCount) setState(() => _readCount = n);
+        if (n > _readCount) {
+          setState(() => _readCount = n);
+          final now = DateTime.now();
+          if (_lastReadReport == null || now.difference(_lastReadReport!).inMilliseconds > 1000) {
+            _lastReadReport = now;
+            EventLogger.instance.ui('reading', {'page': page, 'read': n, 'total': words.length});
+          }
+        }
         if (n >= words.length || isFinal) _doneReading(words.length);
       },
     );

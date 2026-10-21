@@ -689,7 +689,7 @@ export const openapi = {
               type: 'object',
               required: ['type'],
               properties: {
-                type: { type: 'string', enum: ['app_open', 'tab', 'heartbeat', 'lesson_start', 'step', 'answer', 'lesson_complete', 'lesson_exit', 'story_open', 'story_page', 'story_read', 'story_complete'] },
+                type: { type: 'string', enum: ['app_open', 'app_pause', 'tab', 'heartbeat', 'ui', 'lesson_start', 'step', 'answer', 'lesson_complete', 'lesson_exit', 'story_open', 'story_page', 'story_read', 'story_complete'] },
                 data: { type: 'object' },
                 at: { type: 'string', format: 'date-time' },
               },

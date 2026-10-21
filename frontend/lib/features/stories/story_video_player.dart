@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/config/app_orientation.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/event_logger.dart';
 
 /// Pemutar video dongeng.
 /// - Awalnya hanya menampilkan gambar sampul + tombol play (video belum diunduh,
@@ -16,8 +17,9 @@ import '../../core/theme/app_colors.dart';
 class StoryVideoPlayer extends StatefulWidget {
   final String videoUrl;
   final String? posterUrl;
+  final String? title; // judul dongeng (untuk Pantau Langsung orang tua)
 
-  const StoryVideoPlayer({super.key, required this.videoUrl, this.posterUrl});
+  const StoryVideoPlayer({super.key, required this.videoUrl, this.posterUrl, this.title});
 
   @override
   State<StoryVideoPlayer> createState() => _StoryVideoPlayerState();
@@ -53,6 +55,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
         _loading = false;
       });
       await controller.play();
+      _videoEvent(controller, 'play', title: widget.title);
     } catch (_) {
       if (_controller == null) await controller.dispose();
       if (!mounted) return;
@@ -69,7 +72,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
         opaque: true,
         transitionDuration: const Duration(milliseconds: 200),
         reverseTransitionDuration: const Duration(milliseconds: 200),
-        pageBuilder: (_, __, ___) => _FullscreenVideoPage(controller: c),
+        pageBuilder: (_, __, ___) => _FullscreenVideoPage(controller: c, title: widget.title),
         transitionsBuilder: (_, anim, __, child) =>
             FadeTransition(opacity: anim, child: child),
       ),
@@ -138,6 +141,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
               ? _buildPoster()
               : _VideoWithControls(
                   controller: c,
+                  title: widget.title,
                   isFullscreen: false,
                   onFullscreenPressed: () => _openFullscreen(c),
                 ),
@@ -151,7 +155,8 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
 /// Tombol back HP atau tombol ⛶ untuk keluar.
 class _FullscreenVideoPage extends StatefulWidget {
   final VideoPlayerController controller;
-  const _FullscreenVideoPage({required this.controller});
+  final String? title;
+  const _FullscreenVideoPage({required this.controller, this.title});
 
   @override
   State<_FullscreenVideoPage> createState() => _FullscreenVideoPageState();
@@ -163,6 +168,7 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
     super.initState();
     // aplikasi sudah selalu landscape; cukup sembunyikan bar sistem
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    _videoEvent(widget.controller, 'fullscreen', title: widget.title);
   }
 
   @override
@@ -178,6 +184,7 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
       backgroundColor: Colors.black,
       body: _VideoWithControls(
         controller: widget.controller,
+        title: widget.title,
         isFullscreen: true,
         onFullscreenPressed: () => Navigator.of(context).pop(),
       ),
@@ -186,13 +193,26 @@ class _FullscreenVideoPageState extends State<_FullscreenVideoPage> {
 }
 
 /// Video + kontrol (dipakai di tampilan biasa dan full layar).
+/// Catat keadaan video untuk Pantau Langsung: play / pause / seek / fullscreen / selesai.
+void _videoEvent(VideoPlayerController c, String state, {String? title}) {
+  final v = c.value;
+  EventLogger.instance.ui('video', {
+    'state': state,
+    if (title != null) 'title': title,
+    'position': v.position.inSeconds,
+    'duration': v.duration.inSeconds,
+  });
+}
+
 class _VideoWithControls extends StatefulWidget {
   final VideoPlayerController controller;
+  final String? title;
   final bool isFullscreen;
   final VoidCallback onFullscreenPressed;
 
   const _VideoWithControls({
     required this.controller,
+    this.title,
     required this.isFullscreen,
     required this.onFullscreenPressed,
   });
@@ -226,7 +246,13 @@ class _VideoWithControlsState extends State<_VideoWithControls> {
     super.dispose();
   }
 
+  bool _endLogged = false;
+
   void _onTick() {
+    final v = _c.value;
+    final ended = v.duration > Duration.zero && v.position >= v.duration && !v.isPlaying;
+    if (ended && !_endLogged) _videoEvent(_c, 'ended', title: widget.title);
+    _endLogged = ended;
     if (mounted) setState(() {});
   }
 
@@ -234,6 +260,7 @@ class _VideoWithControlsState extends State<_VideoWithControls> {
     final v = _c.value;
     if (v.isPlaying) {
       _c.pause();
+      _videoEvent(_c, 'pause', title: widget.title);
       _hideTimer?.cancel();
       setState(() => _showControls = true);
       return;
@@ -242,6 +269,7 @@ class _VideoWithControlsState extends State<_VideoWithControls> {
       _c.seekTo(Duration.zero);
     }
     _c.play();
+    _videoEvent(_c, 'play', title: widget.title);
     _scheduleHide();
   }
 
@@ -252,6 +280,12 @@ class _VideoWithControlsState extends State<_VideoWithControls> {
     if (target < Duration.zero) target = Duration.zero;
     if (target > v.duration) target = v.duration;
     _c.seekTo(target);
+    EventLogger.instance.ui('video', {
+      'state': dir < 0 ? 'back10' : 'forward10',
+      if (widget.title != null) 'title': widget.title,
+      'position': target.inSeconds,
+      'duration': v.duration.inSeconds,
+    });
     setState(() => _seekFlash = dir);
     _flashTimer?.cancel();
     _flashTimer = Timer(const Duration(milliseconds: 700), () {

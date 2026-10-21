@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../services/event_logger.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/sound_service.dart';
@@ -136,6 +137,7 @@ class _ReadStepState extends State<ReadStep>
       HapticFeedback.mediumImpact();
       widget.env.sfx(Sfx.success);
       setState(() => _heard = words);
+      widget.env.report({'heard': words.split(' ').first, 'note': 'Berhasil mengucapkan huruf $_letter'});
       _setPhase(_Phase.success);
       _finish(correct: true);
     } else if (isFinal) {
@@ -151,8 +153,16 @@ class _ReadStepState extends State<ReadStep>
       }
     } else {
       setState(() => _heard = words);
+      final now = DateTime.now();
+      if (words.trim().isNotEmpty &&
+          (_lastHeardReport == null || now.difference(_lastHeardReport!).inMilliseconds > 1000)) {
+        _lastHeardReport = now;
+        widget.env.report({'heard': words.split(' ').first, 'live': true});
+      }
     }
   }
+
+  DateTime? _lastHeardReport;
 
   String get _status {
     switch (_phase) {
@@ -270,6 +280,7 @@ class _ReadStepState extends State<ReadStep>
               animate: widget.env.animate,
               onTap: () {
                 widget.env.sfx(Sfx.tap);
+                EventLogger.instance.ui('listen_letter', {'letter': _letter});
                 _speech.speakLetter(_letter);
               },
               child: WoodTile(

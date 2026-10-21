@@ -55,6 +55,10 @@ class EventLogger {
     }
   }
 
+  /// Interaksi kecil untuk Pantau Langsung (mis. memutar ulang suara, mengetuk kata, video).
+  void ui(String action, [Map<String, Object?> data = const {}]) =>
+      log('ui', {'action': action, ...data});
+
   /// Saat logout: buang kejadian akun sebelumnya.
   void clear() {
     _timer?.cancel();

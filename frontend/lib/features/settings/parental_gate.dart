@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/api_client.dart';
+import '../../services/event_logger.dart';
 import '../../services/settings_store.dart';
 
 /// "Gerbang orang tua": PIN 4 angka (menggantikan soal penjumlahan, yang lama-lama
@@ -24,6 +25,7 @@ Future<bool> showParentalGate(BuildContext context) async {
     return showSetParentPin(context, firstTime: true);
   }
 
+  EventLogger.instance.ui('parent_gate');
   final result = await showDialog<_PinResult>(
     context: context,
     barrierDismissible: false,
@@ -103,6 +105,7 @@ class _PinDialogState extends State<_PinDialog> with SingleTickerProviderStateMi
         _checking = false;
         _pin = '';
         _error = e.statusCode == 403 ? 'PIN salah, coba lagi' : e.message;
+        if (e.statusCode == 403) EventLogger.instance.ui('pin_wrong');
       });
     }
   }

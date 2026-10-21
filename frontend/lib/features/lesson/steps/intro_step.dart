@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../services/event_logger.dart';
 import '../../../services/sound_service.dart';
 import '../../../services/speech_service.dart';
 import '../lesson_steps.dart';
@@ -38,6 +39,7 @@ class _IntroStepState extends State<IntroStep> {
           animate: widget.env.animate,
           onTap: () {
             widget.env.sfx(Sfx.tap);
+            EventLogger.instance.ui('listen_letter', {'letter': letter});
             SpeechService.instance.speakLetter(widget.step.letter.toUpperCase());
           },
           child: WoodTile(letter: letter, size: 120),

@@ -60,6 +60,37 @@ function weekDates(weekOffset = 0) {
 }
 
 const pct = (a, b) => (b === 0 ? 0 : Math.round((a / b) * 100));
+const mmss = (sec) => `${Math.floor((sec ?? 0) / 60)}:${String((sec ?? 0) % 60).padStart(2, '0')}`;
+const VIDEO_STATES = {
+  play: '▶️ Memutar video',
+  pause: '⏸ Menjeda video',
+  back10: '⏪ Mundur 10 detik',
+  forward10: '⏩ Maju 10 detik',
+  fullscreen: '⛶ Layar penuh',
+  ended: '🏁 Video selesai',
+};
+
+/** Teks untuk interaksi kecil ('ui'). */
+function describeUi(d) {
+  switch (d.action) {
+    case 'replay': return { icon: '🔊', text: `Memutar ulang suara "${d.text ?? ''}"` };
+    case 'listen_letter': return { icon: '🔈', text: d.letter && d.letter !== '?' ? `Mendengarkan bunyi huruf ${d.letter}` : 'Memutar ulang suara huruf' };
+    case 'word': return { icon: '👆', text: `Mengetuk kata "${d.word ?? ''}" di dongeng` };
+    case 'narration': return d.on ? null : { icon: '⏸', text: 'Menjeda narasi dongeng' };
+    case 'reading': return null; // progres membaca: ditampilkan di kartu "sedang apa"
+    case 'video': {
+      const st = VIDEO_STATES[d.state] ?? 'Video';
+      return { icon: '🎬', text: `${st}${d.title ? ` "${d.title}"` : ''} (${mmss(d.position)} / ${mmss(d.duration)})` };
+    }
+    case 'premium_prompt': return { icon: '🔒', text: `Mencoba membuka konten Premium: ${d.what ?? ''}` };
+    case 'parent_gate': return { icon: '🛡️', text: 'Membuka menu khusus orang tua (minta PIN)' };
+    case 'pin_wrong': return { icon: '⚠️', text: 'Memasukkan PIN orang tua yang salah' };
+    case 'locked':
+      return { icon: '🔒', text: d.reason === 'curfew' ? 'Layar terkunci: sudah jam malam' : 'Layar terkunci: batas waktu belajar hari ini habis' };
+    case 'unlocked': return { icon: '🔓', text: 'Layar terbuka lagi' };
+    default: return null;
+  }
+}
 
 /** Ubah satu kejadian menjadi teks yang mudah dibaca orang tua. null = tidak ditampilkan. */
 export function describe(ev) {
@@ -67,8 +98,13 @@ export function describe(ev) {
   switch (ev.type) {
     case 'lesson_start':
       return { icon: '📘', text: `Mulai belajar "${d.title ?? 'lesson'}"` };
-    case 'lesson_complete':
-      return { icon: '🏆', text: `Selesai "${d.title ?? 'lesson'}" ${'⭐'.repeat(d.stars ?? 0)}` };
+    case 'lesson_complete': {
+      const extra = [
+        d.mistakes != null ? `${d.mistakes} salah` : null,
+        d.seconds != null ? `${Math.max(1, Math.round(d.seconds / 60))} menit` : null,
+      ].filter(Boolean).join(', ');
+      return { icon: '🏆', text: `Selesai "${d.title ?? 'lesson'}" ${'⭐'.repeat(d.stars ?? 0)}${extra ? ` (${extra})` : ''}` };
+    }
     case 'lesson_exit':
       return { icon: '🚪', text: `Keluar dari "${d.title ?? 'lesson'}" sebelum selesai` };
     case 'answer': {
@@ -93,6 +129,10 @@ export function describe(ev) {
       return { icon: '👆', text: `Membuka menu ${TAB_NAMES[d.index] ?? d.name ?? ''}` };
     case 'app_open':
       return { icon: '📱', text: 'Membuka aplikasi Bebaca' };
+    case 'app_pause':
+      return { icon: '💤', text: 'Meninggalkan aplikasi (diminimize / pindah aplikasi / layar mati)' };
+    case 'ui':
+      return describeUi(d);
     default:
       return null; // heartbeat, story_page: terlalu sering untuk ditampilkan
   }
@@ -304,8 +344,42 @@ export function currentActivity(events) {
       });
     }
     const last = stepAnswers[0];
+
+    // Urutan langkah: kapan mulai, berapa lama, hasilnya
+    const firstOfStep = new Map();
+    for (const e of [...steps].reverse()) {
+      const i = e.data?.stepIndex;
+      if (i != null && !firstOfStep.has(i)) firstOfStep.set(i, e);
+    }
+    const order = [...firstOfStep.keys()].sort((a, b) => a - b);
+    const timeline = order.map((i, k) => {
+      const e = firstOfStep.get(i);
+      const startMs = Date.parse(e.created_at);
+      const next = firstOfStep.get(order[k + 1]);
+      const endMs = next ? Date.parse(next.created_at) : Date.now();
+      const ans = lessonAnswers.filter((a) => a.data?.stepIndex === i);
+      return {
+        step: i + 1,
+        name: STEP_NAMES[e.data.step] ?? 'Soal',
+        letter: e.data.letter ?? null,
+        seconds: Math.max(0, Math.round((endMs - startMs) / 1000)),
+        correct: ans.filter((a) => a.data.correct).length,
+        wrong: ans.filter((a) => !a.data.correct).length,
+        current: i === cur.stepIndex,
+      };
+    });
+
+    const heardEv = steps.find((e) => sameStep(e) && e.data.heard);
+    const drawEv = steps.find((e) => sameStep(e) && Array.isArray(e.data.strokes));
+    const replays = inLesson.filter((e) => e.type === 'ui' && ['replay', 'listen_letter'].includes(e.data?.action)).length;
     return {
       kind: 'lesson',
+      timeline,
+      replays,
+      heard: heardEv ? { text: heardEv.data.heard, live: Boolean(heardEv.data.live), at: heardEv.created_at } : null,
+      drawing: drawEv
+        ? { glyph: drawEv.data.glyph ?? cur.letter ?? '', strokes: drawEv.data.strokes, coverage: drawEv.data.coverage ?? null, at: drawEv.created_at }
+        : null,
       title: start.title ?? cur.lessonTitle ?? 'Lesson',
       subtitle: start.unit ? `Unit ${start.unit}, Section ${start.section}` : null,
       step: (cur.stepIndex ?? 0) + 1,
@@ -334,8 +408,20 @@ export function currentActivity(events) {
     const page = inStory.find((e) => e.type === 'story_page')?.data ?? {};
     const pageNo = page.page ?? open.page ?? 0;
     const read = inStory.find((e) => e.type === 'story_read' && e.data?.page === pageNo)?.data;
+    const narration = inStory.find((e) => e.type === 'ui' && e.data?.action === 'narration');
+    const reading = inStory.find((e) => e.type === 'ui' && e.data?.action === 'reading' && e.data?.page === pageNo);
+    const words = inStory
+      .filter((e) => e.type === 'ui' && e.data?.action === 'word')
+      .slice(0, 6)
+      .map((e) => e.data.word)
+      .filter(Boolean);
+    const pagesSeen = new Set(inStory.filter((e) => e.type === 'story_page').map((e) => e.data?.page));
     return {
       kind: 'story',
+      pagesSeen: pagesSeen.size,
+      narrationPaused: narration ? narration.data.on === false && page.mode !== 'listen' : false,
+      readingLive: reading && !read ? { read: reading.data.read, total: reading.data.total } : null,
+      tappedWords: words,
       title: open.title ?? page.title ?? 'Dongeng',
       page: pageNo + 1,
       pages: page.pages ?? open.pages ?? null,
@@ -343,6 +429,25 @@ export function currentActivity(events) {
       mode: STORY_MODES[page.mode] ?? STORY_MODES.browse,
       readResult: read ? { read: read.read, total: read.total, good: Boolean(read.good) } : null,
       since: since(events[storyIdx]),
+    };
+  }
+
+  // ---- sedang menonton video
+  const videoIdx = events.findIndex((e) => e.type === 'ui' && e.data?.action === 'video');
+  if (videoIdx >= 0 && !newer(tabIdx, videoIdx) && !newer(startIdx, videoIdx) && !newer(storyIdx, videoIdx)) {
+    const v = events[videoIdx].data;
+    const playing = ['play', 'back10', 'forward10', 'fullscreen'].includes(v.state);
+    // posisi sekarang diperkirakan dari waktu sejak kejadian terakhir (kalau sedang diputar)
+    const elapsed = playing ? Math.round((Date.now() - Date.parse(events[videoIdx].created_at)) / 1000) : 0;
+    const position = Math.min(v.duration || Infinity, (v.position ?? 0) + elapsed);
+    return {
+      kind: 'video',
+      title: v.title ?? 'Video dongeng',
+      state: VIDEO_STATES[v.state] ?? 'Video',
+      playing,
+      position,
+      duration: v.duration ?? null,
+      since: since(events[videoIdx]),
     };
   }
 
@@ -363,16 +468,30 @@ export function currentActivity(events) {
 /** Data halaman Pantau Langsung: sedang apa sekarang + kejadian terbaru hari ini. */
 export async function buildLiveSnapshot(userId) {
   const today = jakartaDate(0);
-  const [profile, eventsRes, usageRes] = await Promise.all([
+  const [profile, eventsRes, usageRes, settingsRes] = await Promise.all([
     loadProfile(userId),
     supabaseAdmin.from('learning_events').select('type, data, created_at').eq('user_id', userId)
       .gte('created_at', wibStart(today)).order('created_at', { ascending: false }).limit(200),
     supabaseAdmin.from('daily_usage').select('minutes').eq('user_id', userId)
       .eq('usage_date', today).maybeSingle(),
+    supabaseAdmin.from('user_settings').select('parental_control, time_limit_minutes, curfew')
+      .eq('user_id', userId).maybeSingle(),
   ]);
   const events = must(eventsRes, undefined, 'pantau: kejadian');
   const lastAt = events[0]?.created_at ?? null;
-  const online = lastAt ? Date.now() - Date.parse(lastAt) < 150_000 : false;
+  const paused = events[0]?.type === 'app_pause';
+  const online = lastAt ? !paused && Date.now() - Date.parse(lastAt) < 150_000 : false;
+  const lastInteraction = events.find((e) => !['heartbeat', 'app_pause'].includes(e.type))?.created_at ?? null;
+
+  // layar terkunci? (kejadian 'locked' terakhir belum diikuti 'unlocked')
+  const lockEv = events.find((e) => e.type === 'ui' && ['locked', 'unlocked'].includes(e.data?.action));
+  const locked = lockEv?.data?.action === 'locked'
+    ? (lockEv.data.reason === 'curfew' ? 'Sudah jam malam' : 'Batas waktu belajar hari ini habis')
+    : null;
+
+  const st = must(settingsRes, undefined, 'pantau: pengaturan');
+  const minutesToday = must(usageRes, undefined, 'pantau: waktu')?.minutes ?? 0;
+  const limit = st?.parental_control && st.time_limit_minutes > 0 ? st.time_limit_minutes : null;
 
   const activity = currentActivity(events);
 
@@ -381,9 +500,18 @@ export async function buildLiveSnapshot(userId) {
     child: { name: profile.name, avatarUrl: profile.avatarUrl },
     online,
     lastSeen: lastAt,
+    state: online ? 'active' : paused ? 'background' : lastAt ? 'idle' : 'none',
+    lastInteraction,
+    locked: online || paused ? locked : null,
     activity: online ? activity : null,
+    limits: {
+      parentalControl: Boolean(st?.parental_control),
+      limitMinutes: limit,
+      remainingMinutes: limit != null ? Math.max(0, limit - minutesToday) : null,
+      curfew: st?.parental_control ? st.curfew : null,
+    },
     today: {
-      minutes: must(usageRes, undefined, 'pantau: waktu')?.minutes ?? 0,
+      minutes: minutesToday,
       answers: answers.length,
       correct: answers.filter((a) => a.data?.correct).length,
       lessonsCompleted: events.filter((e) => e.type === 'lesson_complete').length,
@@ -392,6 +520,6 @@ export async function buildLiveSnapshot(userId) {
     feed: events
       .map((ev) => ({ ...describe(ev), at: ev.created_at }))
       .filter((e) => e.text)
-      .slice(0, 25),
+      .slice(0, 40),
   };
 }

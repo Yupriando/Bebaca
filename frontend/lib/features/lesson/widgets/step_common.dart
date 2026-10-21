@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../services/event_logger.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/sound_service.dart';
 import '../../../services/speech_service.dart';
@@ -112,7 +113,10 @@ class _StepPromptState extends State<StepPrompt> {
         const SizedBox(width: 6),
         IconButton(
           tooltip: 'Dengarkan',
-          onPressed: () => SpeechService.instance.speak(widget.speech),
+          onPressed: () {
+            EventLogger.instance.ui('replay', {'text': widget.speech});
+            SpeechService.instance.speak(widget.speech);
+          },
           icon: const Icon(Icons.volume_up_rounded,
               color: AppColors.primary, size: 30),
         ),

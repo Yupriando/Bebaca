@@ -7,7 +7,7 @@ import { notifyMonitor } from '../services/realtimeService.js';
 const router = Router();
 
 const TYPES = [
-  'app_open', 'tab', 'heartbeat',
+  'app_open', 'app_pause', 'tab', 'heartbeat', 'ui',
   'lesson_start', 'step', 'answer', 'lesson_complete', 'lesson_exit',
   'story_open', 'story_page', 'story_read', 'story_complete',
 ];
@@ -34,7 +34,9 @@ router.post('/', async (req, res) => {
     // waktu dari HP dipakai, tapi tidak boleh di masa depan / lebih dari 1 hari lalu
     let at = e.at ? Date.parse(e.at) : now;
     if (!Number.isFinite(at) || at > now || at < now - 86400000) at = now;
-    const data = JSON.stringify(e.data ?? {}).length > 2000 ? {} : e.data ?? {};
+    // 'step' boleh lebih besar (berisi goresan tulisan anak untuk pratinjau)
+    const limit = e.type === 'step' ? 8000 : 2000;
+    const data = JSON.stringify(e.data ?? {}).length > limit ? {} : e.data ?? {};
     return { user_id: req.user.id, type: e.type, data, created_at: new Date(at).toISOString() };
   });
   must(await supabaseAdmin.from('learning_events').insert(rows), undefined, 'simpan kejadian');

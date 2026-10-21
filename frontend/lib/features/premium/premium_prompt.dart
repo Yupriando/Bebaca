@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../services/event_logger.dart';
 import '../lesson/widgets/mascot.dart';
 import '../settings/parental_gate.dart';
 import 'premium_page.dart';
@@ -18,6 +19,7 @@ Future<void> openPremium(BuildContext context) async {
 /// Dialog ramah anak saat menekan konten premium: "minta ayah/ibu ya!".
 /// [what] mis. "Cerita ini" atau "Pelajaran ini".
 Future<void> showPremiumPrompt(BuildContext context, {required String what}) async {
+  EventLogger.instance.ui('premium_prompt', {'what': what});
   final callParent = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(

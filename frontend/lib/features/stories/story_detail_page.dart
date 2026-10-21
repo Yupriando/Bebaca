@@ -299,6 +299,7 @@ class _VideoPage extends StatelessWidget {
                       key: ValueKey(story.videoUrl),
                       videoUrl: story.videoUrl!,
                       posterUrl: story.coverUrl,
+                      title: story.title,
                     ),
                   ),
                 ),

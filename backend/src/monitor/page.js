@@ -65,6 +65,24 @@ export const PAGE_HTML = `<!doctype html>
   .quote { margin:6px 0 10px; padding:12px 14px; background:#FFFBF2; border-left:4px solid var(--gold);
            border-radius:10px; font-size:20px; line-height:1.4; }
   .mode { font-size:16px; font-weight:bold; }
+  .banner { border-radius:16px; padding:12px 14px; margin-bottom:12px; font-size:17px; display:none; }
+  .banner.on { display:block; }
+  .banner.lock { background:#FDE4E1; color:#8C1D18; }
+  .banner.away { background:#EEF1F4; color:#41484D; }
+  .limit .bar { margin:8px 0 4px; }
+  .timeline { margin-top:12px; border-top:1px solid #eef2f5; padding-top:8px; }
+  .tl { display:flex; align-items:center; gap:8px; font-size:15px; padding:4px 0; color:var(--muted); }
+  .tl.cur { color:var(--ink); font-weight:bold; }
+  .tl .n { width:22px; height:22px; border-radius:50%; background:#EDF2F6; display:flex; align-items:center; justify-content:center; font-size:12px; flex:none; }
+  .tl.cur .n { background:var(--blue); color:#fff; }
+  .tl.done .n { background:#E3F5EA; color:#1E7A43; }
+  .tl .grow { flex:1; }
+  .heard { margin-top:8px; font-size:17px; }
+  .heard b { background:#E8F3FB; padding:2px 8px; border-radius:8px; }
+  .draw { display:flex; gap:12px; align-items:center; margin-top:8px; }
+  canvas.draw-c { width:180px; height:150px; border:2px solid #E0E6EB; border-radius:12px; background:#fff; flex:none; }
+  .words { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+  .word { background:#FFF3C4; border-radius:8px; padding:2px 8px; font-size:15px; }
   .live { margin-left:6px; font-size:13px; background:#FFD54F; color:#5A3A00; padding:1px 8px; border-radius:10px; display:none; }
   .live.on { display:inline-block; }
   .error { text-align:center; padding:60px 20px; font-size:20px; }
@@ -83,6 +101,8 @@ export const PAGE_HTML = `<!doctype html>
   </div>
 </header>
 <main id="main">
+  <div class="banner lock" id="lock"></div>
+  <div class="banner away" id="away"></div>
   <div class="card">
     <div class="label">Sedang apa sekarang</div>
     <div id="now"><div class="idle">Memuat...</div></div>
@@ -92,6 +112,12 @@ export const PAGE_HTML = `<!doctype html>
     <div class="stat"><span class="label">✅ Jawaban benar</span><b id="correct">-</b></div>
     <div class="stat"><span class="label">🏆 Lesson selesai</span><b id="lessons">-</b></div>
     <div class="stat"><span class="label">🔥 Hari beruntun</span><b id="streak">-</b></div>
+  </div>
+  <div class="card limit" id="limitCard" style="margin-top:12px; display:none">
+    <div class="label">⏳ Batas waktu belajar hari ini</div>
+    <div id="limitText" style="font-size:20px; font-weight:bold"></div>
+    <div class="bar"><div id="limitBar"></div></div>
+    <div class="label" id="curfewText"></div>
   </div>
   <div class="card" style="margin-top:12px">
     <div class="label">Aktivitas hari ini</div>
@@ -141,9 +167,24 @@ export const PAGE_JS = `(() => {
       av.appendChild(img);
     }
     $('dot').className = 'dot' + (d.online ? ' on' : '');
-    $('status').textContent = d.online
-      ? 'Sedang memakai Bebaca'
-      : d.lastSeen ? 'Tidak aktif · terakhir ' + ago(d.lastSeen) : 'Belum membuka Bebaca hari ini';
+    $('status').textContent = statusText(d);
+
+    const lock = $('lock');
+    lock.className = 'banner lock' + (d.locked ? ' on' : '');
+    lock.textContent = d.locked ? '🔒 Layar Bebaca sedang terkunci: ' + d.locked : '';
+    const away = $('away');
+    const isAway = d.state === 'background';
+    away.className = 'banner away' + (isAway ? ' on' : '');
+    away.textContent = isAway ? '💤 Bebaca sedang ditinggalkan (diminimize, pindah ke aplikasi lain, atau layar HP mati) sejak ' + ago(d.lastSeen) : '';
+
+    const lim = d.limits || {};
+    $('limitCard').style.display = lim.limitMinutes ? 'block' : 'none';
+    if (lim.limitMinutes) {
+      const used = Math.min(lim.limitMinutes, d.today.minutes);
+      $('limitText').textContent = 'Sisa ' + lim.remainingMinutes + ' menit dari ' + lim.limitMinutes + ' menit';
+      $('limitBar').style.width = Math.round((used / lim.limitMinutes) * 100) + '%';
+      $('curfewText').textContent = lim.curfew ? 'Jam malam mulai pukul ' + lim.curfew : '';
+    }
 
     renderActivity(d);
 
@@ -166,6 +207,40 @@ export const PAGE_JS = `(() => {
     }
     first = false;
     last = d;
+  }
+
+  function statusText(d) {
+    if (d.state === 'active') {
+      return 'Sedang memakai Bebaca' + (d.lastInteraction ? ' · interaksi terakhir ' + ago(d.lastInteraction) : '');
+    }
+    if (d.state === 'background') return 'Aplikasi ditinggalkan · ' + ago(d.lastSeen);
+    return d.lastSeen ? 'Tidak aktif · terakhir ' + ago(d.lastSeen) : 'Belum membuka Bebaca hari ini';
+  }
+
+  const secs = (n) => (n < 60 ? n + ' dtk' : Math.floor(n / 60) + ' mnt ' + (n % 60) + ' dtk');
+  const mmss = (n) => Math.floor((n || 0) / 60) + ':' + String((n || 0) % 60).padStart(2, '0');
+
+  // Pratinjau tulisan tangan anak: huruf panduan abu-abu + goresan biru (kanvas 360x300)
+  function drawing(dr) {
+    const c = document.createElement('canvas');
+    c.className = 'draw-c';
+    c.width = 360; c.height = 300;
+    const g = c.getContext('2d');
+    g.strokeStyle = '#8E8E8E'; g.lineWidth = 8; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(24, 45); g.lineTo(336, 45); g.moveTo(24, 215); g.lineTo(336, 215); g.stroke();
+    g.fillStyle = '#D5D5D5';
+    g.font = 'bold 238px Itim, sans-serif';
+    g.textAlign = 'center'; g.textBaseline = 'alphabetic';
+    g.fillText(dr.glyph || '', 180, 215);
+    g.strokeStyle = 'rgba(80,165,219,0.92)'; g.lineWidth = 20; g.lineJoin = 'round';
+    for (const s of dr.strokes || []) {
+      if (s.length < 2) continue;
+      g.beginPath(); g.moveTo(s[0], s[1]);
+      if (s.length === 2) g.lineTo(s[0] + 0.1, s[1]);
+      for (let i = 2; i < s.length; i += 2) g.lineTo(s[i], s[i + 1]);
+      g.stroke();
+    }
+    return c;
   }
 
   function head(icon, title, sub, right) {
@@ -222,9 +297,48 @@ export const PAGE_JS = `(() => {
         c.appendChild(el('span', 'chip', 'Jawaban terakhir: ' + (la.correct ? 'benar 👍' :
           la.picked ? (la.read ? 'terdengar "' + la.picked + '"' : 'memilih ' + la.picked) : 'belum tepat')));
       }
+      if (a.replays) c.appendChild(el('span', 'chip', '🔊 ' + a.replays + 'x memutar ulang suara'));
       if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
       now.appendChild(c);
+      if (a.heard) {
+        const h = el('div', 'heard', a.heard.live ? '🎤 Sedang terdengar: ' : '🎤 Terdengar: ');
+        h.appendChild(el('b', null, '"' + a.heard.text + '"'));
+        now.appendChild(h);
+      }
+      if (a.drawing) {
+        const box = el('div', 'draw');
+        box.appendChild(drawing(a.drawing));
+        const t = el('div');
+        t.appendChild(el('div', 'act-sub', 'Tulisan tangan si kecil'));
+        if (a.drawing.coverage != null) t.appendChild(el('div', 'prompt-text', a.drawing.coverage + '% tertelusuri'));
+        t.appendChild(el('div', 'act-sub', 'diperbarui ' + ago(a.drawing.at)));
+        box.appendChild(t);
+        now.appendChild(box);
+      }
       if (a.note) now.appendChild(el('div', 'note', '📝 ' + a.note));
+      if (a.timeline && a.timeline.length) {
+        const tl = el('div', 'timeline');
+        tl.appendChild(el('div', 'act-sub', 'Perjalanan lesson ini:'));
+        for (const x of a.timeline) {
+          const row = el('div', 'tl' + (x.current ? ' cur' : ' done'));
+          row.appendChild(el('span', 'n', String(x.step)));
+          row.appendChild(el('span', 'grow', x.name + (x.letter ? ' ' + x.letter : '') + (x.current ? ' (sekarang)' : '')));
+          const res = [x.correct ? '✅ ' + x.correct : '', x.wrong ? '❌ ' + x.wrong : '', secs(x.seconds)].filter(Boolean).join('  ·  ');
+          row.appendChild(el('span', null, res));
+          tl.appendChild(row);
+        }
+        now.appendChild(tl);
+      }
+      return;
+    }
+
+    if (a.kind === 'video') {
+      now.appendChild(head('🎬', a.title, a.state, a.duration ? mmss(a.position) + ' / ' + mmss(a.duration) : null));
+      if (a.duration) now.appendChild(bar(a.position, a.duration));
+      const c = el('div', 'chips');
+      c.appendChild(el('span', 'chip', a.playing ? '▶️ Sedang diputar' : '⏸ Sedang berhenti'));
+      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      now.appendChild(c);
       return;
     }
 
@@ -233,11 +347,22 @@ export const PAGE_JS = `(() => {
       if (a.pages) now.appendChild(bar(a.page, a.pages));
       if (a.text) now.appendChild(el('div', 'quote', a.text));
       const c = el('div', 'chips');
+      if (a.readingLive) {
+        c.appendChild(el('span', 'chip', '🎤 Sedang membaca: ' + a.readingLive.read + '/' + a.readingLive.total + ' kata'));
+      }
       if (a.readResult) {
         c.appendChild(el('span', 'chip', '🎤 Terbaca ' + a.readResult.read + '/' + a.readResult.total + ' kata ' + (a.readResult.good ? '✅' : '— belum lancar')));
       }
+      if (a.narrationPaused) c.appendChild(el('span', 'chip', '⏸ Narasi dijeda'));
+      if (a.pagesSeen) c.appendChild(el('span', 'chip', '📄 ' + a.pagesSeen + ' halaman sudah dibuka'));
       if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
       now.appendChild(c);
+      if (a.tappedWords && a.tappedWords.length) {
+        now.appendChild(el('div', 'act-sub', 'Kata yang diketuk (minta dibacakan):'));
+        const w = el('div', 'words');
+        for (const x of a.tappedWords) w.appendChild(el('span', 'word', x));
+        now.appendChild(w);
+      }
       return;
     }
 
@@ -250,7 +375,7 @@ export const PAGE_JS = `(() => {
     document.querySelectorAll('.feed .time').forEach((e, i) => {
       if (last.feed[i]) e.textContent = ago(last.feed[i].at);
     });
-    if (!last.online && last.lastSeen) $('status').textContent = 'Tidak aktif · terakhir ' + ago(last.lastSeen);
+    $('status').textContent = statusText(last);
   }
 
   function showError(msg) {

@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import '../../../services/event_logger.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/sound_service.dart';
@@ -90,7 +91,10 @@ class _ListenPickStepState extends State<ListenPickStep>
         const SizedBox(height: 16),
         BouncyTap(
           animate: widget.env.animate,
-          onTap: () => SpeechService.instance.speakLetter(_target),
+          onTap: () {
+            EventLogger.instance.ui('listen_letter', {'letter': '?'});
+            SpeechService.instance.speakLetter(_target);
+          },
           child: Container(
             width: 84,
             height: 84,

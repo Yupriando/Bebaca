@@ -443,9 +443,10 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
     }
 
     _attempts++;
-    widget.env.report({
-      'note': 'Tulisan belum tepat (percobaan ke-$_attempts, ${(e.coverage * 100).round()}% tertelusuri)',
-    });
+    _coverage = e.coverage;
+    _reportDrawing(
+      note: 'Tulisan belum tepat (percobaan ke-$_attempts, ${(e.coverage * 100).round()}% tertelusuri)',
+    );
     setState(() {
       _coverage = e.coverage;
       _hints = e.hints;
@@ -468,6 +469,7 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
       _messageColor = _green;
     });
     widget.env.sfx(Sfx.success);
+    _reportDrawing(note: 'Hurufnya berhasil ditulis');
     widget.env.onCorrect();
     widget.env.onDone();
   }
@@ -476,6 +478,35 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
     _liveTimer ??= Timer(const Duration(milliseconds: 300), () {
       _liveTimer = null;
       _check(finish: false);
+    });
+  }
+
+  /// Goresan anak (disederhanakan) untuk pratinjau di Pantau Langsung orang tua.
+  /// Koordinat kanvas 360x300, dibulatkan; titik yang terlalu rapat dibuang (maks. ~500 angka).
+  List<List<int>> _compactStrokes() {
+    final out = <List<int>>[];
+    var budget = 500;
+    for (final s in _strokes) {
+      if (budget <= 0) break;
+      final pts = <int>[];
+      Offset? last;
+      for (final p in s) {
+        if (last != null && (p - last).distance < 6 && p != s.last) continue;
+        pts..add(p.dx.round())..add(p.dy.round());
+        last = p;
+      }
+      budget -= pts.length;
+      out.add(pts);
+    }
+    return out;
+  }
+
+  void _reportDrawing({String? note}) {
+    widget.env.report({
+      'glyph': _glyph,
+      'strokes': _compactStrokes(),
+      'coverage': (_coverage * 100).round(),
+      if (note != null) 'note': note,
     });
   }
 
@@ -491,6 +522,7 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
       _message = 'Telusuri huruf abu-abu dengan jarimu';
       _messageColor = const Color(0xFF777777);
     });
+    _reportDrawing(note: 'Menghapus tulisan, mulai lagi');
   }
 
   void _skip() {
