@@ -1,4 +1,23 @@
+# Rahasia & dependensi
 node_modules
 .env
+
+# Hasil build Flutter
 build
 .dart_tool
+
+# Alat AI / asisten coding (bukan bagian aplikasi)
+.claude/
+.agents/
+skills-lock.json
+CLAUDE.md
+
+# Pengaturan editor pribadi (Android Studio / IntelliJ / VS Code)
+.idea/
+*.iml
+.vscode/
+
+# File sementara & log
+*.log
+.DS_Store
+Thumbs.db
