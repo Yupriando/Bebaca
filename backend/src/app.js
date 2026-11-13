@@ -16,6 +16,7 @@ import subscriptionRoutes from './routes/subscription.routes.js';
 import eventRoutes from './routes/events.routes.js';
 import reportRoutes from './routes/report.routes.js';
 import monitorRoutes from './routes/monitor.routes.js';
+import keepaliveRoutes from './routes/keepalive.routes.js';
 
 const app = express();
 
@@ -42,6 +43,8 @@ app.use(
 app.use(express.json({ limit: '100kb' }));
 
 app.get('/health', (req, res) => res.json({ status: 'ok' }));
+// menjaga project Supabase gratis tetap aktif (dipanggil tiap hari oleh Vercel Cron)
+app.use('/api/keepalive', keepaliveRoutes);
 
 // Diagnosa skema database (hanya saat development): memberi tahu migrasi mana yang belum dijalankan.
 if (process.env.NODE_ENV !== 'production') {

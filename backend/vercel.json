@@ -1,11 +1,24 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "regions": ["sin1"],
+  "regions": [
+    "sin1"
+  ],
   "functions": {
     "api/index.js": {
       "maxDuration": 30,
       "includeFiles": "node_modules/swagger-ui-dist/**"
     }
   },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/keepalive",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }

@@ -1,5 +1,20 @@
 # Bebaca - Aplikasi Belajar Baca
 
+## 📲 Download aplikasi (Android)
+
+**[⬇️ Download Bebaca v1.0.0 (APK, 61 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.0.0.apk)**
+
+Cara memasang:
+1. Buka link di atas dari HP Android, tunggu sampai unduhan selesai.
+2. Buka file `Bebaca-v1.0.0.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
+   untuk browser / File Manager yang dipakai.
+3. Ketuk **Instal**, lalu buka **Bebaca**. Daftar akun baru atau login.
+
+Bisa dipasang di semua HP Android 7.0 ke atas. Aplikasi dipakai dalam posisi landscape (HP dimiringkan).
+File APK ada di folder [`release/`](release/).
+
+---
+
 ```
 bebaca-app/
 ├── frontend/   Flutter (aplikasi)

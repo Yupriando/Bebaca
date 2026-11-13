@@ -85,6 +85,14 @@ File yang dipakai: `vercel.json` (semua request -> `api/index.js` -> aplikasi Ex
 3. Deploy, lalu cek `https://<nama-project>.vercel.app/health` -> `{"status":"ok"}` dan `/docs`.
 4. Flutter: isi `API_BASE_URL` di `frontend/config/dart_defines.json` dengan URL Vercel tadi.
 Setiap `git push` ke branch utama otomatis men-deploy ulang. Server berada di Singapura (`sin1`).
+
+**Menjaga Supabase tetap aktif** (paket gratis di-pause setelah 7 hari tanpa aktivitas database):
+- Vercel Cron memanggil `GET /api/keepalive` tiap hari pukul 10:00 WIB (`crons` di `vercel.json`);
+  endpoint ini menjalankan query kecil ke database.
+- Cadangan: GitHub Actions `.github/workflows/keepalive.yml` tiap 3 hari (bisa dijalankan manual di tab Actions).
+- Opsional (disarankan): isi `CRON_SECRET` (teks acak) di Environment Variables Vercel **dan** di
+  GitHub -> Settings -> Secrets and variables -> Actions, supaya endpoint hanya bisa dipanggil penjadwal.
+- Cek: Vercel -> project -> Settings -> Cron Jobs (riwayat & tombol Run), atau buka `/api/keepalive`.
 Catatan: `/health/db` hanya aktif di lokal; batas percobaan PIN dihitung per server (bukan global).
 
 ## 6. Catatan
