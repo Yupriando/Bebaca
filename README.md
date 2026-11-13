@@ -275,6 +275,19 @@ dipasang ke semua platform dengan `dart run flutter_launcher_icons`.
 SIMPAN CADANGANNYA di tempat aman. Kalau hilang, APK baru tidak bisa meng-update aplikasi yang
 sudah terpasang, dan tidak bisa dipakai untuk update di Play Store.
 
+## Deploy versi web (Vercel)
+Versi web online di **https://bebaca-app.vercel.app** (project Vercel `bebaca-app`, terpisah dari backend `bebaca`).
+Dipakai untuk tombol "Try It Live" di portofolio. Akun demo: `demo@bebaca.app` / `bebaca-demo`.
+
+Update setelah mengubah kode Flutter:
+```bash
+cd frontend
+flutter build web --release --dart-define-from-file=config/dart_defines.json
+npx vercel deploy build/web --prod --yes --project bebaca-app
+```
+`build/` tidak ikut git, jadi versi web di-deploy langsung dari komputer (sekali login: `npx vercel login`).
+Routing memakai `#/...`, jadi tidak perlu pengaturan rewrite. Backend sudah mengizinkan semua origin (CORS).
+
 ## Masalah umum
 | Gejala | Penyebab / solusi |
 |---|---|
