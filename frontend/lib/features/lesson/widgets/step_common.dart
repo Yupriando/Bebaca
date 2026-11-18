@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../services/event_logger.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../services/sound_service.dart';
@@ -103,7 +104,7 @@ class _StepPromptState extends State<StepPrompt> {
           child: Text(
             widget.text,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.fredoka(
               fontSize: widget.emphasis ? 36 : 24,
               fontWeight: FontWeight.bold,
               color: widget.emphasis ? Colors.black : const Color(0xFF555555),

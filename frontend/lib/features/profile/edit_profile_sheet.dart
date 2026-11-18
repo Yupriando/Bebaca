@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/primary_button.dart';
@@ -91,7 +92,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(bottom: 6, left: 4),
         child: Text(text,
-            style: const TextStyle(
+            style: GoogleFonts.fredoka(
                 fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black)),
       );
 
@@ -111,7 +112,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
+                style: GoogleFonts.fredoka(
                   fontSize: 22,
                   fontWeight: placeholder ? FontWeight.bold : FontWeight.normal,
                   color: placeholder ? AppColors.hint : AppColors.textDark,
@@ -143,9 +144,9 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Center(
+                  Center(
                     child: Text('Edit Profil',
-                        style: TextStyle(
+                        style: GoogleFonts.fredoka(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textDark)),
@@ -182,8 +183,8 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                     _tapBox(
                       text: '${_ageFrom(birth)} tahun',
                       placeholder: false,
-                      trailing: const Text('otomatis',
-                          style: TextStyle(fontSize: 16, color: AppColors.hint)),
+                      trailing: Text('otomatis',
+                          style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.hint)),
                     )
                   else
                     AppTextField(
@@ -201,7 +202,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                   if (_error != null) ...[
                     const SizedBox(height: 12),
                     Text(_error!,
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 18)),
+                        style: GoogleFonts.fredoka(color: Colors.redAccent, fontSize: 18)),
                   ],
                   const SizedBox(height: 24),
                   Row(
@@ -209,7 +210,7 @@ class _EditProfileSheetState extends State<EditProfileSheet> {
                       Expanded(
                         child: TextButton(
                           onPressed: _saving ? null : () => Navigator.pop(context, false),
-                          child: const Text('Batal', style: TextStyle(fontSize: 20)),
+                          child: Text('Batal', style: GoogleFonts.fredoka(fontSize: 20)),
                         ),
                       ),
                       const SizedBox(width: 12),

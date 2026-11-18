@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/sky_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
@@ -290,10 +291,13 @@ class _LessonPageState extends State<LessonPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body:
-            _settings == null
-                ? const Center(child: CircularProgressIndicator())
-                : _buildBody(),
+        body: SkyBackground(
+          stars: false,
+          child:
+              _settings == null
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildBody(),
+        ),
       ),
     );
   }
@@ -304,9 +308,9 @@ class _LessonPageState extends State<LessonPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               'Lesson ini belum tersedia.',
-              style: TextStyle(fontSize: 22),
+              style: GoogleFonts.fredoka(fontSize: 22),
             ),
             const SizedBox(height: 16),
             PrimaryButton(

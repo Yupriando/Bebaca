@@ -66,17 +66,17 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 ListTile(
                   leading: const Icon(Icons.photo_camera_rounded),
-                  title: const Text(
+                  title: Text(
                     'Ambil foto',
-                    style: TextStyle(fontSize: 20),
+                    style: GoogleFonts.fredoka(fontSize: 20),
                   ),
                   onTap: () => Navigator.pop(ctx, _AvatarAction.camera),
                 ),
                 ListTile(
                   leading: const Icon(Icons.photo_library_rounded),
-                  title: const Text(
+                  title: Text(
                     'Pilih dari galeri',
-                    style: TextStyle(fontSize: 20),
+                    style: GoogleFonts.fredoka(fontSize: 20),
                   ),
                   onTap: () => Navigator.pop(ctx, _AvatarAction.gallery),
                 ),
@@ -86,9 +86,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       Icons.delete_outline_rounded,
                       color: Colors.redAccent,
                     ),
-                    title: const Text(
+                    title: Text(
                       'Hapus foto',
-                      style: TextStyle(fontSize: 20, color: Colors.redAccent),
+                      style: GoogleFonts.fredoka(fontSize: 20, color: Colors.redAccent),
                     ),
                     onTap: () => Navigator.pop(ctx, _AvatarAction.remove),
                   ),
@@ -373,7 +373,7 @@ class _InfoRow extends StatelessWidget {
               ),
               child: Text(
                 value,
-                style: const TextStyle(fontSize: 22, color: AppColors.textDark),
+                style: GoogleFonts.fredoka(fontSize: 22, color: AppColors.textDark),
               ),
             ),
           ),

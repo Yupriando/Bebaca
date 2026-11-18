@@ -69,9 +69,10 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
                   child: Row(
                     children: [
                       PrimaryButton(
-                        label: 'Back',
+                        label: 'Kembali',
+                        icon: Icons.arrow_back_rounded,
                         onPressed: () => Navigator.pop(context, _changed),
-                        width: 100,
+                        width: 160,
                         height: 44,
                         fontSize: 20,
                       ),
@@ -179,9 +180,9 @@ class _Overview extends StatelessWidget {
         ],
         const SizedBox(height: 24),
         if (pages.isEmpty)
-          const Text(
+          Text(
             'Cerita untuk dibaca belum tersedia.',
-            style: TextStyle(fontSize: 20, color: AppColors.hint),
+            style: GoogleFonts.fredoka(fontSize: 20, color: AppColors.hint),
           )
         else ...[
           _ActionButton(

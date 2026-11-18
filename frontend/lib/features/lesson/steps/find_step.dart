@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../../../services/sound_service.dart';
 import '../../../services/speech_service.dart';
@@ -147,7 +148,7 @@ class _FindStepState extends State<FindStep>
         const SizedBox(height: 20),
         Text(
           _complete ? 'Hebat!' : 'Ditemukan ${_found.length} dari $_targets',
-          style: TextStyle(
+          style: GoogleFonts.fredoka(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: _complete ? _green : const Color(0xFF888888),

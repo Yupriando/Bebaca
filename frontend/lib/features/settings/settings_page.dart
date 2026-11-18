@@ -138,9 +138,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
+                child: Text(
                   'Keluar',
-                  style: TextStyle(color: Colors.redAccent),
+                  style: GoogleFonts.fredoka(color: Colors.redAccent),
                 ),
               ),
             ],
@@ -271,9 +271,9 @@ class _SettingsPageState extends State<SettingsPage> {
                               'Mengubah pengaturan ini butuh PIN orang tua.',
                         ].join('\n')
                         : 'Saat menyala: aplikasi terkunci bila batas waktu belajar habis atau sudah lewat jam malam.',
-                    style: const TextStyle(
+                    style: GoogleFonts.fredoka(
                       fontSize: 16,
-                      color: Color(0xFF777777),
+                      color: const Color(0xFF777777),
                     ),
                   ),
                 ),
@@ -357,7 +357,7 @@ class _PremiumCard extends StatelessWidget {
                         children: [
                           Text(
                             title,
-                            style: const TextStyle(
+                            style: GoogleFonts.fredoka(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -365,9 +365,9 @@ class _PremiumCard extends StatelessWidget {
                           ),
                           Text(
                             subtitle,
-                            style: const TextStyle(
+                            style: GoogleFonts.fredoka(
                               fontSize: 16,
-                              color: Color(0xFF5A3A00),
+                              color: const Color(0xFF5A3A00),
                             ),
                           ),
                         ],
@@ -385,10 +385,10 @@ class _PremiumCard extends StatelessWidget {
                       ),
                       child: Text(
                         s.isPremium ? 'Kelola' : 'Lihat Paket',
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFE08A00),
+                          color: const Color(0xFFE08A00),
                         ),
                       ),
                     ),
@@ -449,16 +449,16 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
                     ChoiceChip(
                       label: Text(
                         formatMinutes(m),
-                        style: const TextStyle(fontSize: 16),
+                        style: GoogleFonts.fredoka(fontSize: 16),
                       ),
                       selected: !_custom && widget.current == m,
                       onSelected: (_) => Navigator.pop(context, m),
                     ),
                   ChoiceChip(
                     avatar: const Icon(Icons.tune_rounded, size: 18),
-                    label: const Text(
+                    label: Text(
                       'Atur sendiri…',
-                      style: TextStyle(fontSize: 16),
+                      style: GoogleFonts.fredoka(fontSize: 16),
                     ),
                     selected: _custom,
                     onSelected: (_) => setState(() => _custom = true),
@@ -490,10 +490,10 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Center(
+                Center(
                   child: Text(
                     'Ketuk angkanya untuk mengetik langsung',
-                    style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
+                    style: GoogleFonts.fredoka(fontSize: 13, color: const Color(0xFF999999)),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -502,7 +502,7 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
                     _total == 0
                         ? 'Pilih minimal 1 menit'
                         : 'Batas: ${formatMinutes(_total)} per hari',
-                    style: TextStyle(
+                    style: GoogleFonts.fredoka(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color:
@@ -578,7 +578,7 @@ class _NumberFieldState extends State<_NumberField> {
       children: [
         Text(
           widget.label,
-          style: const TextStyle(fontSize: 16, color: Color(0xFF777777)),
+          style: GoogleFonts.fredoka(fontSize: 16, color: const Color(0xFF777777)),
         ),
         const SizedBox(height: 4),
         Row(
@@ -599,7 +599,7 @@ class _NumberFieldState extends State<_NumberField> {
                   FilteringTextInputFormatter.digitsOnly,
                   LengthLimitingTextInputFormatter(2),
                 ],
-                style: const TextStyle(
+                style: GoogleFonts.fredoka(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
@@ -680,17 +680,17 @@ class _ParentTools extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF333333),
+                          color: const Color(0xFF333333),
                         ),
                       ),
                       Text(
                         subtitle,
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 15,
-                          color: Color(0xFF888888),
+                          color: const Color(0xFF888888),
                         ),
                       ),
                     ],
@@ -759,19 +759,19 @@ class _PinRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'PIN Orang Tua',
-                style: TextStyle(
+                style: GoogleFonts.fredoka(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
+                  color: const Color(0xFF333333),
                 ),
               ),
               Text(
                 hasPin
                     ? 'Sudah dibuat. Dipakai untuk pengaturan orang tua dan Premium.'
                     : 'Belum dibuat. Buat PIN 4 angka agar anak tidak bisa mengubah pengaturan.',
-                style: const TextStyle(fontSize: 15, color: Color(0xFF888888)),
+                style: GoogleFonts.fredoka(fontSize: 15, color: const Color(0xFF888888)),
               ),
             ],
           ),
@@ -787,7 +787,7 @@ class _PinRow extends StatelessWidget {
           ),
           child: Text(
             hasPin ? 'Ganti PIN' : 'Buat PIN',
-            style: const TextStyle(fontSize: 18),
+            style: GoogleFonts.fredoka(fontSize: 18),
           ),
         ),
       ],
@@ -834,17 +834,17 @@ class _SwitchRow extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: GoogleFonts.fredoka(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
+                    color: const Color(0xFF333333),
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
+                  style: GoogleFonts.fredoka(
                     fontSize: 15,
-                    color: Color(0xFF888888),
+                    color: const Color(0xFF888888),
                   ),
                 ),
               ],
@@ -924,10 +924,10 @@ class _ValueRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: const TextStyle(
+              style: GoogleFonts.fredoka(
                 fontSize: 26,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF222222),
+                color: const Color(0xFF222222),
               ),
             ),
           ),
@@ -945,7 +945,7 @@ class _ValueRow extends StatelessWidget {
               ),
               child: Text(
                 value,
-                style: const TextStyle(fontSize: 22, color: AppColors.textDark),
+                style: GoogleFonts.fredoka(fontSize: 22, color: AppColors.textDark),
               ),
             ),
           ),

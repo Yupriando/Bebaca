@@ -40,7 +40,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
           Text(
             '$what khusus Bebaca Premium.\nMinta ayah atau ibu untuk membukanya, ya!',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20, color: AppColors.textDark, height: 1.3),
+            style: GoogleFonts.fredoka(fontSize: 20, color: AppColors.textDark, height: 1.3),
           ),
         ],
       ),
@@ -49,7 +49,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Nanti saja', style: TextStyle(fontSize: 18)),
+          child: Text('Nanti saja', style: GoogleFonts.fredoka(fontSize: 18)),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
@@ -57,7 +57,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
             backgroundColor: AppColors.primary,
             padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
           ),
-          child: const Text('Panggil Ayah/Ibu', style: TextStyle(fontSize: 18)),
+          child: Text('Panggil Ayah/Ibu', style: GoogleFonts.fredoka(fontSize: 18)),
         ),
       ],
     ),
@@ -90,8 +90,8 @@ class PremiumBadge extends StatelessWidget {
           Icon(Icons.lock_rounded, size: compact ? 16 : 18, color: Colors.white),
           if (!compact) ...[
             const SizedBox(width: 4),
-            const Text('Premium',
-                style: TextStyle(
+            Text('Premium',
+                style: GoogleFonts.fredoka(
                     fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
           ],
         ],

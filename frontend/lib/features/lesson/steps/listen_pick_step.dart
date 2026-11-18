@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../services/event_logger.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
@@ -153,8 +154,8 @@ class _ListenPickStepState extends State<ListenPickStep>
         ),
         const SizedBox(height: 18),
         if (_correct != null)
-          const Text('Betul sekali!',
-              style: TextStyle(
+          Text('Betul sekali!',
+              style: GoogleFonts.fredoka(
                   fontSize: 22, fontWeight: FontWeight.bold, color: _green)),
       ],
     );

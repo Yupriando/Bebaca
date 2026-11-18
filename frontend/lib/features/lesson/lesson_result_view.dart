@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../services/sound_service.dart';
@@ -92,9 +93,9 @@ class _LessonResultViewState extends State<LessonResultView> {
                             curve: Curves.elasticOut,
                             builder: (context, v, child) =>
                                 Transform.scale(scale: v, child: child),
-                            child: const Text(
+                            child: Text(
                               'Hebat!',
-                              style: TextStyle(
+                              style: GoogleFonts.fredoka(
                                 fontSize: 52,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.primary,
@@ -121,7 +122,7 @@ class _LessonResultViewState extends State<LessonResultView> {
                 const SizedBox(height: 8),
                 Text(_message,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 22, color: Color(0xFF555555))),
+                    style: GoogleFonts.fredoka(fontSize: 22, color: const Color(0xFF555555))),
                 if (widget.streak != null) ...[
                   const SizedBox(height: 10),
                   Row(
@@ -131,10 +132,10 @@ class _LessonResultViewState extends State<LessonResultView> {
                       const SizedBox(width: 6),
                       Text(
                         'Belajar berturut-turut: ${widget.streak} hari',
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFFFF8F00),
+                          color: const Color(0xFFFF8F00),
                         ),
                       ),
                     ],
@@ -146,7 +147,7 @@ class _LessonResultViewState extends State<LessonResultView> {
                 else if (widget.error != null) ...[
                   Text(widget.error!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.redAccent, fontSize: 18)),
+                      style: GoogleFonts.fredoka(color: Colors.redAccent, fontSize: 18)),
                   const SizedBox(height: 12),
                   ElevatedButton(
                       onPressed: widget.onRetry, child: const Text('Coba lagi')),

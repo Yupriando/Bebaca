@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../../core/theme/app_colors.dart';
 import '../../services/api_client.dart';
@@ -120,8 +121,8 @@ class _PinDialogState extends State<_PinDialog> with SingleTickerProviderStateMi
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Masukkan PIN orang tua',
-                style: TextStyle(fontSize: 18, color: AppColors.hint)),
+            Text('Masukkan PIN orang tua',
+                style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.hint)),
             const SizedBox(height: 16),
             AnimatedBuilder(
               animation: _shake,
@@ -158,7 +159,7 @@ class _PinDialogState extends State<_PinDialog> with SingleTickerProviderStateMi
                       )
                     : Text(_error ?? '',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 15)),
+                        style: GoogleFonts.fredoka(color: Colors.redAccent, fontSize: 15)),
               ),
             ),
             _Keypad(onDigit: _tap, onBackspace: _backspace),
@@ -201,7 +202,7 @@ class _Keypad extends StatelessWidget {
         );
     Widget digit(String d) => key(
           Text(d,
-              style: const TextStyle(
+              style: GoogleFonts.fredoka(
                   fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark)),
           () => onDigit(d),
         );
@@ -321,7 +322,7 @@ class _SetPinDialogState extends State<_SetPinDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(intro, style: const TextStyle(fontSize: 16, color: AppColors.hint)),
+                Text(intro, style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.hint)),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passC,
@@ -363,7 +364,7 @@ class _SetPinDialogState extends State<_SetPinDialog> {
                   Padding(
                     padding: const EdgeInsets.only(top: 10),
                     child: Text(_error!,
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 15)),
+                        style: GoogleFonts.fredoka(color: Colors.redAccent, fontSize: 15)),
                   ),
               ],
             ),

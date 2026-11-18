@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../services/event_logger.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
@@ -254,7 +255,7 @@ class _ReadStepState extends State<ReadStep>
             borderRadius: BorderRadius.circular(16),
           ),
         ),
-        child: const Text('Aku sudah membaca', style: TextStyle(fontSize: 20)),
+        child: Text('Aku sudah membaca', style: GoogleFonts.fredoka(fontSize: 20)),
       ),
     );
   }
@@ -315,7 +316,7 @@ class _ReadStepState extends State<ReadStep>
           child: Text(
             _status,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.fredoka(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: _statusColor,
@@ -327,7 +328,7 @@ class _ReadStepState extends State<ReadStep>
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               'Terdengar: "$_heard"',
-              style: const TextStyle(fontSize: 16, color: Color(0xFF999999)),
+              style: GoogleFonts.fredoka(fontSize: 16, color: const Color(0xFF999999)),
             ),
           ),
         if (!_finished)
@@ -336,9 +337,9 @@ class _ReadStepState extends State<ReadStep>
               widget.env.onMistake();
               _finish();
             },
-            child: const Text(
+            child: Text(
               'Lewati',
-              style: TextStyle(fontSize: 18, color: Color(0xFF888888)),
+              style: GoogleFonts.fredoka(fontSize: 18, color: const Color(0xFF888888)),
             ),
           ),
       ],

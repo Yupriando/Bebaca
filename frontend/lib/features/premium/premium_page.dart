@@ -73,9 +73,10 @@ class _PremiumPageState extends State<PremiumPage> {
                     child: Row(
                       children: [
                         PrimaryButton(
-                          label: 'Back',
+                          label: 'Kembali',
+                          icon: Icons.arrow_back_rounded,
                           onPressed: () => Navigator.pop(context),
-                          width: 100,
+                          width: 160,
                           height: 44,
                           fontSize: 20,
                         ),
@@ -106,7 +107,7 @@ class _PremiumPageState extends State<PremiumPage> {
                                         child: Text(
                                           _store.error!,
                                           textAlign: TextAlign.center,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.fredoka(
                                             fontSize: 16,
                                             color: Colors.redAccent,
                                           ),
@@ -118,9 +119,9 @@ class _PremiumPageState extends State<PremiumPage> {
                                           _store.busy || !_store.isPremium
                                               ? null
                                               : _store.deactivate,
-                                      child: const Text(
+                                      child: Text(
                                         'Pulihkan pembelian',
-                                        style: TextStyle(fontSize: 18),
+                                        style: GoogleFonts.fredoka(fontSize: 18),
                                       ),
                                     ),
                                     const _SimulationNote(),
@@ -265,10 +266,10 @@ class _Header extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 4),
-        const Text(
+        Text(
           'Buka semua pelajaran dan dongeng untuk si kecil',
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 20, color: AppColors.textDark),
+          style: GoogleFonts.fredoka(fontSize: 20, color: AppColors.textDark),
         ),
       ],
     );
@@ -304,7 +305,7 @@ class _Benefit extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: GoogleFonts.fredoka(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textDark,
@@ -312,7 +313,7 @@ class _Benefit extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(fontSize: 16, color: AppColors.hint),
+                  style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.hint),
                 ),
               ],
             ),
@@ -374,7 +375,7 @@ class _PlanCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: GoogleFonts.fredoka(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textDark,
@@ -393,7 +394,7 @@ class _PlanCard extends StatelessWidget {
                       ),
                       child: Text(
                         badge!,
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
@@ -408,7 +409,7 @@ class _PlanCard extends StatelessWidget {
                   children: [
                     TextSpan(
                       text: price,
-                      style: const TextStyle(
+                      style: GoogleFonts.fredoka(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
@@ -416,7 +417,7 @@ class _PlanCard extends StatelessWidget {
                     ),
                     TextSpan(
                       text: ' $period',
-                      style: const TextStyle(
+                      style: GoogleFonts.fredoka(
                         fontSize: 18,
                         color: AppColors.hint,
                       ),
@@ -427,7 +428,7 @@ class _PlanCard extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 note,
-                style: const TextStyle(fontSize: 15, color: AppColors.hint),
+                style: GoogleFonts.fredoka(fontSize: 15, color: AppColors.hint),
               ),
             ],
           ),
@@ -450,12 +451,12 @@ class _SimulationNote extends StatelessWidget {
         color: const Color(0xFFFFF4D6),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Text(
+      child: Text(
         'Mode uji coba: belum ada pembayaran sungguhan. '
         '"Langganan Sekarang" langsung mengaktifkan Premium, '
         '"Pulihkan pembelian" mengembalikan akun ke Gratis.',
         textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 14, color: Color(0xFF7A5A00)),
+        style: GoogleFonts.fredoka(fontSize: 14, color: const Color(0xFF7A5A00)),
       ),
     );
   }
@@ -487,19 +488,19 @@ class _ActiveView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              const Text(
+              Text(
                 '⭐ Premium aktif ⭐',
-                style: TextStyle(
+                style: GoogleFonts.fredoka(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textDark,
                 ),
               ),
               const SizedBox(height: 8),
-              const Text(
+              Text(
                 'Semua pelajaran dan dongeng sudah terbuka. Selamat belajar!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: AppColors.hint),
+                style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.hint),
               ),
               const Divider(height: 32),
               _row('Paket', plan),
@@ -521,12 +522,12 @@ class _ActiveView extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 18, color: AppColors.hint),
+            style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.hint),
           ),
         ),
         Text(
           value,
-          style: const TextStyle(
+          style: GoogleFonts.fredoka(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textDark,

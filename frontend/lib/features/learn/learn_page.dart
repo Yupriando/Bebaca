@@ -144,7 +144,7 @@ class _GreetingCard extends StatelessWidget {
             border: Border.all(color: AppColors.sun, width: 3),
             image: avatar != null ? DecorationImage(image: NetworkImage(avatar), fit: BoxFit.cover) : null,
           ),
-          child: avatar == null ? const Center(child: Text('🧒', style: TextStyle(fontSize: 34))) : null,
+          child: avatar == null ? Center(child: Text('🧒', style: GoogleFonts.fredoka(fontSize: 34))) : null,
         ),
         const SizedBox(width: 14),
         Expanded(
@@ -347,7 +347,7 @@ class _Signpost extends StatelessWidget {
                   builder: (_) => AlertDialog(
                     title: Text('Panduan: ${section.title}'),
                     content: Text(section.guide ?? 'Panduan untuk ${section.title} segera hadir.',
-                        style: const TextStyle(fontSize: 18)),
+                        style: GoogleFonts.fredoka(fontSize: 18)),
                   ),
                 ),
                 icon: const Icon(Icons.lightbulb_rounded, color: Color(0xFF4A2A0C)),

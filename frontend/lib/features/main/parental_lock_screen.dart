@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
 import '../../services/api_client.dart';
@@ -27,16 +28,16 @@ class ParentalLockScreen extends StatelessWidget {
           if (reason == LockReason.timeLimit)
             SimpleDialogOption(
               onPressed: () => Navigator.pop(ctx, 'extend'),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 6),
-                child: Text('Tambah 15 menit hari ini', style: TextStyle(fontSize: 18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: Text('Tambah 15 menit hari ini', style: GoogleFonts.fredoka(fontSize: 18)),
               ),
             ),
           SimpleDialogOption(
             onPressed: () => Navigator.pop(ctx, 'off'),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(vertical: 6),
-              child: Text('Matikan kontrol orang tua', style: TextStyle(fontSize: 18)),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Text('Matikan kontrol orang tua', style: GoogleFonts.fredoka(fontSize: 18)),
             ),
           ),
         ],
@@ -92,7 +93,7 @@ class ParentalLockScreen extends StatelessWidget {
                 Text(
                   isCurfew ? 'Waktunya istirahat' : 'Waktu belajar habis',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
+                  style: GoogleFonts.fredoka(
                       fontSize: 38,
                       fontWeight: FontWeight.bold,
                       color: AppColors.textDark),
@@ -105,7 +106,7 @@ class ParentalLockScreen extends StatelessWidget {
                         ? 'Sekarang sudah lewat jam malam (${s.curfew}). Belajar lagi besok pagi ya!'
                         : 'Hari ini kamu sudah belajar ${formatDuration(s.timespentMinutes)} dari batas ${formatMinutes(s.timeLimitMinutes)}. Sampai jumpa besok!',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontSize: 22, color: Color(0xFF555555)),
+                    style: GoogleFonts.fredoka(fontSize: 22, color: const Color(0xFF555555)),
                   ),
                 ),
                 const SizedBox(height: 36),

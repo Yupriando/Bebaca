@@ -77,9 +77,9 @@ class _MonitorPageState extends State<MonitorPage> {
               ),
               TextButton(
                 onPressed: () => Navigator.pop(ctx, true),
-                child: const Text(
+                child: Text(
                   'Matikan',
-                  style: TextStyle(color: Colors.redAccent),
+                  style: GoogleFonts.fredoka(color: Colors.redAccent),
                 ),
               ),
             ],
@@ -111,9 +111,10 @@ class _MonitorPageState extends State<MonitorPage> {
                 child: Row(
                   children: [
                     PrimaryButton(
-                      label: 'Back',
+                      label: 'Kembali',
+                      icon: Icons.arrow_back_rounded,
                       onPressed: () => Navigator.pop(context),
-                      width: 100,
+                      width: 160,
                       height: 44,
                       fontSize: 20,
                     ),
@@ -194,7 +195,7 @@ class _MonitorPageState extends State<MonitorPage> {
             child: Text(
               _error!,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.redAccent),
+              style: GoogleFonts.fredoka(color: Colors.redAccent),
             ),
           ),
         const SizedBox(height: 20),
@@ -247,7 +248,7 @@ class _MonitorPageState extends State<MonitorPage> {
                 url,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontSize: 14, color: AppColors.hint),
+                style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.hint),
               ),
             ),
             IconButton(
@@ -278,17 +279,17 @@ class _MonitorPageState extends State<MonitorPage> {
             TextButton.icon(
               onPressed: _revoke,
               icon: const Icon(Icons.link_off_rounded, color: Colors.redAccent),
-              label: const Text(
+              label: Text(
                 'Matikan',
-                style: TextStyle(color: Colors.redAccent),
+                style: GoogleFonts.fredoka(color: Colors.redAccent),
               ),
             ),
           ],
         ),
         const SizedBox(height: 6),
-        const Text(
+        Text(
           'Ganti QR = HP yang memakai QR lama tidak bisa memantau lagi.',
-          style: TextStyle(fontSize: 13, color: AppColors.hint),
+          style: GoogleFonts.fredoka(fontSize: 13, color: AppColors.hint),
         ),
       ],
     );
@@ -323,7 +324,7 @@ class _Step extends StatelessWidget {
           backgroundColor: AppColors.primary,
           child: Text(
             n,
-            style: const TextStyle(
+            style: GoogleFonts.fredoka(
               color: Colors.white,
               fontWeight: FontWeight.bold,
             ),
@@ -333,7 +334,7 @@ class _Step extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 17, color: AppColors.textDark),
+            style: GoogleFonts.fredoka(fontSize: 17, color: AppColors.textDark),
           ),
         ),
       ],
@@ -352,16 +353,16 @@ class _PrivacyNote extends StatelessWidget {
       color: const Color(0xFFE8F3FB),
       borderRadius: BorderRadius.circular(12),
     ),
-    child: const Row(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.shield_rounded, color: AppColors.primary),
-        SizedBox(width: 8),
+        const Icon(Icons.shield_rounded, color: AppColors.primary),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             'Yang terlihat hanya aktivitas belajar (mis. "Cari huruf B: benar"), '
             'bukan isi layar, foto, atau suara anak. Jangan bagikan QR ke orang lain.',
-            style: TextStyle(fontSize: 14, color: AppColors.textDark),
+            style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.textDark),
           ),
         ),
       ],

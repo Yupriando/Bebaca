@@ -68,9 +68,10 @@ class _ParentReportPageState extends State<ParentReportPage> {
                 child: Row(
                   children: [
                     PrimaryButton(
-                      label: 'Back',
+                      label: 'Kembali',
+                      icon: Icons.arrow_back_rounded,
                       onPressed: () => Navigator.pop(context),
-                      width: 100,
+                      width: 160,
                       height: 44,
                       fontSize: 20,
                     ),
@@ -171,11 +172,11 @@ class _ParentReportPageState extends State<ParentReportPage> {
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('•  ', style: TextStyle(fontSize: 18)),
+                        Text('•  ', style: GoogleFonts.fredoka(fontSize: 18)),
                         Expanded(
                           child: Text(
                             s,
-                            style: const TextStyle(
+                            style: GoogleFonts.fredoka(
                               fontSize: 18,
                               color: AppColors.textDark,
                               height: 1.35,
@@ -201,9 +202,9 @@ class _ParentReportPageState extends State<ParentReportPage> {
           title: 'Aktivitas terbaru',
           child:
               r.recent.isEmpty
-                  ? const Text(
+                  ? Text(
                     'Belum ada aktivitas. Ajak si kecil membuka Belajar atau Dongeng!',
-                    style: TextStyle(fontSize: 17, color: AppColors.hint),
+                    style: GoogleFonts.fredoka(fontSize: 17, color: AppColors.hint),
                   )
                   : Column(
                     children: [
@@ -216,13 +217,13 @@ class _ParentReportPageState extends State<ParentReportPage> {
                                 width: 32,
                                 child: Text(
                                   a.icon,
-                                  style: const TextStyle(fontSize: 20),
+                                  style: GoogleFonts.fredoka(fontSize: 20),
                                 ),
                               ),
                               Expanded(
                                 child: Text(
                                   a.text,
-                                  style: const TextStyle(
+                                  style: GoogleFonts.fredoka(
                                     fontSize: 17,
                                     color: AppColors.textDark,
                                   ),
@@ -230,7 +231,7 @@ class _ParentReportPageState extends State<ParentReportPage> {
                               ),
                               Text(
                                 _when(a.at),
-                                style: const TextStyle(
+                                style: GoogleFonts.fredoka(
                                   fontSize: 14,
                                   color: AppColors.hint,
                                 ),
@@ -277,7 +278,7 @@ class _ParentReportPageState extends State<ParentReportPage> {
               ),
               Text(
                 _range(r.weekFrom, r.weekTo),
-                style: const TextStyle(fontSize: 16, color: AppColors.hint),
+                style: GoogleFonts.fredoka(fontSize: 16, color: AppColors.hint),
               ),
             ],
           ),
@@ -293,7 +294,7 @@ class _ParentReportPageState extends State<ParentReportPage> {
               : _week == 1
               ? 'Minggu lalu'
               : '$_week minggu lalu',
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         IconButton(
           tooltip: 'Minggu berikutnya',
@@ -447,7 +448,7 @@ class _SummaryTiles extends StatelessWidget {
                   children: [
                     Text(
                       t.$1,
-                      style: const TextStyle(
+                      style: GoogleFonts.fredoka(
                         fontSize: 15,
                         color: AppColors.hint,
                       ),
@@ -464,7 +465,7 @@ class _SummaryTiles extends StatelessWidget {
                     if (t.$3 != null)
                       Text(
                         t.$3!,
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 13,
                           color: AppColors.hint,
                         ),
@@ -494,9 +495,9 @@ class _MinutesChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final maxMin = days.fold<int>(0, (m, d) => d.minutes > m ? d.minutes : m);
     if (maxMin == 0) {
-      return const Text(
+      return Text(
         'Belum ada waktu belajar minggu ini.',
-        style: TextStyle(fontSize: 17, color: AppColors.hint),
+        style: GoogleFonts.fredoka(fontSize: 17, color: AppColors.hint),
       );
     }
     final peak = days.indexWhere((d) => d.minutes == maxMin);
@@ -520,7 +521,7 @@ class _MinutesChart extends StatelessWidget {
                     if (i == peak)
                       Text(
                         '${days[i].minutes} mnt',
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: AppColors.textDark,
@@ -544,7 +545,7 @@ class _MinutesChart extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       days[i].label,
-                      style: TextStyle(
+                      style: GoogleFonts.fredoka(
                         fontSize: 15,
                         fontWeight:
                             days[i].date == todayStr
@@ -595,9 +596,9 @@ class _Letters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (letters.isEmpty) {
-      return const Text(
+      return Text(
         'Data huruf akan muncul setelah si kecil mengerjakan beberapa lesson.',
-        style: TextStyle(fontSize: 17, color: AppColors.hint),
+        style: GoogleFonts.fredoka(fontSize: 17, color: AppColors.hint),
       );
     }
     return Column(
@@ -639,7 +640,7 @@ class _Letters extends StatelessWidget {
                       const SizedBox(width: 6),
                       Text(
                         '${l.accuracy}%',
-                        style: const TextStyle(
+                        style: GoogleFonts.fredoka(
                           fontSize: 14,
                           color: AppColors.textDark,
                         ),
@@ -647,7 +648,7 @@ class _Letters extends StatelessWidget {
                       if (l.confusedWith != null)
                         Text(
                           '  ↔ ${l.confusedWith}',
-                          style: const TextStyle(
+                          style: GoogleFonts.fredoka(
                             fontSize: 14,
                             color: AppColors.textDark,
                           ),
@@ -671,13 +672,13 @@ class _Letters extends StatelessWidget {
                   const SizedBox(width: 4),
                   Text(
                     e.$4,
-                    style: const TextStyle(fontSize: 14, color: AppColors.hint),
+                    style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.hint),
                   ),
                 ],
               ),
-            const Text(
+            Text(
               '↔ = sering tertukar dengan',
-              style: TextStyle(fontSize: 14, color: AppColors.hint),
+              style: GoogleFonts.fredoka(fontSize: 14, color: AppColors.hint),
             ),
           ],
         ),
@@ -703,11 +704,11 @@ class _PremiumTeaser extends StatelessWidget {
       children: [
         const Icon(Icons.lock_rounded, size: 40, color: Color(0xFFE08A00)),
         const SizedBox(width: 14),
-        const Expanded(
+        Expanded(
           child: Text(
             'Grafik waktu belajar harian, huruf yang sudah dikuasai & perlu latihan, '
             'serta saran untuk Ayah/Ibu tersedia di Bebaca Premium.',
-            style: TextStyle(
+            style: GoogleFonts.fredoka(
               fontSize: 17,
               color: AppColors.textDark,
               height: 1.35,

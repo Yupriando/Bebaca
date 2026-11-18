@@ -240,7 +240,7 @@ Future<_Masks> _buildMasks(String glyph) async {
 
   // area yang diizinkan = huruf + pelebaran (setengah tebal kuas + kelonggaran)
   final dOut = _distanceTo(inside, w, h);
-  final reach = (_judgeBrush / 2 + _slack) * _scale;
+  const reach = (_judgeBrush / 2 + _slack) * _scale;
   final allowed = Uint8List(n);
   for (var i = 0; i < n; i++) {
     allowed[i] = (inside[i] == 1 || dOut[i] <= reach) ? 1 : 0;
@@ -328,7 +328,7 @@ class _TracePainter extends CustomPainter {
     canvas.drawLine(const Offset(24, _topLine), Offset(size.width - 24, _topLine), linePaint);
     canvas.drawLine(const Offset(24, _baseline), Offset(size.width - 24, _baseline), linePaint);
 
-    // huruf panduan (abu-abu)
+    // huruf panduan (biru muda)
     // huruf panduan: isian biru muda + garis tepi biru (gaya banner)
     final tp = _guidePainter(glyph, color: const Color(0xFFE3F0FF));
     final at = _guideOffset(tp);
@@ -397,7 +397,7 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
 
   double _coverage = 0;
   List<Offset> _hints = const [];
-  String _message = 'Telusuri huruf abu-abu dengan jarimu';
+  String _message = 'Telusuri huruf biru dengan jarimu';
   Color _messageColor = const Color(0xFF777777);
 
   bool _done = false;
@@ -537,7 +537,7 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
       _coverage = 0;
       _hints = const [];
       _clears++;
-      _message = 'Telusuri huruf abu-abu dengan jarimu';
+      _message = 'Telusuri huruf biru dengan jarimu';
       _messageColor = const Color(0xFF777777);
     });
     _reportDrawing(note: 'Menghapus tulisan, mulai lagi');
@@ -691,7 +691,7 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
           child: Text(
             _message,
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: GoogleFonts.fredoka(
                 fontSize: 18, fontWeight: FontWeight.bold, color: _messageColor),
           ),
         ),
@@ -708,8 +708,8 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
             if (showSkip)
               TextButton(
                 onPressed: _skip,
-                child: const Text('Lewati',
-                    style: TextStyle(fontSize: 18, color: Color(0xFF888888))),
+                child: Text('Lewati',
+                    style: GoogleFonts.fredoka(fontSize: 18, color: const Color(0xFF888888))),
               ),
           ],
         ),
