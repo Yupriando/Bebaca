@@ -74,11 +74,12 @@ class _LessonPageState extends State<LessonPage> {
     if (!mounted) return;
 
     // Huruf pengecoh diambil dari seluruh huruf di section ini (mis. semua vokal).
-    final pool = widget.section.lessons
-        .expand((l) => l.letters)
-        .map((e) => e.toUpperCase())
-        .toSet()
-        .toList();
+    final pool =
+        widget.section.lessons
+            .expand((l) => l.letters)
+            .map((e) => e.toUpperCase())
+            .toSet()
+            .toList();
 
     setState(() {
       _settings = settings;
@@ -96,7 +97,9 @@ class _LessonPageState extends State<LessonPage> {
       'steps': _steps.length,
       'stepIndex': 0,
     });
-    _logStep(0); // sesudah lesson_start, supaya urutannya benar di Pantau Langsung
+    _logStep(
+      0,
+    ); // sesudah lesson_start, supaya urutannya benar di Pantau Langsung
   }
 
   /// Langkah yang sedang dikerjakan (untuk Pantau Langsung), plus detail dari langkah itu.
@@ -132,7 +135,9 @@ class _LessonPageState extends State<LessonPage> {
     final token = ++_moodToken;
     setState(() => _mood = mood);
     Future.delayed(const Duration(milliseconds: 1300), () {
-      if (mounted && token == _moodToken) setState(() => _mood = MascotMood.idle);
+      if (mounted && token == _moodToken) {
+        setState(() => _mood = MascotMood.idle);
+      }
     });
   }
 
@@ -157,7 +162,9 @@ class _LessonPageState extends State<LessonPage> {
   }
 
   void _onNext() {
-    if (_settings!.soundEffect) SoundService.instance.play(Sfx.next, volume: 0.6);
+    if (_settings!.soundEffect) {
+      SoundService.instance.play(Sfx.next, volume: 0.6);
+    }
     if (_index >= _steps.length - 1) {
       _finish();
     } else {
@@ -192,8 +199,10 @@ class _LessonPageState extends State<LessonPage> {
       _saveError = null;
     });
     try {
-      final streak =
-          await _lessonService.completeLesson(widget.lesson.id, stars: _stars);
+      final streak = await _lessonService.completeLesson(
+        widget.lesson.id,
+        stars: _stars,
+      );
       if (!mounted) return;
       setState(() {
         _saving = false;
@@ -217,11 +226,12 @@ class _LessonPageState extends State<LessonPage> {
     SpeechService.instance.stopSpeaking();
     final leave = await showDialog<bool>(
       context: context,
-      builder: (_) => _ExitDialog(
-        done: _index + (_stepDone ? 1 : 0),
-        total: _steps.length,
-        animate: _settings?.animation ?? true,
-      ),
+      builder:
+          (_) => _ExitDialog(
+            done: _index + (_stepDone ? 1 : 0),
+            total: _steps.length,
+            animate: _settings?.animation ?? true,
+          ),
     );
     if (leave == true && mounted) {
       EventLogger.instance.log('lesson_exit', {
@@ -264,11 +274,12 @@ class _LessonPageState extends State<LessonPage> {
   /// Layar pendek (HP landscape): kalau isi soal lebih tinggi dari ruang yang ada,
   /// soal diperkecil sedikit supaya tetap terlihat utuh, tidak terpotong.
   Widget _fit(Widget step) => LayoutBuilder(
-        builder: (context, box) => FittedBox(
+    builder:
+        (context, box) => FittedBox(
           fit: BoxFit.scaleDown,
           child: SizedBox(width: box.maxWidth, child: step),
         ),
-      );
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -278,10 +289,11 @@ class _LessonPageState extends State<LessonPage> {
         if (!didPop) _requestExit();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
-        body: _settings == null
-            ? const Center(child: CircularProgressIndicator())
-            : _buildBody(),
+        backgroundColor: Colors.transparent,
+        body:
+            _settings == null
+                ? const Center(child: CircularProgressIndicator())
+                : _buildBody(),
       ),
     );
   }
@@ -292,13 +304,16 @@ class _LessonPageState extends State<LessonPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('Lesson ini belum tersedia.',
-                style: TextStyle(fontSize: 22)),
+            const Text(
+              'Lesson ini belum tersedia.',
+              style: TextStyle(fontSize: 22),
+            ),
             const SizedBox(height: 16),
             PrimaryButton(
-                label: 'Kembali',
-                onPressed: () => Navigator.pop(context, false),
-                width: 180),
+              label: 'Kembali',
+              onPressed: () => Navigator.pop(context, false),
+              width: 180,
+            ),
           ],
         ),
       );
@@ -326,7 +341,7 @@ class _LessonPageState extends State<LessonPage> {
         _LessonHeader(
           section: widget.section,
           lesson: widget.lesson,
-          nextLabel: isLast ? 'Complete' : 'Next',
+          nextLabel: isLast ? 'Selesai' : 'Lanjut',
           nextEnabled: _stepDone,
           animate: animate,
           onNext: _onNext,
@@ -334,6 +349,8 @@ class _LessonPageState extends State<LessonPage> {
         ),
         _ProgressWithMascot(
           progress: progress,
+          steps: _steps.length,
+          done: _index + (_stepDone ? 1 : 0),
           mood: _mood,
           animate: animate,
         ),
@@ -367,10 +384,14 @@ class _LessonPageState extends State<LessonPage> {
 /// Bar progres; maskot "berjalan" di atasnya mengikuti kemajuan.
 class _ProgressWithMascot extends StatelessWidget {
   final double progress;
+  final int steps;
+  final int done;
   final MascotMood mood;
   final bool animate;
   const _ProgressWithMascot({
     required this.progress,
+    required this.steps,
+    required this.done,
     required this.mood,
     required this.animate,
   });
@@ -380,9 +401,9 @@ class _ProgressWithMascot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: 28),
       child: SizedBox(
-        height: 58,
+        height: 60,
         child: LayoutBuilder(
           builder: (context, box) {
             final maxLeft = box.maxWidth - _mascotSize;
@@ -390,30 +411,54 @@ class _ProgressWithMascot extends StatelessWidget {
               tween: Tween<double>(end: progress),
               duration: Duration(milliseconds: animate ? 500 : 0),
               curve: Curves.easeOutCubic,
-              builder: (context, v, _) => Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    left: 0,
-                    right: 0,
-                    bottom: 8,
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: LinearProgressIndicator(
-                        value: v,
-                        minHeight: 10,
-                        backgroundColor: const Color(0xFFE6E6E6),
-                        color: const Color(0xFFFFB300),
+              builder:
+                  (context, v, _) => Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // satu segmen per langkah: hijau = sudah, putih = belum
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 8,
+                        child: Row(
+                          children: [
+                            for (var i = 0; i < steps; i++) ...[
+                              if (i > 0) const SizedBox(width: 6),
+                              Expanded(
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 300),
+                                  height: 12,
+                                  decoration: BoxDecoration(
+                                    color:
+                                        i < done
+                                            ? const Color(0xFF4CC26B)
+                                            : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color:
+                                          i < done
+                                              ? const Color(0xFF34A853)
+                                              : const Color(0xFFD6E2F0),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                    ),
+                      Positioned(
+                        left: v * maxLeft,
+                        bottom: 14,
+                        child: Mascot(
+                          mood: mood,
+                          size: _mascotSize,
+                          animate: animate,
+                        ),
+                      ),
+                    ],
                   ),
-                  Positioned(
-                    left: v * maxLeft,
-                    bottom: 12,
-                    child: Mascot(mood: mood, size: _mascotSize, animate: animate),
-                  ),
-                ],
-              ),
             );
           },
         ),
@@ -443,28 +488,52 @@ class _LessonHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const white = TextStyle(color: Colors.white, fontWeight: FontWeight.bold);
+    final ink = GoogleFonts.fredoka(
+      color: AppColors.textDark,
+      fontWeight: FontWeight.w700,
+    );
     return Container(
-      margin: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-      padding: const EdgeInsets.fromLTRB(8, 10, 16, 10),
+      margin: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+      padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(20),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1A1C5FC7),
+            blurRadius: 16,
+            offset: Offset(0, 5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           IconButton(
             tooltip: 'Keluar',
             onPressed: onClose,
-            icon: const Icon(Icons.close_rounded, color: Colors.white, size: 30),
+            style: IconButton.styleFrom(
+              backgroundColor: const Color(0xFFEFF6FF),
+            ),
+            icon: const Icon(
+              Icons.arrow_back_rounded,
+              color: AppColors.primary,
+              size: 28,
+            ),
           ),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Unit ${section.unit}, Section ${section.section}',
-                    style: white.copyWith(fontSize: 18)),
-                Text(lesson.title, style: white.copyWith(fontSize: 22)),
+                Text(
+                  'Unit ${section.unit} · ${section.title}',
+                  style: ink.copyWith(
+                    fontSize: 16,
+                    color: AppColors.hint,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                Text(lesson.title, style: ink.copyWith(fontSize: 24)),
               ],
             ),
           ),
@@ -503,8 +572,10 @@ class _NextButtonState extends State<_NextButton>
     vsync: this,
     duration: const Duration(milliseconds: 750),
   );
-  late final Animation<double> _scale = Tween<double>(begin: 1.0, end: 1.09)
-      .animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
+  late final Animation<double> _scale = Tween<double>(
+    begin: 1.0,
+    end: 1.09,
+  ).animate(CurvedAnimation(parent: _c, curve: Curves.easeInOut));
 
   @override
   void initState() {
@@ -538,17 +609,14 @@ class _NextButtonState extends State<_NextButton>
     final enabled = widget.enabled;
     return ScaleTransition(
       scale: _scale,
-      child: OutlinedButton(
+      child: PrimaryButton(
+        label: widget.label,
+        icon: Icons.arrow_forward_rounded,
         onPressed: enabled ? widget.onPressed : null,
-        style: OutlinedButton.styleFrom(
-          foregroundColor: Colors.white,
-          disabledForegroundColor: Colors.white54,
-          backgroundColor: enabled ? Colors.white24 : Colors.transparent,
-          side: BorderSide(color: enabled ? Colors.white : Colors.white38, width: 2),
-          padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-        child: Text(widget.label, style: const TextStyle(fontSize: 20)),
+        color: enabled ? AppColors.primary : const Color(0xFFB0C4DE),
+        width: 170,
+        height: 50,
+        fontSize: 20,
       ),
     );
   }
@@ -560,7 +628,11 @@ class _ExitDialog extends StatelessWidget {
   final int done;
   final int total;
   final bool animate;
-  const _ExitDialog({required this.done, required this.total, required this.animate});
+  const _ExitDialog({
+    required this.done,
+    required this.total,
+    required this.animate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -583,8 +655,11 @@ class _ExitDialog extends StatelessWidget {
               Text(
                 'Yakin mau berhenti?',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.itim(
-                    fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                style: GoogleFonts.fredoka(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -592,7 +667,11 @@ class _ExitDialog extends StatelessWidget {
                     ? 'Sedikit lagi selesai! Kalau keluar sekarang, bintangmu belum tersimpan.'
                     : 'Tinggal $left langkah lagi. Kalau keluar sekarang, bintangmu belum tersimpan.',
                 textAlign: TextAlign.center,
-                style: GoogleFonts.itim(fontSize: 19, color: AppColors.hint, height: 1.3),
+                style: GoogleFonts.fredoka(
+                  fontSize: 19,
+                  color: AppColors.hint,
+                  height: 1.3,
+                ),
               ),
               const SizedBox(height: 18),
               Row(
@@ -604,14 +683,21 @@ class _ExitDialog extends StatelessWidget {
                         value: progress,
                         minHeight: 14,
                         backgroundColor: const Color(0xFFE6E6E6),
-                        valueColor: const AlwaysStoppedAnimation(Color(0xFFFFB300)),
+                        valueColor: const AlwaysStoppedAnimation(
+                          Color(0xFFFFB300),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Text('$done/$total',
-                      style: GoogleFonts.itim(
-                          fontSize: 18, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                  Text(
+                    '$done/$total',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
@@ -625,8 +711,13 @@ class _ExitDialog extends StatelessWidget {
               TextButton(
                 onPressed: () => Navigator.pop(context, true),
                 style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
-                child: Text('Keluar',
-                    style: GoogleFonts.itim(fontSize: 20, fontWeight: FontWeight.bold)),
+                child: Text(
+                  'Keluar',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ),

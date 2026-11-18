@@ -33,7 +33,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
           Text(
             'Khusus Premium ⭐',
             textAlign: TextAlign.center,
-            style: GoogleFonts.itim(
+            style: GoogleFonts.fredoka(
                 fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
           ),
           const SizedBox(height: 8),

@@ -20,7 +20,8 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 20),
       decoration: const BoxDecoration(
         color: AppColors.white,
-        border: Border(bottom: BorderSide(color: AppColors.divider, width: 3)),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
+        boxShadow: [BoxShadow(color: Color(0x1A1C5FC7), blurRadius: 14, offset: Offset(0, 4))],
       ),
       child: SafeArea(
         bottom: false,
@@ -43,7 +44,7 @@ class AppHeader extends StatelessWidget implements PreferredSizeWidget {
             const SizedBox(width: 10),
             Text(
               'Bebaca',
-              style: GoogleFonts.itim(
+              style: GoogleFonts.fredoka(
                 fontSize: 36,
                 fontWeight: FontWeight.bold,
                 color: AppColors.primary,

@@ -274,7 +274,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
           child: Text(
             'Belajar baca yang menyenangkan',
             textAlign: TextAlign.center,
-            style: GoogleFonts.itim(
+            style: GoogleFonts.fredoka(
               fontSize: 22,
               color: Colors.white.withAlpha(215),
             ),
@@ -297,7 +297,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
         offset: Offset(0, (1 - v) * 40),
         child: Text(
           ch,
-          style: GoogleFonts.itim(
+          style: GoogleFonts.fredoka(
             fontSize: 64,
             fontWeight: FontWeight.bold,
             color: Colors.white,

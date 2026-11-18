@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/widgets/sky_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/story.dart';
@@ -110,8 +111,11 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       return;
     }
     SoundService.instance.play(Sfx.next, volume: 0.5);
-    _controller.animateToPage(target,
-        duration: const Duration(milliseconds: 380), curve: Curves.easeOutCubic);
+    _controller.animateToPage(
+      target,
+      duration: const Duration(milliseconds: 380),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _finish() {
@@ -127,12 +131,15 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
 
   Future<void> _narrate() async {
     final page = _page;
-    await _narrator.play(_pages[page], onFinished: () {
-      if (!mounted || !_autoRead || page != _page) return;
-      Future.delayed(const Duration(milliseconds: 700), () {
-        if (mounted && _autoRead && page == _page) _go(1);
-      });
-    });
+    await _narrator.play(
+      _pages[page],
+      onFinished: () {
+        if (!mounted || !_autoRead || page != _page) return;
+        Future.delayed(const Duration(milliseconds: 700), () {
+          if (mounted && _autoRead && page == _page) _go(1);
+        });
+      },
+    );
   }
 
   void _toggleListen() {
@@ -174,9 +181,11 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     await _narrator.stop();
     if (!await SpeechService.instance.initListening()) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Mikrofon tidak tersedia. Periksa izin mikrofon ya.'),
-        ));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Mikrofon tidak tersedia. Periksa izin mikrofon ya.'),
+          ),
+        );
       }
       return;
     }
@@ -199,9 +208,14 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
         if (n > _readCount) {
           setState(() => _readCount = n);
           final now = DateTime.now();
-          if (_lastReadReport == null || now.difference(_lastReadReport!).inMilliseconds > 1000) {
+          if (_lastReadReport == null ||
+              now.difference(_lastReadReport!).inMilliseconds > 1000) {
             _lastReadReport = now;
-            EventLogger.instance.ui('reading', {'page': page, 'read': n, 'total': words.length});
+            EventLogger.instance.ui('reading', {
+              'page': page,
+              'read': n,
+              'total': words.length,
+            });
           }
         }
         if (n >= words.length || isFinal) _doneReading(words.length);
@@ -221,16 +235,23 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       'total': total,
       'good': good,
     });
-    SoundService.instance.play(good ? Sfx.correct : Sfx.wrong, volume: good ? 0.8 : 0.4);
+    SoundService.instance.play(
+      good ? Sfx.correct : Sfx.wrong,
+      volume: good ? 0.8 : 0.4,
+    );
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        duration: const Duration(seconds: 2),
-        backgroundColor: good ? const Color(0xFF2E9E5B) : null,
-        content: Text(good
-            ? 'Hebat! Kamu sudah membaca halaman ini 🎉'
-            : 'Hampir! Coba baca lagi pelan-pelan ya'),
-      ));
+      ..showSnackBar(
+        SnackBar(
+          duration: const Duration(seconds: 2),
+          backgroundColor: good ? const Color(0xFF2E9E5B) : null,
+          content: Text(
+            good
+                ? 'Hebat! Kamu sudah membaca halaman ini 🎉'
+                : 'Hampir! Coba baca lagi pelan-pelan ya',
+          ),
+        ),
+      );
   }
 
   void _stopListening() {
@@ -246,41 +267,46 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     if (_pages.isEmpty) {
       return Scaffold(
         appBar: AppBar(title: Text(widget.story.title)),
-        body: const Center(child: Text('Cerita belum tersedia.', style: TextStyle(fontSize: 22))),
+        body: const Center(
+          child: Text('Cerita belum tersedia.', style: TextStyle(fontSize: 22)),
+        ),
       );
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFBF2),
-      body: SafeArea(
-        child: _ended
-            ? StoryEndView(
-                story: widget.story,
-                lastPage: _pages.length - 1,
-                onReadAgain: () {
-                  setState(() {
-                    _ended = false;
-                    _page = 0;
-                  });
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    if (_controller.hasClients) _controller.jumpToPage(0);
-                  });
-                },
-              )
-            : Column(
-                children: [
-                  _topBar(),
-                  Expanded(
-                    child: PageView.builder(
-                      controller: _controller,
-                      itemCount: _pages.length,
-                      onPageChanged: _onPageChanged,
-                      itemBuilder: (context, i) => _pageView(i),
-                    ),
+      backgroundColor: Colors.transparent,
+      body: SkyBackground(
+        child: SafeArea(
+          child:
+              _ended
+                  ? StoryEndView(
+                    story: widget.story,
+                    lastPage: _pages.length - 1,
+                    onReadAgain: () {
+                      setState(() {
+                        _ended = false;
+                        _page = 0;
+                      });
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (_controller.hasClients) _controller.jumpToPage(0);
+                      });
+                    },
+                  )
+                  : Column(
+                    children: [
+                      _topBar(),
+                      Expanded(
+                        child: PageView.builder(
+                          controller: _controller,
+                          itemCount: _pages.length,
+                          onPageChanged: _onPageChanged,
+                          itemBuilder: (context, i) => _pageView(i),
+                        ),
+                      ),
+                      _controls(),
+                    ],
                   ),
-                  _controls(),
-                ],
-              ),
+        ),
       ),
     );
   }
@@ -302,32 +328,45 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(widget.story.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.itim(
-                        fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                Text(
+                  widget.story.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.fredoka(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
                 const SizedBox(height: 4),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
                   child: TweenAnimationBuilder<double>(
                     tween: Tween(end: progress),
                     duration: const Duration(milliseconds: 350),
-                    builder: (_, v, __) => LinearProgressIndicator(
-                      value: v,
-                      minHeight: 10,
-                      backgroundColor: const Color(0xFFEDE4D3),
-                      valueColor: const AlwaysStoppedAnimation(Color(0xFFFFB300)),
-                    ),
+                    builder:
+                        (_, v, __) => LinearProgressIndicator(
+                          value: v,
+                          minHeight: 10,
+                          backgroundColor: const Color(0xFFEDE4D3),
+                          valueColor: const AlwaysStoppedAnimation(
+                            Color(0xFFFFB300),
+                          ),
+                        ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(width: 16),
-          Text('${_page + 1} / ${_pages.length}',
-              style: GoogleFonts.itim(
-                  fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.hint)),
+          Text(
+            '${_page + 1} / ${_pages.length}',
+            style: GoogleFonts.fredoka(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.hint,
+            ),
+          ),
         ],
       ),
     );
@@ -335,7 +374,10 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
 
   Widget _pageView(int i) {
     final images = widget.story.pageImages;
-    final image = i < images.length && images[i].isNotEmpty ? images[i] : widget.story.coverUrl;
+    final image =
+        i < images.length && images[i].isNotEmpty
+            ? images[i]
+            : widget.story.coverUrl;
 
     final picture = ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -351,27 +393,49 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       builder: (context, _) => _pageText(i),
     );
 
-    return LayoutBuilder(builder: (context, c) {
-      final wide = c.maxWidth > 760;
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
-        child: wide
-            ? Row(
-                children: [
-                  Expanded(flex: 5, child: AspectRatio(aspectRatio: 4 / 3, child: picture)),
-                  const SizedBox(width: 28),
-                  Expanded(flex: 6, child: Center(child: SingleChildScrollView(child: text))),
-                ],
-              )
-            : Column(
-                children: [
-                  Flexible(flex: 5, child: Center(child: AspectRatio(aspectRatio: 4 / 3, child: picture))),
-                  const SizedBox(height: 16),
-                  Expanded(flex: 4, child: SingleChildScrollView(child: text)),
-                ],
-              ),
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, c) {
+        final wide = c.maxWidth > 760;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 8),
+          child:
+              wide
+                  ? Row(
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: AspectRatio(aspectRatio: 4 / 3, child: picture),
+                      ),
+                      const SizedBox(width: 28),
+                      Expanded(
+                        flex: 6,
+                        child: Center(
+                          child: SingleChildScrollView(child: text),
+                        ),
+                      ),
+                    ],
+                  )
+                  : Column(
+                    children: [
+                      Flexible(
+                        flex: 5,
+                        child: Center(
+                          child: AspectRatio(
+                            aspectRatio: 4 / 3,
+                            child: picture,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        flex: 4,
+                        child: SingleChildScrollView(child: text),
+                      ),
+                    ],
+                  ),
+        );
+      },
+    );
   }
 
   Widget _pageText(int i) {
@@ -392,22 +456,24 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
               margin: const EdgeInsets.symmetric(horizontal: 3),
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: w == narrating || (isCurrent && w == _tappedWord)
-                    ? const Color(0xFFFFD54F)
-                    : isCurrent && w < _readCount
+                color:
+                    w == narrating || (isCurrent && w == _tappedWord)
+                        ? const Color(0xFFFFD54F)
+                        : isCurrent && w < _readCount
                         ? const Color(0xFFC8F0D4)
                         : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
                 words[w],
-                style: GoogleFonts.itim(
+                style: GoogleFonts.fredoka(
                   fontSize: size,
                   height: 1.35,
                   fontWeight: FontWeight.bold,
-                  color: isCurrent && w < _readCount
-                      ? const Color(0xFF1E7A43)
-                      : AppColors.textDark,
+                  color:
+                      isCurrent && w < _readCount
+                          ? const Color(0xFF1E7A43)
+                          : AppColors.textDark,
                 ),
               ),
             ),
@@ -426,7 +492,10 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
           padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
           child: Row(
             children: [
-              _navButton(Icons.chevron_left_rounded, _page > 0 ? () => _go(-1) : null),
+              _navButton(
+                Icons.chevron_left_rounded,
+                _page > 0 ? () => _go(-1) : null,
+              ),
               const Spacer(),
               _bigButton(
                 icon: speaking ? Icons.pause_rounded : Icons.volume_up_rounded,
@@ -443,7 +512,11 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
               ),
               const Spacer(),
               last
-                  ? _navButton(Icons.flag_rounded, () => _go(1), highlight: true)
+                  ? _navButton(
+                    Icons.flag_rounded,
+                    () => _go(1),
+                    highlight: true,
+                  )
                   : _navButton(Icons.chevron_right_rounded, () => _go(1)),
             ],
           ),
@@ -452,11 +525,16 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     );
   }
 
-  Widget _navButton(IconData icon, VoidCallback? onTap, {bool highlight = false}) {
+  Widget _navButton(
+    IconData icon,
+    VoidCallback? onTap, {
+    bool highlight = false,
+  }) {
     return Material(
-      color: onTap == null
-          ? const Color(0xFFEDEDED)
-          : highlight
+      color:
+          onTap == null
+              ? const Color(0xFFEDEDED)
+              : highlight
               ? const Color(0xFFFFB300)
               : Colors.white,
       shape: const CircleBorder(),
@@ -467,13 +545,16 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
         child: SizedBox(
           width: 64,
           height: 64,
-          child: Icon(icon,
-              size: 40,
-              color: onTap == null
-                  ? Colors.black26
-                  : highlight
-                      ? Colors.white
-                      : AppColors.primary),
+          child: Icon(
+            icon,
+            size: 40,
+            color:
+                onTap == null
+                    ? Colors.black26
+                    : highlight
+                    ? Colors.white
+                    : AppColors.primary,
+          ),
         ),
       ),
     );
@@ -498,9 +579,14 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
             children: [
               Icon(icon, color: Colors.white, size: 30),
               const SizedBox(width: 8),
-              Text(label,
-                  style: GoogleFonts.itim(
-                      fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white)),
+              Text(
+                label,
+                style: GoogleFonts.fredoka(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ],
           ),
         ),

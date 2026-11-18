@@ -17,8 +17,8 @@ const navItems = [
     'assets/images/nav_dongeng.png',
     Icons.auto_stories_rounded,
   ),
-  NavItem('Profile', 'assets/images/nav_profile.png', Icons.person_rounded),
-  NavItem('Settings', 'assets/images/nav_settings.png', Icons.settings_rounded),
+  NavItem('Profil', 'assets/images/nav_profile.png', Icons.person_rounded),
+  NavItem('Pengaturan', 'assets/images/nav_settings.png', Icons.settings_rounded),
 ];
 
 class NavIcon extends StatelessWidget {
@@ -55,44 +55,42 @@ class AppSidebar extends StatelessWidget {
   Widget build(BuildContext context) {
     // HP dalam posisi landscape: layar pendek -> sidebar lebih ringkas
     final compact = MediaQuery.of(context).size.height < 560;
+    // panel putih membulat yang "melayang" di atas langit (gaya banner)
     return Container(
-      width: compact ? 210 : 250,
-      decoration: const BoxDecoration(
+      width: compact ? 216 : 256,
+      margin: const EdgeInsets.fromLTRB(14, 14, 0, 14),
+      decoration: BoxDecoration(
         color: AppColors.white,
-        border: Border(right: BorderSide(color: AppColors.divider, width: 4)),
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: const [BoxShadow(color: Color(0x221C5FC7), blurRadius: 20, offset: Offset(0, 6))],
       ),
       child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding:
-                  compact
-                      ? const EdgeInsets.fromLTRB(16, 12, 10, 8)
-                      : const EdgeInsets.fromLTRB(20, 20, 12, 20),
+              padding: compact
+                  ? const EdgeInsets.fromLTRB(16, 14, 10, 10)
+                  : const EdgeInsets.fromLTRB(18, 20, 12, 18),
               child: Row(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(12),
                     child: Image.asset(
                       'assets/images/logo_icon.png',
-                      width: compact ? 38 : 48,
-                      height: compact ? 38 : 48,
+                      width: compact ? 40 : 50,
+                      height: compact ? 40 : 50,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (_, __, ___) => const Icon(
-                            Icons.menu_book_rounded,
-                            size: 48,
-                            color: AppColors.primary,
-                          ),
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.menu_book_rounded, size: 48, color: AppColors.primary),
                     ),
                   ),
                   const SizedBox(width: 10),
                   Text(
                     'Bebaca',
-                    style: GoogleFonts.itim(
-                      fontSize: compact ? 30 : 38,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.fredoka(
+                      fontSize: compact ? 28 : 34,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
                   ),
@@ -106,6 +104,7 @@ class AppSidebar extends StatelessWidget {
                 compact: compact,
                 onTap: () => onSelected(i),
               ),
+            const SizedBox(height: 10),
           ],
         ),
       ),
@@ -127,35 +126,52 @@ class _SidebarTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final icon = compact ? 34.0 : 44.0;
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 10, vertical: compact ? 3 : 8),
-      child: Material(
-        color: selected ? AppColors.primary : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: onTap,
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: compact ? 6 : 10,
-            ),
-            child: Row(
-              children: [
-                NavIcon(item: item, size: compact ? 38 : 52),
-                const SizedBox(width: 14),
-                Text(
-                  item.label,
-                  style: GoogleFonts.itim(
-                    fontSize: compact ? 24 : 30,
-                    fontWeight: FontWeight.bold,
-                    color:
-                        selected
-                            ? const Color(0xFF1F5F85)
-                            : const Color(0xFF808080),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: compact ? 3 : 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primary : Colors.transparent,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: selected
+              ? const [BoxShadow(color: AppColors.primaryDark, offset: Offset(0, 4))]
+              : null,
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: onTap,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 10, vertical: compact ? 6 : 9),
+              child: Row(
+                children: [
+                  Container(
+                    width: icon + 10,
+                    height: icon + 10,
+                    decoration: BoxDecoration(
+                      color: selected ? Colors.white : const Color(0xFFEFF6FF),
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: NavIcon(item: item, size: icon),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Flexible(
+                    child: Text(
+                      item.label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.fredoka(
+                        fontSize: compact ? 21 : 25,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? Colors.white : AppColors.hint,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

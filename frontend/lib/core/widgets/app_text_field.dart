@@ -34,7 +34,7 @@ class _AppTextFieldState extends State<AppTextField> {
       obscureText: _hidden,
       keyboardType: widget.keyboardType,
       validator: widget.validator,
-      style: GoogleFonts.itim(fontSize: 22, color: AppColors.textDark),
+      style: GoogleFonts.fredoka(fontSize: 22, color: AppColors.textDark),
       decoration: InputDecoration(
         hintText: widget.hint,
         suffixIcon: widget.obscureText
@@ -51,7 +51,7 @@ class _AppTextFieldState extends State<AppTextField> {
                 ),
               )
             : null,
-        hintStyle: GoogleFonts.itim(
+        hintStyle: GoogleFonts.fredoka(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: AppColors.hint,

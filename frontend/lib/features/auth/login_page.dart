@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_header.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/sky_background.dart';
 import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
@@ -45,7 +46,10 @@ class _LoginPageState extends State<LoginPage> {
 
     if (result.success) {
       Navigator.pushNamedAndRemoveUntil(
-          context, AppRoutes.main, (route) => false);
+        context,
+        AppRoutes.main,
+        (route) => false,
+      );
     } else {
       _showMessage(result.message ?? 'Login gagal');
     }
@@ -53,51 +57,61 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppHeader(
-        actionLabel: 'Sign-Up',
-        onActionPressed: () =>
-            Navigator.pushReplacementNamed(context, AppRoutes.register),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Log in',
-                      style: AppTheme.title(context, size: 34)
-                          .copyWith(color: Colors.black)),
-                  const SizedBox(height: 28),
-                  AppTextField(
-                    hint: 'Email',
-                    controller: _emailC,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) => (v == null || !v.contains('@'))
-                        ? 'Email tidak valid'
-                        : null,
+    return SkyBackground(
+      hills: true,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppHeader(
+          actionLabel: 'Sign-Up',
+          onActionPressed:
+              () => Navigator.pushReplacementNamed(context, AppRoutes.register),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: SoftCard(
+                radius: 32,
+                padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text('Log in', style: AppTheme.title(context, size: 34)),
+                      const SizedBox(height: 28),
+                      AppTextField(
+                        hint: 'Email',
+                        controller: _emailC,
+                        keyboardType: TextInputType.emailAddress,
+                        validator:
+                            (v) =>
+                                (v == null || !v.contains('@'))
+                                    ? 'Email tidak valid'
+                                    : null,
+                      ),
+                      const SizedBox(height: 18),
+                      AppTextField(
+                        hint: 'Password',
+                        controller: _passC,
+                        obscureText: true,
+                        validator:
+                            (v) =>
+                                (v == null || v.isEmpty)
+                                    ? 'Password wajib diisi'
+                                    : null,
+                      ),
+                      const SizedBox(height: 28),
+                      PrimaryButton(
+                        label: 'MASUK',
+                        onPressed: _login,
+                        isLoading: _loading,
+                        width: 320,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
-                  AppTextField(
-                    hint: 'Password',
-                    controller: _passC,
-                    obscureText: true,
-                    validator: (v) => (v == null || v.isEmpty)
-                        ? 'Password wajib diisi'
-                        : null,
-                  ),
-                  const SizedBox(height: 28),
-                  PrimaryButton(
-                    label: 'MASUK',
-                    onPressed: _login,
-                    isLoading: _loading,
-                    width: 320,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

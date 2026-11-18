@@ -147,7 +147,7 @@ class _StoryEndViewState extends State<StoryEndView> {
   }
 
   TextStyle _title(double size) =>
-      GoogleFonts.itim(fontSize: size, fontWeight: FontWeight.bold, color: AppColors.textDark);
+      GoogleFonts.fredoka(fontSize: size, fontWeight: FontWeight.bold, color: AppColors.textDark);
 
   Widget _moral() {
     return Column(
@@ -171,7 +171,7 @@ class _StoryEndViewState extends State<StoryEndView> {
               const SizedBox(height: 10),
               Text(widget.story.moral!,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.itim(fontSize: 26, color: AppColors.textDark, height: 1.3)),
+                  style: GoogleFonts.fredoka(fontSize: 26, color: AppColors.textDark, height: 1.3)),
             ],
           ),
         ),
@@ -193,7 +193,7 @@ class _StoryEndViewState extends State<StoryEndView> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text('Kuis ${_q + 1} dari ${widget.story.quiz.length}',
-            style: GoogleFonts.itim(fontSize: 20, color: AppColors.hint)),
+            style: GoogleFonts.fredoka(fontSize: 20, color: AppColors.hint)),
         const SizedBox(height: 10),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -253,13 +253,13 @@ class _StoryEndViewState extends State<StoryEndView> {
                   shape: BoxShape.circle,
                 ),
                 child: Text(String.fromCharCode(65 + i),
-                    style: GoogleFonts.itim(
+                    style: GoogleFonts.fredoka(
                         fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.primary)),
               ),
               const SizedBox(width: 14),
               Expanded(
                 child: Text(q.options[i],
-                    style: GoogleFonts.itim(fontSize: 24, color: AppColors.textDark)),
+                    style: GoogleFonts.fredoka(fontSize: 24, color: AppColors.textDark)),
               ),
               if (picked)
                 Icon(correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
@@ -280,7 +280,7 @@ class _StoryEndViewState extends State<StoryEndView> {
         Text('Hebat, kamu selesai membaca!', style: _title(32), textAlign: TextAlign.center),
         const SizedBox(height: 6),
         Text(widget.story.title,
-            style: GoogleFonts.itim(fontSize: 22, color: AppColors.hint)),
+            style: GoogleFonts.fredoka(fontSize: 22, color: AppColors.hint)),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -308,7 +308,7 @@ class _StoryEndViewState extends State<StoryEndView> {
         TextButton.icon(
           onPressed: widget.onReadAgain,
           icon: const Icon(Icons.replay_rounded),
-          label: Text('Baca lagi', style: GoogleFonts.itim(fontSize: 20)),
+          label: Text('Baca lagi', style: GoogleFonts.fredoka(fontSize: 20)),
         ),
       ],
     );

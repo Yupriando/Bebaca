@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_header.dart';
 import '../../core/widgets/app_text_field.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/sky_background.dart';
 import '../../services/auth_service.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -47,9 +48,11 @@ class _RegisterPageState extends State<RegisterPage> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(result.success
-            ? 'Akun berhasil dibuat! Silakan login.'
-            : (result.message ?? 'Gagal membuat akun')),
+        content: Text(
+          result.success
+              ? 'Akun berhasil dibuat! Silakan login.'
+              : (result.message ?? 'Gagal membuat akun'),
+        ),
       ),
     );
     if (result.success) {
@@ -59,70 +62,88 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppHeader(
-        actionLabel: 'Login',
-        onActionPressed: () =>
-            Navigator.pushReplacementNamed(context, AppRoutes.login),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('Buatlah Profile Anda',
-                      textAlign: TextAlign.center,
-                      style: AppTheme.title(context, size: 34)),
-                  const SizedBox(height: 28),
-                  AppTextField(
-                    hint: 'Umur',
-                    controller: _umurC,
-                    keyboardType: TextInputType.number,
-                    validator: (v) {
-                      final n = int.tryParse(v?.trim() ?? '');
-                      if (n == null || n <= 0) return 'Masukkan umur yang valid';
-                      return null;
-                    },
+    return SkyBackground(
+      hills: true,
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        appBar: AppHeader(
+          actionLabel: 'Login',
+          onActionPressed:
+              () => Navigator.pushReplacementNamed(context, AppRoutes.login),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: SoftCard(
+                radius: 32,
+                padding: const EdgeInsets.fromLTRB(32, 28, 32, 28),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Buatlah Profile Anda',
+                        textAlign: TextAlign.center,
+                        style: AppTheme.title(context, size: 34),
+                      ),
+                      const SizedBox(height: 28),
+                      AppTextField(
+                        hint: 'Umur',
+                        controller: _umurC,
+                        keyboardType: TextInputType.number,
+                        validator: (v) {
+                          final n = int.tryParse(v?.trim() ?? '');
+                          if (n == null || n <= 0) {
+                            return 'Masukkan umur yang valid';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      AppTextField(
+                        hint: 'Nama',
+                        controller: _namaC,
+                        validator:
+                            (v) =>
+                                (v == null || v.trim().isEmpty)
+                                    ? 'Nama wajib diisi'
+                                    : null,
+                      ),
+                      const SizedBox(height: 18),
+                      AppTextField(
+                        hint: 'Email',
+                        controller: _emailC,
+                        keyboardType: TextInputType.emailAddress,
+                        validator:
+                            (v) =>
+                                (v == null || !v.contains('@'))
+                                    ? 'Email tidak valid'
+                                    : null,
+                      ),
+                      const SizedBox(height: 18),
+                      AppTextField(
+                        hint: 'Password',
+                        controller: _passC,
+                        obscureText: true,
+                        validator:
+                            (v) =>
+                                (v == null || v.length < 6)
+                                    ? 'Minimal 6 karakter'
+                                    : null,
+                      ),
+                      const SizedBox(height: 28),
+                      PrimaryButton(
+                        label: 'Buat Akun',
+                        onPressed: _submit,
+                        isLoading: _loading,
+                        width: 320,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
-                  AppTextField(
-                    hint: 'Nama',
-                    controller: _namaC,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Nama wajib diisi'
-                        : null,
-                  ),
-                  const SizedBox(height: 18),
-                  AppTextField(
-                    hint: 'Email',
-                    controller: _emailC,
-                    keyboardType: TextInputType.emailAddress,
-                    validator: (v) => (v == null || !v.contains('@'))
-                        ? 'Email tidak valid'
-                        : null,
-                  ),
-                  const SizedBox(height: 18),
-                  AppTextField(
-                    hint: 'Password',
-                    controller: _passC,
-                    obscureText: true,
-                    validator: (v) => (v == null || v.length < 6)
-                        ? 'Minimal 6 karakter'
-                        : null,
-                  ),
-                  const SizedBox(height: 28),
-                  PrimaryButton(
-                    label: 'Buat Akun',
-                    onPressed: _submit,
-                    isLoading: _loading,
-                    width: 320,
-                  ),
-                ],
+                ),
               ),
             ),
           ),

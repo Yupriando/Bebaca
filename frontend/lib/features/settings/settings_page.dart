@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/sky_background.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/services.dart';
 import '../../core/routes/app_routes.dart';
 import '../../core/theme/app_colors.dart';
@@ -67,8 +69,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _update(AppSettings next) async {
     final soundTurnedOn = next.soundEffect && !_store.value.soundEffect;
     try {
-      await _store.update(next); // gagal -> otomatis dikembalikan seperti semula
-      if (soundTurnedOn) SoundService.instance.play(Sfx.correct); // contoh bunyinya
+      await _store.update(
+        next,
+      ); // gagal -> otomatis dikembalikan seperti semula
+      if (soundTurnedOn) {
+        SoundService.instance.play(Sfx.correct); // contoh bunyinya
+      }
     } on ApiException catch (e) {
       if (mounted) _snack(e.message);
     }
@@ -81,7 +87,9 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Future<void> _toggleParental(bool value) async {
-    if (!value && !await _allowParentalChange()) return; // mematikan = harus orang tua
+    if (!value && !await _allowParentalChange()) {
+      return; // mematikan = harus orang tua
+    }
     await _update(_store.value.copyWith(parentalControl: value));
   }
 
@@ -92,7 +100,9 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (_) => _TimeLimitDialog(current: _store.value.timeLimitMinutes),
     );
-    if (picked != null) await _update(_store.value.copyWith(timeLimitMinutes: picked));
+    if (picked != null) {
+      await _update(_store.value.copyWith(timeLimitMinutes: picked));
+    }
   }
 
   Future<void> _pickCurfew() async {
@@ -103,8 +113,9 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       helpText: 'Jam malam (terkunci sampai 05:00)',
       initialTime: TimeOfDay(
-          hour: int.tryParse(parts[0]) ?? 20,
-          minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0),
+        hour: int.tryParse(parts[0]) ?? 20,
+        minute: parts.length > 1 ? int.tryParse(parts[1]) ?? 0 : 0,
+      ),
     );
     if (t != null) {
       final hh = t.hour.toString().padLeft(2, '0');
@@ -116,17 +127,24 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _logout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Yakin ingin keluar dari akun ini?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Batal')),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Keluar', style: TextStyle(color: Colors.redAccent)),
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Logout'),
+            content: const Text('Yakin ingin keluar dari akun ini?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Batal'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text(
+                  'Keluar',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
     );
     if (confirm != true) return;
 
@@ -134,7 +152,11 @@ class _SettingsPageState extends State<SettingsPage> {
     await AuthService().logout();
     PremiumStore.instance.reset();
     if (!mounted) return;
-    Navigator.pushNamedAndRemoveUntil(context, AppRoutes.landing, (route) => false);
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      AppRoutes.landing,
+      (route) => false,
+    );
   }
 
   @override
@@ -181,61 +203,85 @@ class _SettingsPageState extends State<SettingsPage> {
           const SizedBox(height: 16),
           const _ParentTools(),
           const SizedBox(height: 28),
-          const Text('Preferences',
-              style: TextStyle(
-                  fontSize: 44, fontWeight: FontWeight.bold, color: Colors.black)),
-          const SizedBox(height: 28),
-          const _SectionTitle('Lesson Experience'),
-          const Divider(height: 8, thickness: 1.5, color: Colors.black87),
-          _SwitchRow(
-            label: 'Sound Effect',
-            subtitle: 'Efek suara, serta perintah dan huruf yang dibacakan otomatis',
-            value: s.soundEffect,
-            onChanged: (v) => _update(s.copyWith(soundEffect: v)),
-          ),
-          _SwitchRow(
-            label: 'Animation',
-            subtitle: 'Animasi lesson, maskot, konfeti, dan splash screen',
-            value: s.animation,
-            onChanged: (v) => _update(s.copyWith(animation: v)),
-          ),
-          _SwitchRow(
-            label: 'Listening Exercise',
-            subtitle: 'Latihan "dengar lalu pilih huruf" di lesson dan kuis',
-            value: s.listeningExercise,
-            onChanged: (v) => _update(s.copyWith(listeningExercise: v)),
-          ),
-          const SizedBox(height: 28),
-          Row(
-            children: [
-              const Expanded(child: _SectionTitle('Parental Control')),
-              Switch(value: s.parentalControl, onChanged: _toggleParental),
-            ],
-          ),
-          const Divider(height: 8, thickness: 1.5, color: Colors.black87),
-          _ParentalPanel(
-            enabled: s.parentalControl,
-            timespent: '${s.timespentMinutes} menit',
-            timeLimit: formatMinutes(s.timeLimitMinutes),
-            curfew: s.curfew,
-            onTimeLimitTap: _pickTimeLimit,
-            onCurfewTap: _pickCurfew,
-          ),
-          Padding(
-            padding: const EdgeInsets.only(top: 10, left: 4),
-            child: Text(
-              s.parentalControl
-                  ? [
-                      if (remaining >= 0) 'Sisa waktu belajar hari ini: $remaining menit.',
-                      'Aplikasi terkunci mulai pukul ${s.curfew} sampai 05:00. '
-                          'Mengubah pengaturan ini butuh PIN orang tua.',
-                    ].join('\n')
-                  : 'Saat menyala: aplikasi terkunci bila batas waktu belajar habis atau sudah lewat jam malam.',
-              style: const TextStyle(fontSize: 16, color: Color(0xFF777777)),
+          SoftCard(
+            radius: 28,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionTitle('🎧 Pengalaman Belajar'),
+                const SizedBox(height: 6),
+                _SwitchRow(
+                  label: 'Efek Suara',
+                  subtitle:
+                      'Efek suara, serta perintah dan huruf yang dibacakan otomatis',
+                  value: s.soundEffect,
+                  onChanged: (v) => _update(s.copyWith(soundEffect: v)),
+                ),
+                _SwitchRow(
+                  label: 'Animasi',
+                  subtitle:
+                      'Animasi lesson, maskot, konfeti, dan splash screen',
+                  value: s.animation,
+                  onChanged: (v) => _update(s.copyWith(animation: v)),
+                ),
+                _SwitchRow(
+                  label: 'Latihan Mendengar',
+                  subtitle:
+                      'Latihan "dengar lalu pilih huruf" di lesson dan kuis',
+                  value: s.listeningExercise,
+                  onChanged: (v) => _update(s.copyWith(listeningExercise: v)),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 20),
-          _PinRow(hasPin: s.hasParentPin),
+          const SizedBox(height: 18),
+          SoftCard(
+            radius: 28,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: _SectionTitle('🛡️ Kontrol Orang Tua'),
+                    ),
+                    Switch(
+                      value: s.parentalControl,
+                      onChanged: _toggleParental,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                _ParentalPanel(
+                  enabled: s.parentalControl,
+                  timespent: '${s.timespentMinutes} menit',
+                  timeLimit: formatMinutes(s.timeLimitMinutes),
+                  curfew: s.curfew,
+                  onTimeLimitTap: _pickTimeLimit,
+                  onCurfewTap: _pickCurfew,
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 10, left: 4),
+                  child: Text(
+                    s.parentalControl
+                        ? [
+                          if (remaining >= 0)
+                            'Sisa waktu belajar hari ini: $remaining menit.',
+                          'Aplikasi terkunci mulai pukul ${s.curfew} sampai 05:00. '
+                              'Mengubah pengaturan ini butuh PIN orang tua.',
+                        ].join('\n')
+                        : 'Saat menyala: aplikasi terkunci bila batas waktu belajar habis atau sudah lewat jam malam.',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF777777),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                _PinRow(hasPin: s.hasParentPin),
+              ],
+            ),
+          ),
           const SizedBox(height: 40),
           Center(
             child: PrimaryButton(
@@ -263,12 +309,13 @@ class _PremiumCard extends StatelessWidget {
       builder: (context, _) {
         final s = store.status;
         final title = s.isPremium ? 'Bebaca Premium aktif' : 'Bebaca Premium';
-        final subtitle = s.isPremium
-            ? (s.expiresAt == null
-                ? 'Semua pelajaran dan dongeng terbuka'
-                : '${s.autoRenew ? 'Diperpanjang' : 'Berlaku sampai'} '
-                    '${SubscriptionStatus.formatDate(s.expiresAt!)}')
-            : 'Buka semua unit Belajar dan semua dongeng. Paket bulanan atau tahunan.';
+        final subtitle =
+            s.isPremium
+                ? (s.expiresAt == null
+                    ? 'Semua pelajaran dan dongeng terbuka'
+                    : '${s.autoRenew ? 'Diperpanjang' : 'Berlaku sampai'} '
+                        '${SubscriptionStatus.formatDate(s.expiresAt!)}')
+                : 'Buka semua unit Belajar dan semua dongeng. Paket bulanan atau tahunan.';
 
         return Material(
           borderRadius: BorderRadius.circular(22),
@@ -284,46 +331,66 @@ class _PremiumCard extends StatelessWidget {
             child: InkWell(
               onTap: () => openPremium(context),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 18,
+                ),
                 child: Row(
                   children: [
                     Container(
                       width: 64,
                       height: 64,
                       decoration: const BoxDecoration(
-                          color: Colors.white, shape: BoxShape.circle),
-                      child: const Icon(Icons.star_rounded,
-                          size: 46, color: Color(0xFFFFA41B)),
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.star_rounded,
+                        size: 46,
+                        color: Color(0xFFFFA41B),
+                      ),
                     ),
                     const SizedBox(width: 18),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(title,
-                              style: const TextStyle(
-                                  fontSize: 28,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white)),
-                          Text(subtitle,
-                              style: const TextStyle(
-                                  fontSize: 16, color: Color(0xFF5A3A00))),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Text(
+                            subtitle,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Color(0xFF5A3A00),
+                            ),
+                          ),
                         ],
                       ),
                     ),
                     const SizedBox(width: 12),
                     Container(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 18,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(14),
                       ),
-                      child: Text(s.isPremium ? 'Kelola' : 'Lihat Paket',
-                          style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFFE08A00))),
+                      child: Text(
+                        s.isPremium ? 'Kelola' : 'Lihat Paket',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFE08A00),
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -374,53 +441,73 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Wrap(spacing: 8, runSpacing: 8, children: [
-                for (final m in _presets)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final m in _presets)
+                    ChoiceChip(
+                      label: Text(
+                        formatMinutes(m),
+                        style: const TextStyle(fontSize: 16),
+                      ),
+                      selected: !_custom && widget.current == m,
+                      onSelected: (_) => Navigator.pop(context, m),
+                    ),
                   ChoiceChip(
-                    label: Text(formatMinutes(m), style: const TextStyle(fontSize: 16)),
-                    selected: !_custom && widget.current == m,
-                    onSelected: (_) => Navigator.pop(context, m),
+                    avatar: const Icon(Icons.tune_rounded, size: 18),
+                    label: const Text(
+                      'Atur sendiri…',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    selected: _custom,
+                    onSelected: (_) => setState(() => _custom = true),
                   ),
-                ChoiceChip(
-                  avatar: const Icon(Icons.tune_rounded, size: 18),
-                  label: const Text('Atur sendiri…', style: TextStyle(fontSize: 16)),
-                  selected: _custom,
-                  onSelected: (_) => setState(() => _custom = true),
-                ),
-              ]),
+                ],
+              ),
               if (_custom) ...[
                 const SizedBox(height: 20),
-                Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
-                  _NumberField(
-                    label: 'Jam',
-                    value: _hours,
-                    max: 24,
-                    onChanged: (v) => setState(() {
-                      _hours = v;
-                      if (_hours == 24) _minutes = 0;
-                    }),
-                  ),
-                  _NumberField(
-                    key: ValueKey('menit-${_hours == 24}'),
-                    label: 'Menit',
-                    value: _minutes,
-                    max: _hours == 24 ? 0 : 59,
-                    onChanged: (v) => setState(() => _minutes = v),
-                  ),
-                ]),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    _NumberField(
+                      label: 'Jam',
+                      value: _hours,
+                      max: 24,
+                      onChanged:
+                          (v) => setState(() {
+                            _hours = v;
+                            if (_hours == 24) _minutes = 0;
+                          }),
+                    ),
+                    _NumberField(
+                      key: ValueKey('menit-${_hours == 24}'),
+                      label: 'Menit',
+                      value: _minutes,
+                      max: _hours == 24 ? 0 : 59,
+                      onChanged: (v) => setState(() => _minutes = v),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 4),
                 const Center(
-                  child: Text('Ketuk angkanya untuk mengetik langsung',
-                      style: TextStyle(fontSize: 13, color: Color(0xFF999999))),
+                  child: Text(
+                    'Ketuk angkanya untuk mengetik langsung',
+                    style: TextStyle(fontSize: 13, color: Color(0xFF999999)),
+                  ),
                 ),
                 const SizedBox(height: 12),
                 Center(
                   child: Text(
-                    _total == 0 ? 'Pilih minimal 1 menit' : 'Batas: ${formatMinutes(_total)} per hari',
+                    _total == 0
+                        ? 'Pilih minimal 1 menit'
+                        : 'Batas: ${formatMinutes(_total)} per hari',
                     style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: _total == 0 ? Colors.redAccent : AppColors.textDark),
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color:
+                          _total == 0 ? Colors.redAccent : AppColors.textDark,
+                    ),
                   ),
                 ),
               ],
@@ -429,10 +516,14 @@ class _TimeLimitDialogState extends State<_TimeLimitDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Batal')),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Batal'),
+        ),
         if (_custom)
           FilledButton(
-            onPressed: _total == 0 ? null : () => Navigator.pop(context, _total),
+            onPressed:
+                _total == 0 ? null : () => Navigator.pop(context, _total),
             child: const Text('Simpan'),
           ),
       ],
@@ -482,43 +573,61 @@ class _NumberFieldState extends State<_NumberField> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(mainAxisSize: MainAxisSize.min, children: [
-      Text(widget.label, style: const TextStyle(fontSize: 16, color: Color(0xFF777777))),
-      const SizedBox(height: 4),
-      Row(mainAxisSize: MainAxisSize.min, children: [
-        IconButton.filledTonal(
-          onPressed: widget.value > 0 ? () => _set(widget.value - 1) : null,
-          icon: const Icon(Icons.remove_rounded),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          widget.label,
+          style: const TextStyle(fontSize: 16, color: Color(0xFF777777)),
         ),
-        SizedBox(
-          width: 72,
-          child: TextField(
-            controller: _c,
-            enabled: widget.max > 0,
-            textAlign: TextAlign.center,
-            keyboardType: TextInputType.number,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(2),
-            ],
-            style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
-            decoration: const InputDecoration(isDense: true, border: UnderlineInputBorder()),
-            onChanged: (t) {
-              final v = int.tryParse(t) ?? 0;
-              if (v > widget.max) {
-                _set(widget.max);
-              } else {
-                widget.onChanged(v);
-              }
-            },
-          ),
+        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton.filledTonal(
+              onPressed: widget.value > 0 ? () => _set(widget.value - 1) : null,
+              icon: const Icon(Icons.remove_rounded),
+            ),
+            SizedBox(
+              width: 72,
+              child: TextField(
+                controller: _c,
+                enabled: widget.max > 0,
+                textAlign: TextAlign.center,
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(2),
+                ],
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  border: UnderlineInputBorder(),
+                ),
+                onChanged: (t) {
+                  final v = int.tryParse(t) ?? 0;
+                  if (v > widget.max) {
+                    _set(widget.max);
+                  } else {
+                    widget.onChanged(v);
+                  }
+                },
+              ),
+            ),
+            IconButton.filledTonal(
+              onPressed:
+                  widget.value < widget.max
+                      ? () => _set(widget.value + 1)
+                      : null,
+              icon: const Icon(Icons.add_rounded),
+            ),
+          ],
         ),
-        IconButton.filledTonal(
-          onPressed: widget.value < widget.max ? () => _set(widget.value + 1) : null,
-          icon: const Icon(Icons.add_rounded),
-        ),
-      ]),
-    ]);
+      ],
+    );
   }
 }
 
@@ -529,58 +638,107 @@ class _ParentTools extends StatelessWidget {
   Future<void> _open(BuildContext context, Widget page) async {
     if (!await showParentalGate(context)) return;
     if (!context.mounted) return;
-    await Navigator.of(context, rootNavigator: true)
-        .push(MaterialPageRoute(builder: (_) => page));
+    await Navigator.of(
+      context,
+      rootNavigator: true,
+    ).push(MaterialPageRoute(builder: (_) => page));
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget tile(IconData icon, Color color, String title, String subtitle, Widget page) => Expanded(
-          child: Material(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            elevation: 1,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(20),
-              onTap: () => _open(context, page),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(children: [
-                  Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(color: color.withAlpha(30), borderRadius: BorderRadius.circular(16)),
-                    child: Icon(icon, color: color, size: 32),
+    Widget tile(
+      IconData icon,
+      Color color,
+      String title,
+      String subtitle,
+      Widget page,
+    ) => Expanded(
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        elevation: 1,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () => _open(context, page),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(30),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      Text(title,
-                          style: const TextStyle(
-                              fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
-                      Text(subtitle, style: const TextStyle(fontSize: 15, color: Color(0xFF888888))),
-                    ]),
+                  child: Icon(icon, color: color, size: 32),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF333333),
+                        ),
+                      ),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          color: Color(0xFF888888),
+                        ),
+                      ),
+                    ],
                   ),
-                  const Icon(Icons.chevron_right_rounded, size: 30, color: Color(0xFFAAAAAA)),
-                ]),
-              ),
+                ),
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  size: 30,
+                  color: Color(0xFFAAAAAA),
+                ),
+              ],
             ),
           ),
-        );
+        ),
+      ),
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Untuk Orang Tua',
-            style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+        Text(
+          '👨‍👩‍👧 Untuk Orang Tua',
+          style: GoogleFonts.fredoka(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
         const SizedBox(height: 10),
-        Row(children: [
-          tile(Icons.insights_rounded, const Color(0xFF2E7FB8), 'Laporan Perkembangan',
-              'Waktu belajar, huruf yang dikuasai, saran', const ParentReportPage()),
-          const SizedBox(width: 14),
-          tile(Icons.qr_code_2_rounded, const Color(0xFF2E9E5B), 'Pantau Langsung',
-              'Scan QR, lihat si kecil belajar dari HP Ayah/Ibu', const MonitorPage()),
-        ]),
+        Row(
+          children: [
+            tile(
+              Icons.insights_rounded,
+              const Color(0xFF2E7FB8),
+              'Laporan Perkembangan',
+              'Waktu belajar, huruf yang dikuasai, saran',
+              const ParentReportPage(),
+            ),
+            const SizedBox(width: 14),
+            tile(
+              Icons.qr_code_2_rounded,
+              const Color(0xFF2E9E5B),
+              'Pantau Langsung',
+              'Scan QR, lihat si kecil belajar dari HP Ayah/Ibu',
+              const MonitorPage(),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -601,9 +759,14 @@ class _PinRow extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('PIN Orang Tua',
-                  style: TextStyle(
-                      fontSize: 26, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+              const Text(
+                'PIN Orang Tua',
+                style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
+              ),
               Text(
                 hasPin
                     ? 'Sudah dibuat. Dipakai untuk pengaturan orang tua dan Premium.'
@@ -618,9 +781,14 @@ class _PinRow extends StatelessWidget {
           onPressed: () => showSetParentPin(context, firstTime: !hasPin),
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          child: Text(hasPin ? 'Ganti PIN' : 'Buat PIN', style: const TextStyle(fontSize: 18)),
+          child: Text(
+            hasPin ? 'Ganti PIN' : 'Buat PIN',
+            style: const TextStyle(fontSize: 18),
+          ),
         ),
       ],
     );
@@ -632,9 +800,14 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.text);
 
   @override
-  Widget build(BuildContext context) => Text(text,
-      style: const TextStyle(
-          fontSize: 32, fontWeight: FontWeight.bold, color: Color(0xFF333333)));
+  Widget build(BuildContext context) => Text(
+    text,
+    style: GoogleFonts.fredoka(
+      fontSize: 28,
+      fontWeight: FontWeight.w700,
+      color: AppColors.textDark,
+    ),
+  );
 }
 
 class _SwitchRow extends StatelessWidget {
@@ -659,13 +832,21 @@ class _SwitchRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label,
-                    style: const TextStyle(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF333333))),
-                Text(subtitle,
-                    style: const TextStyle(fontSize: 15, color: Color(0xFF888888))),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: Color(0xFF888888),
+                  ),
+                ),
               ],
             ),
           ),
@@ -699,14 +880,28 @@ class _ParentalPanel extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 8),
       // Abu gelap saat nonaktif (sesuai desain), terang saat aktif.
-      color: enabled ? const Color(0xFFF1F1F1) : const Color(0xFF808080),
+      decoration: BoxDecoration(
+        color: enabled ? const Color(0xFFF4F8FD) : const Color(0xFFF1F3F5),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      foregroundDecoration:
+          enabled
+              ? null
+              : BoxDecoration(
+                color: Colors.white.withAlpha(140),
+                borderRadius: BorderRadius.circular(18),
+              ),
       child: IgnorePointer(
         ignoring: !enabled,
         child: Column(
           children: [
-            _ValueRow(label: 'Timespent', value: timespent),
-            _ValueRow(label: 'Time Limit', value: timeLimit, onTap: onTimeLimitTap),
-            _ValueRow(label: 'Curfew', value: curfew, onTap: onCurfewTap),
+            _ValueRow(label: 'Waktu belajar hari ini', value: timespent),
+            _ValueRow(
+              label: 'Batas waktu',
+              value: timeLimit,
+              onTap: onTimeLimitTap,
+            ),
+            _ValueRow(label: 'Jam malam', value: curfew, onTap: onCurfewTap),
           ],
         ),
       ),
@@ -727,11 +922,14 @@ class _ValueRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Text(label,
-                style: const TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF222222))),
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF222222),
+              ),
+            ),
           ),
           InkWell(
             onTap: onTap,
@@ -745,8 +943,10 @@ class _ValueRow extends StatelessWidget {
                 color: AppColors.fieldFill,
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: Text(value,
-                  style: const TextStyle(fontSize: 22, color: AppColors.textDark)),
+              child: Text(
+                value,
+                style: const TextStyle(fontSize: 22, color: AppColors.textDark),
+              ),
             ),
           ),
         ],

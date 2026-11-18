@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/sky_background.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/async_body.dart';
@@ -17,7 +18,11 @@ class StoryDetailPage extends StatefulWidget {
   final String storyId;
   final String title;
 
-  const StoryDetailPage({super.key, required this.storyId, required this.title});
+  const StoryDetailPage({
+    super.key,
+    required this.storyId,
+    required this.title,
+  });
 
   @override
   State<StoryDetailPage> createState() => _StoryDetailPageState();
@@ -28,18 +33,22 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
   bool _changed = false;
 
   Future<void> _read(StoryDetail story, {required int startPage}) async {
-    await Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => StoryReaderPage(story: story, startPage: startPage),
-    ));
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StoryReaderPage(story: story, startPage: startPage),
+      ),
+    );
     if (!mounted) return;
     _changed = true;
-    setState(() => _future = StoryService().getStory(widget.storyId)); // progres terbaru
+    setState(
+      () => _future = StoryService().getStory(widget.storyId),
+    ); // progres terbaru
   }
 
   void _watch(StoryDetail story) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (_) => _VideoPage(story: story),
-    ));
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => _VideoPage(story: story)));
   }
 
   @override
@@ -50,35 +59,38 @@ class _StoryDetailPageState extends State<StoryDetailPage> {
         if (!didPop) Navigator.pop(context, _changed);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFFFFBF2),
-        body: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                child: Row(
-                  children: [
-                    PrimaryButton(
-                      label: 'Back',
-                      onPressed: () => Navigator.pop(context, _changed),
-                      width: 100,
-                      height: 44,
-                      fontSize: 20,
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: AsyncBody<StoryDetail>(
-                  future: _future,
-                  builder: (context, story) => _Overview(
-                    story: story,
-                    onRead: (page) => _read(story, startPage: page),
-                    onWatch: () => _watch(story),
+        backgroundColor: Colors.transparent,
+        body: SkyBackground(
+          child: SafeArea(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: Row(
+                    children: [
+                      PrimaryButton(
+                        label: 'Back',
+                        onPressed: () => Navigator.pop(context, _changed),
+                        width: 100,
+                        height: 44,
+                        fontSize: 20,
+                      ),
+                    ],
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: AsyncBody<StoryDetail>(
+                    future: _future,
+                    builder:
+                        (context, story) => _Overview(
+                          story: story,
+                          onRead: (page) => _read(story, startPage: page),
+                          onWatch: () => _watch(story),
+                        ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -90,7 +102,11 @@ class _Overview extends StatelessWidget {
   final StoryDetail story;
   final ValueChanged<int> onRead;
   final VoidCallback onWatch;
-  const _Overview({required this.story, required this.onRead, required this.onWatch});
+  const _Overview({
+    required this.story,
+    required this.onRead,
+    required this.onWatch,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -98,53 +114,82 @@ class _Overview extends StatelessWidget {
     final minutes = readingMinutes(story.content);
     final p = story.progress;
     final hasVideo = story.videoUrl?.isNotEmpty == true;
-    final resume = p != null && !p.completed && p.lastPage > 0 && p.lastPage < pages.length;
+    final resume =
+        p != null &&
+        !p.completed &&
+        p.lastPage > 0 &&
+        p.lastPage < pages.length;
 
     final cover = ClipRRect(
       borderRadius: BorderRadius.circular(28),
       child: AspectRatio(
         aspectRatio: 16 / 10,
         child: StoryCover(
-            url: story.coverUrl, title: story.title, seed: story.id, titleSize: 34),
+          url: story.coverUrl,
+          title: story.title,
+          seed: story.id,
+          titleSize: 34,
+        ),
       ),
     );
 
     final info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(story.title,
-            style: GoogleFonts.itim(
-                fontSize: 40, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+        Text(
+          story.title,
+          style: GoogleFonts.fredoka(
+            fontSize: 40,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
+        ),
         const SizedBox(height: 10),
         Wrap(
           spacing: 10,
           runSpacing: 8,
           children: [
             if (minutes > 0) _chip(Icons.timer_rounded, '$minutes menit'),
-            if (pages.isNotEmpty) _chip(Icons.menu_book_rounded, '${pages.length} halaman'),
+            if (pages.isNotEmpty)
+              _chip(Icons.menu_book_rounded, '${pages.length} halaman'),
             if (hasVideo) _chip(Icons.smart_display_rounded, 'Ada video'),
             if (p?.completed == true)
-              _chip(Icons.check_circle_rounded, 'Sudah dibaca',
-                  color: const Color(0xFF2E9E5B)),
+              _chip(
+                Icons.check_circle_rounded,
+                'Sudah dibaca',
+                color: const Color(0xFF2E9E5B),
+              ),
           ],
         ),
         if (p?.completed == true && p!.stars > 0) ...[
           const SizedBox(height: 10),
-          Row(children: [
-            for (var i = 0; i < 3; i++)
-              Icon(Icons.star_rounded,
+          Row(
+            children: [
+              for (var i = 0; i < 3; i++)
+                Icon(
+                  Icons.star_rounded,
                   size: 34,
-                  color: i < p.stars ? const Color(0xFFFFB300) : const Color(0xFFDDDDDD)),
-          ]),
+                  color:
+                      i < p.stars
+                          ? const Color(0xFFFFB300)
+                          : const Color(0xFFDDDDDD),
+                ),
+            ],
+          ),
         ],
         const SizedBox(height: 24),
         if (pages.isEmpty)
-          const Text('Cerita untuk dibaca belum tersedia.',
-              style: TextStyle(fontSize: 20, color: AppColors.hint))
+          const Text(
+            'Cerita untuk dibaca belum tersedia.',
+            style: TextStyle(fontSize: 20, color: AppColors.hint),
+          )
         else ...[
           _ActionButton(
             icon: Icons.auto_stories_rounded,
-            label: resume ? 'Lanjut Baca (hal. ${p.lastPage + 1})' : 'Baca Bersama',
+            label:
+                resume
+                    ? 'Lanjut Baca (hal. ${p.lastPage + 1})'
+                    : 'Baca Bersama',
             subtitle: 'Didengarkan & dibaca, kata menyala',
             color: AppColors.primary,
             onTap: () => onRead(resume ? p.lastPage : 0),
@@ -152,7 +197,10 @@ class _Overview extends StatelessWidget {
           if (resume)
             TextButton(
               onPressed: () => onRead(0),
-              child: Text('Mulai dari awal', style: GoogleFonts.itim(fontSize: 18)),
+              child: Text(
+                'Mulai dari awal',
+                style: GoogleFonts.fredoka(fontSize: 18),
+              ),
             ),
         ],
         if (hasVideo) ...[
@@ -168,41 +216,50 @@ class _Overview extends StatelessWidget {
       ],
     );
 
-    return LayoutBuilder(builder: (context, c) {
-      final wide = c.maxWidth > 820;
-      return SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 1000),
-            child: wide
-                ? Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 6, child: cover),
-                      const SizedBox(width: 32),
-                      Expanded(flex: 5, child: info),
-                    ],
-                  )
-                : Column(children: [cover, const SizedBox(height: 20), info]),
+    return LayoutBuilder(
+      builder: (context, c) {
+        final wide = c.maxWidth > 820;
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child:
+                  wide
+                      ? Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(flex: 6, child: cover),
+                          const SizedBox(width: 32),
+                          Expanded(flex: 5, child: info),
+                        ],
+                      )
+                      : Column(
+                        children: [cover, const SizedBox(height: 20), info],
+                      ),
+            ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
-  Widget _chip(IconData icon, String text, {Color color = AppColors.hint}) => Container(
+  Widget _chip(IconData icon, String text, {Color color = AppColors.hint}) =>
+      Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: const Color(0xFFE8E1D3)),
         ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 6),
-          Text(text, style: GoogleFonts.itim(fontSize: 17, color: color)),
-        ]),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 6),
+            Text(text, style: GoogleFonts.fredoka(fontSize: 17, color: color)),
+          ],
+        ),
       );
 }
 
@@ -239,15 +296,29 @@ class _ActionButton extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label,
-                        style: GoogleFonts.itim(
-                            fontSize: 26, fontWeight: FontWeight.bold, color: Colors.white)),
-                    Text(subtitle,
-                        style: GoogleFonts.itim(fontSize: 16, color: Colors.white70)),
+                    Text(
+                      label,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 26,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 16,
+                        color: Colors.white70,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, size: 36, color: Colors.white),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 36,
+                color: Colors.white,
+              ),
             ],
           ),
         ),
@@ -280,11 +351,16 @@ class _VideoPage extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(story.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.itim(
-                            fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: Text(
+                      story.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.fredoka(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),

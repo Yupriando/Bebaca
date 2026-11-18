@@ -329,8 +329,26 @@ class _TracePainter extends CustomPainter {
     canvas.drawLine(const Offset(24, _baseline), Offset(size.width - 24, _baseline), linePaint);
 
     // huruf panduan (abu-abu)
-    final tp = _guidePainter(glyph, color: const Color(0xFFC9C9C9));
-    tp.paint(canvas, _guideOffset(tp));
+    // huruf panduan: isian biru muda + garis tepi biru (gaya banner)
+    final tp = _guidePainter(glyph, color: const Color(0xFFE3F0FF));
+    final at = _guideOffset(tp);
+    tp.paint(canvas, at);
+    TextPainter(
+      text: TextSpan(
+        text: glyph,
+        style: GoogleFonts.itim(
+          fontSize: _fontSize,
+          foreground: Paint()
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 3
+            ..strokeJoin = StrokeJoin.round
+            ..color = const Color(0xFF8DB9EE),
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )
+      ..layout()
+      ..paint(canvas, at);
 
     // goresan anak
     _drawStrokes(canvas, strokes, AppColors.primary.withAlpha(235));
@@ -525,6 +543,40 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
     _reportDrawing(note: 'Menghapus tulisan, mulai lagi');
   }
 
+  /// Urungkan goresan terakhir.
+  void _undo() {
+    if (_strokes.isEmpty) return;
+    _checkId++;
+    _liveTimer?.cancel();
+    _liveTimer = null;
+    setState(() {
+      _strokes.removeLast();
+      _hints = const [];
+      if (_strokes.isEmpty) _coverage = 0;
+    });
+    if (_strokes.isNotEmpty) _check(finish: false);
+    _reportDrawing(note: 'Mengurungkan goresan terakhir');
+  }
+
+  Widget _toolButton(IconData icon, String tooltip, VoidCallback? onTap) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        shape: const CircleBorder(side: BorderSide(color: Color(0xFFD6E2F0), width: 2)),
+        elevation: onTap == null ? 0 : 2,
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Icon(icon, size: 28, color: onTap == null ? Colors.black26 : AppColors.primary),
+          ),
+        ),
+      ),
+    );
+  }
+
   void _skip() {
     widget.env.onMistake();
     setState(() {
@@ -646,11 +698,13 @@ class _TraceStepState extends State<TraceStep> with SingleTickerProviderStateMix
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextButton.icon(
-              onPressed: _done ? null : _clear,
-              icon: const Icon(Icons.refresh_rounded),
-              label: const Text('Hapus', style: TextStyle(fontSize: 18)),
-            ),
+            // tombol bulat seperti banner: hapus semua & urungkan
+            _toolButton(Icons.cleaning_services_rounded, 'Hapus semua',
+                _done || _strokes.isEmpty ? null : _clear),
+            const SizedBox(width: 16),
+            _toolButton(Icons.undo_rounded, 'Urungkan goresan terakhir',
+                _done || _strokes.isEmpty ? null : _undo),
+            const SizedBox(width: 8),
             if (showSkip)
               TextButton(
                 onPressed: _skip,

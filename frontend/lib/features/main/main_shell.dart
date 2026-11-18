@@ -8,6 +8,7 @@ import '../learn/learn_tab.dart';
 import '../profile/profile_page.dart';
 import '../settings/settings_page.dart';
 import '../stories/stories_page.dart';
+import '../../core/widgets/sky_background.dart';
 import 'app_sidebar.dart';
 import 'parental_lock_screen.dart';
 
@@ -123,13 +124,17 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
       );
 
       final shell = Scaffold(
-        body: SafeArea(
-          child: wide
-              ? Row(children: [
-                  AppSidebar(selectedIndex: _index, onSelected: _select),
-                  Expanded(child: content),
-                ])
-              : content,
+        backgroundColor: Colors.transparent,
+        // langit berawan di belakang semua tab (gaya banner)
+        body: SkyBackground(
+          child: SafeArea(
+            child: wide
+                ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    AppSidebar(selectedIndex: _index, onSelected: _select),
+                    Expanded(child: content),
+                  ])
+                : content,
+          ),
         ),
         bottomNavigationBar: wide
             ? null

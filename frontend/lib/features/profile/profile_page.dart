@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../core/widgets/sky_background.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/async_body.dart';
@@ -33,9 +35,10 @@ class _ProfilePageState extends State<ProfilePage> {
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  String _date(DateTime? d) => d == null
-      ? '-'
-      : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
+  String _date(DateTime? d) =>
+      d == null
+          ? '-'
+          : '${d.day.toString().padLeft(2, '0')}/${d.month.toString().padLeft(2, '0')}/${d.year}';
 
   Future<void> _edit(UserProfile p) async {
     final saved = await showModalBottomSheet<bool>(
@@ -56,30 +59,42 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _changeAvatar(UserProfile p) async {
     final action = await showModalBottomSheet<_AvatarAction>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_camera_rounded),
-              title: const Text('Ambil foto', style: TextStyle(fontSize: 20)),
-              onTap: () => Navigator.pop(ctx, _AvatarAction.camera),
+      builder:
+          (ctx) => SafeArea(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_rounded),
+                  title: const Text(
+                    'Ambil foto',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  onTap: () => Navigator.pop(ctx, _AvatarAction.camera),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_library_rounded),
+                  title: const Text(
+                    'Pilih dari galeri',
+                    style: TextStyle(fontSize: 20),
+                  ),
+                  onTap: () => Navigator.pop(ctx, _AvatarAction.gallery),
+                ),
+                if (p.avatarUrl != null)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline_rounded,
+                      color: Colors.redAccent,
+                    ),
+                    title: const Text(
+                      'Hapus foto',
+                      style: TextStyle(fontSize: 20, color: Colors.redAccent),
+                    ),
+                    onTap: () => Navigator.pop(ctx, _AvatarAction.remove),
+                  ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Pilih dari galeri', style: TextStyle(fontSize: 20)),
-              onTap: () => Navigator.pop(ctx, _AvatarAction.gallery),
-            ),
-            if (p.avatarUrl != null)
-              ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: Colors.redAccent),
-                title: const Text('Hapus foto',
-                    style: TextStyle(fontSize: 20, color: Colors.redAccent)),
-                onTap: () => Navigator.pop(ctx, _AvatarAction.remove),
-              ),
-          ],
-        ),
-      ),
+          ),
     );
     if (action == null) return;
 
@@ -89,9 +104,10 @@ class _ProfilePageState extends State<ProfilePage> {
         await _service.removeAvatar();
       } else {
         final picked = await ImagePicker().pickImage(
-          source: action == _AvatarAction.camera
-              ? ImageSource.camera
-              : ImageSource.gallery,
+          source:
+              action == _AvatarAction.camera
+                  ? ImageSource.camera
+                  : ImageSource.gallery,
           // dikecilkan di perangkat dulu: unggahan cepat & hemat kuota
           maxWidth: 800,
           maxHeight: 800,
@@ -102,12 +118,18 @@ class _ProfilePageState extends State<ProfilePage> {
         await _service.uploadAvatar(await picked.readAsBytes(), picked.name);
       }
       if (!mounted) return;
-      _snack(action == _AvatarAction.remove ? 'Foto dihapus' : 'Foto profil diperbarui');
+      _snack(
+        action == _AvatarAction.remove
+            ? 'Foto dihapus'
+            : 'Foto profil diperbarui',
+      );
       _reload();
     } on ApiException catch (e) {
       if (mounted) _snack(e.message);
     } catch (_) {
-      if (mounted) _snack('Tidak bisa mengambil foto. Periksa izin kamera/galeri.');
+      if (mounted) {
+        _snack('Tidak bisa mengambil foto. Periksa izin kamera/galeri.');
+      }
     } finally {
       if (mounted) setState(() => _uploading = false);
     }
@@ -127,46 +149,99 @@ class _ProfilePageState extends State<ProfilePage> {
           ('Materi terakhir', p.materiTerakhir ?? 'Belum ada'),
         ];
 
-        return SingleChildScrollView(
+        final info = Column(
+          children: [
+            for (final r in rows) _InfoRow(label: r.$1, value: r.$2),
+            AnimatedBuilder(
+              animation: PremiumStore.instance,
+              builder:
+                  (context, _) => _InfoRow(
+                    label: 'Langganan',
+                    value: PremiumStore.instance.status.label,
+                  ),
+            ),
+          ],
+        );
+        // kartu kiri: foto, nama, hari beruntun | kartu kanan: data profil (gaya banner)
+        final hero = SoftCard(
+          radius: 28,
+          padding: const EdgeInsets.fromLTRB(22, 26, 22, 22),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(height: 28),
               _Avatar(
                 url: p.avatarUrl,
                 busy: _uploading,
                 onTap: _uploading ? null : () => _changeAvatar(p),
               ),
-              const SizedBox(height: 28),
-              const Divider(height: 1, color: Colors.black87),
-              const SizedBox(height: 24),
-              Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        for (final r in rows) _InfoRow(label: r.$1, value: r.$2),
-                        AnimatedBuilder(
-                          animation: PremiumStore.instance,
-                          builder: (context, _) => _InfoRow(
-                            label: 'Langganan',
-                            value: PremiumStore.instance.status.label,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        PrimaryButton(
-                          label: 'Edit Profil',
-                          onPressed: () => _edit(p),
-                          width: 260,
-                        ),
-                      ],
-                    ),
+              const SizedBox(height: 14),
+              Text(
+                p.nama,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.fredoka(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textDark,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEDE0),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  '🔥 ${p.hariBerturut} hari beruntun',
+                  style: GoogleFonts.fredoka(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textDark,
                   ),
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 18),
+              PrimaryButton(
+                label: 'Edit Profil',
+                icon: Icons.edit_rounded,
+                onPressed: () => _edit(p),
+                width: 220,
+              ),
             ],
+          ),
+        );
+        final details = SoftCard(
+          radius: 28,
+          padding: const EdgeInsets.fromLTRB(22, 14, 22, 14),
+          child: info,
+        );
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: LayoutBuilder(
+                builder: (context, c) {
+                  if (c.maxWidth < 720) {
+                    return Column(
+                      children: [hero, const SizedBox(height: 16), details],
+                    );
+                  }
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(width: 300, child: hero),
+                      const SizedBox(width: 18),
+                      Expanded(child: details),
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         );
       },
@@ -182,9 +257,8 @@ class _Avatar extends StatelessWidget {
 
   static const _size = 170.0;
 
-  Widget _placeholder() => const Center(
-        child: Icon(Icons.person, size: 130, color: Colors.white),
-      );
+  Widget _placeholder() =>
+      const Center(child: Icon(Icons.person, size: 130, color: Colors.white));
 
   @override
   Widget build(BuildContext context) {
@@ -201,23 +275,28 @@ class _Avatar extends StatelessWidget {
               height: _size,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                color: Color(0xFF9E9E9E),
+                color: Color(0xFFBFD9F7),
               ),
               child: ClipOval(
-                child: url == null
-                    ? _placeholder()
-                    : Image.network(
-                        url!,
-                        width: _size,
-                        height: _size,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder(),
-                        loadingBuilder: (context, child, progress) =>
-                            progress == null
-                                ? child
-                                : const Center(
-                                    child: CircularProgressIndicator(color: Colors.white)),
-                      ),
+                child:
+                    url == null
+                        ? _placeholder()
+                        : Image.network(
+                          url!,
+                          width: _size,
+                          height: _size,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => _placeholder(),
+                          loadingBuilder:
+                              (context, child, progress) =>
+                                  progress == null
+                                      ? child
+                                      : const Center(
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                        ),
               ),
             ),
             if (busy)
@@ -244,8 +323,11 @@ class _Avatar extends StatelessWidget {
                   color: AppColors.primary,
                   border: Border.all(color: Colors.white, width: 3),
                 ),
-                child: const Icon(Icons.photo_camera_rounded,
-                    color: Colors.white, size: 24),
+                child: const Icon(
+                  Icons.photo_camera_rounded,
+                  color: Colors.white,
+                  size: 24,
+                ),
               ),
             ),
           ],
@@ -269,10 +351,12 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             flex: 5,
             child: Text(
-              '$label :',
-              textAlign: TextAlign.right,
-              style: const TextStyle(
-                  fontSize: 28, fontWeight: FontWeight.bold, color: Colors.black),
+              label,
+              style: GoogleFonts.fredoka(
+                fontSize: 19,
+                fontWeight: FontWeight.w600,
+                color: AppColors.hint,
+              ),
             ),
           ),
           const SizedBox(width: 16),
