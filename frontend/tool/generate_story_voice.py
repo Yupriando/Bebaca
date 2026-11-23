@@ -124,11 +124,13 @@ def fetch_stories(title=None):
         return json.loads(sb_request('GET', f'/rest/v1/stories?{query}'))
 
     try:
-        return get('title,content,moral,quiz,prompts,vocab')
+        rows = get('title,content,moral,quiz,prompts,vocab,is_premium')
     except urllib.error.HTTPError as e:
         if e.code != 400:
             raise
-        return get('title,content,moral,quiz')  # migration 007 belum dijalankan
+        rows = get('title,content,moral,quiz,is_premium')  # migration 007 belum dijalankan
+    # dongeng gratis direkam lebih dulu (kalau kuota habis, yang gratis sudah lengkap)
+    return sorted(rows, key=lambda r: (bool(r.get('is_premium')), r['title']))
 
 
 def ensure_bucket():

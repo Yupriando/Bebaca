@@ -2,11 +2,11 @@
 
 ## Download aplikasi (Android)
 
-**[Download Bebaca v1.2.0 (APK, 61 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.2.0.apk)**
+**[Download Bebaca v1.2.1 (APK, 66 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.2.1.apk)**
 
 Cara memasang:
 1. Buka link di atas dari HP Android, tunggu sampai unduhan selesai.
-2. Buka file `Bebaca-v1.2.0.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
+2. Buka file `Bebaca-v1.2.1.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
    untuk browser / File Manager yang dipakai.
 3. Ketuk **Instal**, lalu buka **Bebaca**. Daftar akun baru atau login.
 
@@ -176,9 +176,13 @@ dikirimi lesson jenis baru: aplikasi 1.2 mengirim header `X-Bebaca-Client: 2`, y
   "Coba lagi" memutar contoh bacaan; penilaian orang tua ikut tercatat di laporan & Pantau Langsung.
 - Di Baca Bersama, narasi berhenti di halaman yang punya pertanyaan **Ayo ngobrol**, supaya ada waktu bercakap.
 
-Rekaman suara AI untuk suku kata, kata, dan kalimat baru (diambil otomatis dari Supabase):
-`cd frontend; $env:ELEVENLABS_API_KEY="sk_..."; python tool/generate_voice.py --voice <VOICE_ID>`
-(hanya merekam yang belum ada, sekitar 240 rekaman pendek. Tanpa rekaman, dipakai suara bawaan perangkat.)
+Rekaman suara AI untuk suku kata, kata, dan kalimat (diambil otomatis dari Supabase, disimpan di dalam aplikasi
+supaya pelajaran tetap jalan tanpa internet):
+`cd frontend; python tool/generate_voice.py --voice Xb7hH8MSUJpSbSDYk0k2 --model eleven_flash_v2_5`
+(suara Alice, sama dengan rekaman lama; hanya merekam yang belum ada. Tanpa rekaman, dipakai suara bawaan perangkat.)
+
+**API key ElevenLabs** cukup ditaruh sekali di `backend/.env` (baris `ELEVENLABS_API_KEY=sk_...`, file ini tidak ikut
+ke GitHub). Yang dipakai adalah key yang diawali `sk_` (muncul sekali saat key dibuat), bukan "Key ID".
 
 ## Video & isi dongeng
 Tiap dongeng punya 3 kolom di tabel `stories` (Supabase -> Table Editor):
@@ -220,11 +224,15 @@ Migrasi: `backend/supabase/migrations/005_story_reader.sql` (kolom `moral`, `qui
   (mis. "Mitologi Yunani" -> "Raja Midas dan Sentuhan Emas"). Gambar sampul & halaman belum ada: isi `cover_url`
   dan `page_images` bila ilustrasinya sudah siap (tanpa gambar, halaman tampil sebagai buku bertulisan besar).
 - Gambar per halaman: isi `page_images` (array URL, urut sesuai halaman). Kosong = pakai gambar sampul.
-- Narasi AI (opsional, sekali saja; tanpanya dipakai suara perangkat):
-  `cd frontend; $env:ELEVENLABS_API_KEY="sk_..."; python tool/generate_story_voice.py --voice <VOICE_ID> --title "Malin Kundang"`
-  Hasil: `frontend/assets/stories/st_*.mp3` + `.json` (waktu tiap kata). Kalau isi cerita diubah, jalankan lagi.
-  Tanpa `--title` semua dongeng direkam (35 dongeng baru sekitar 55.000 karakter: perlu paket ElevenLabs berbayar).
-  Pesan moral, soal kuis, pertanyaan ngobrol, dan arti kata baru ikut direkam.
+- Narasi AI: `cd frontend; python tool/generate_story_voice.py --voice Xb7hH8MSUJpSbSDYk0k2 --model eleven_flash_v2_5`
+  - Hasilnya diunggah ke **Supabase Storage**, bucket publik `narasi` (dibuat otomatis): `st_*.mp3` + `st_*.json`
+    (waktu tiap kata) per halaman, plus suara pesan moral, kuis, pertanyaan ngobrol, dan arti kata baru.
+    Aplikasi memutarnya langsung dari sana (backend mengirim alamatnya sebagai `narrationBaseUrl`), jadi APK tetap
+    kecil dan dongeng baru langsung bersuara tanpa update aplikasi. Daftar rekaman ada di `narasi/manifest.json`.
+  - Yang sudah direkam dilewati. Kalau kuota ElevenLabs habis, jalankan perintah yang sama lagi untuk melanjutkan.
+    Dongeng gratis selalu direkam lebih dulu. `--dry-run` = hitung sisa karakter/kredit tanpa merekam.
+  - Halaman tanpa rekaman (atau saat tidak ada internet) dibacakan suara bawaan perangkat.
+  - Malin Kundang memakai rekaman lama di dalam aplikasi (`frontend/assets/stories`). `--local` = cara lama itu.
 
 ## Untuk Orang Tua: Laporan Perkembangan & Pantau Langsung (QR)
 Migrasi: `backend/supabase/migrations/006_parent_report.sql` (tabel `learning_events` & `parent_links`).
