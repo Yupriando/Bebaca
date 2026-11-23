@@ -7,19 +7,19 @@ export const PAGE_HTML = `<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<meta name="theme-color" content="#50A5DB">
+<meta name="theme-color" content="#2F7BEA">
 <title>Pantau Belajar · Bebaca</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Itim&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Itim&display=swap" rel="stylesheet">
 <style>
-  :root { --blue:#50A5DB; --ink:#1A1033; --muted:#6B6B6B; --bg:#F4FAFF; --card:#fff; --green:#2E9E5B; --red:#E5533D; --gold:#FFB300; }
+  :root { --blue:#2F7BEA; --ink:#17305C; --muted:#6B7A90; --bg:#EEF5FC; --card:#fff; --green:#2E9E5B; --red:#E5533D; --gold:#FFB300; --purple:#7B61FF; }
   * { box-sizing: border-box; }
-  body { margin:0; background:var(--bg); color:var(--ink); font-family:'Itim', system-ui, sans-serif; }
-  header { background:var(--blue); color:#fff; padding:18px 16px 26px; }
-  .brand { font-size:15px; opacity:.9; letter-spacing:.3px; }
+  body { margin:0; background:var(--bg); color:var(--ink); font-family:'Fredoka', system-ui, sans-serif; }
+  header { background:linear-gradient(180deg,#5AAEFF,#2F7BEA); color:#fff; padding:18px 16px 28px; border-radius:0 0 26px 26px; }
+  .brand { font-size:15px; opacity:.92; letter-spacing:.3px; font-weight:600; }
   .child { display:flex; align-items:center; gap:12px; margin-top:10px; }
   .avatar { width:56px; height:56px; border-radius:50%; background:#fff; object-fit:cover; flex:none;
-            display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--blue); }
+            display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700; color:var(--blue); }
   .name { font-size:26px; font-weight:bold; line-height:1.1; }
   .status { display:inline-flex; align-items:center; gap:6px; margin-top:4px; font-size:15px;
             background:rgba(255,255,255,.2); padding:3px 10px; border-radius:20px; }
@@ -27,18 +27,24 @@ export const PAGE_HTML = `<!doctype html>
   .dot.on { background:#7CFC9A; box-shadow:0 0 0 0 rgba(124,252,154,.8); animation:pulse 1.6s infinite; }
   @keyframes pulse { 70% { box-shadow:0 0 0 10px rgba(124,252,154,0); } 100% { box-shadow:0 0 0 0 rgba(124,252,154,0); } }
   main { max-width:640px; margin:-14px auto 0; padding:0 14px 30px; }
-  .card { background:var(--card); border-radius:20px; padding:16px; margin-bottom:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .card { background:var(--card); border-radius:22px; padding:16px; margin-bottom:12px; box-shadow:0 6px 18px rgba(28,95,199,.10); }
   .label { font-size:14px; color:var(--muted); }
   .now-title { font-size:24px; font-weight:bold; margin-top:4px; }
   .now-detail { font-size:17px; color:var(--muted); }
   .idle { font-size:18px; color:var(--muted); }
   .stats { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
-  .stat { background:var(--card); border-radius:18px; padding:12px; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+  .stat { background:var(--card); border-radius:18px; padding:12px 14px; box-shadow:0 6px 18px rgba(28,95,199,.10); border-top:4px solid var(--c, var(--blue)); }
   .stat b { display:block; font-size:28px; }
   .feed { list-style:none; margin:0; padding:0; }
   .feed li { display:flex; gap:10px; padding:9px 0; border-bottom:1px solid #eef2f5; font-size:17px; }
   .feed li:last-child { border-bottom:none; }
-  .feed .ic { width:26px; text-align:center; flex:none; }
+  .feed .ic { width:12px; height:12px; margin-top:6px; border-radius:50%; flex:none; background:#B9C4D2; }
+  .k-lesson, .k-listen, .k-app { background:var(--blue) !important; }
+  .k-complete, .k-premium { background:var(--gold) !important; }
+  .k-correct, .k-read, .k-unlock { background:var(--green) !important; }
+  .k-wrong, .k-story, .k-video { background:var(--red) !important; }
+  .k-parent, .k-word, .k-prompt { background:var(--purple) !important; }
+  .k-warning, .k-note { background:#E67E22 !important; }
   .feed .t { flex:1; }
   .feed .time { color:var(--muted); font-size:14px; white-space:nowrap; }
   .new { animation:flash 1.2s ease-out; }
@@ -50,9 +56,10 @@ export const PAGE_HTML = `<!doctype html>
   .bar { height:10px; background:#EDF2F6; border-radius:6px; margin:10px 0 12px; overflow:hidden; }
   .bar > div { height:100%; background:var(--gold); border-radius:6px; transition:width .4s; }
   .prompt { display:flex; align-items:center; gap:14px; margin:6px 0 10px; }
-  .tile { width:64px; height:64px; flex:none; border-radius:14px; background:linear-gradient(135deg,#D9963F,#B8702A);
+  .tile { min-width:64px; height:64px; padding:0 12px; flex:none; border-radius:14px; background:linear-gradient(135deg,#D9963F,#B8702A);
           color:#fff; font-size:38px; font-weight:bold; display:flex; align-items:center; justify-content:center;
           box-shadow:0 3px 0 #8A5320; }
+  .tile.long { font-size:24px; }
   .prompt-text { font-size:21px; }
   .opts { display:flex; flex-wrap:wrap; gap:8px; margin:4px 0 10px; }
   .opt { min-width:44px; padding:6px 10px; border-radius:12px; border:2px solid #DDE6EE; background:#fff;
@@ -61,6 +68,10 @@ export const PAGE_HTML = `<!doctype html>
   .opt.wrong { border-color:var(--red); background:#FDE4E1; color:#B3261E; }
   .chips { display:flex; flex-wrap:wrap; gap:6px; font-size:15px; }
   .chip { background:#F1F5F8; border-radius:10px; padding:4px 10px; }
+  .chip.good { background:#E3F5EA; color:#1E7A43; }
+  .chip.bad { background:#FDE4E1; color:#B3261E; }
+  .tag { display:inline-block; font-size:13px; font-weight:600; color:#fff; background:var(--blue); border-radius:8px; padding:1px 8px; margin-bottom:4px; }
+  .tag.dongeng { background:var(--purple); } .tag.video { background:var(--red); } .tag.menu { background:#8A94A6; }
   .note { margin-top:10px; background:#FFF4D6; color:#6B4A00; border-radius:12px; padding:8px 12px; font-size:16px; }
   .quote { margin:6px 0 10px; padding:12px 14px; background:#FFFBF2; border-left:4px solid var(--gold);
            border-radius:10px; font-size:20px; line-height:1.4; }
@@ -83,7 +94,7 @@ export const PAGE_HTML = `<!doctype html>
   canvas.draw-c { width:180px; height:150px; border:2px solid #E0E6EB; border-radius:12px; background:#fff; flex:none; }
   .words { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
   .word { background:#FFF3C4; border-radius:8px; padding:2px 8px; font-size:15px; }
-  .live { margin-left:6px; font-size:13px; background:#FFD54F; color:#5A3A00; padding:1px 8px; border-radius:10px; display:none; }
+  .live { margin-left:6px; font-size:12px; font-weight:700; letter-spacing:.5px; background:#FFD54F; color:#5A3A00; padding:1px 8px; border-radius:10px; display:none; }
   .live.on { display:inline-block; }
   .error { text-align:center; padding:60px 20px; font-size:20px; }
   footer { text-align:center; color:var(--muted); font-size:13px; padding:10px 16px 24px; }
@@ -91,12 +102,12 @@ export const PAGE_HTML = `<!doctype html>
 </head>
 <body data-sb-url="__SB_URL__" data-sb-key="__SB_KEY__">
 <header>
-  <div class="brand">📚 Bebaca · Pantau Belajar</div>
+  <div class="brand">Bebaca · Pantau Belajar</div>
   <div class="child">
-    <div class="avatar" id="avatar">🙂</div>
+    <div class="avatar" id="avatar">B</div>
     <div>
       <div class="name" id="name">Memuat...</div>
-      <div class="status"><span class="dot" id="dot"></span><span id="status">Menghubungkan...</span><span class="live" id="live">⚡ Langsung</span></div>
+      <div class="status"><span class="dot" id="dot"></span><span id="status">Menghubungkan...</span><span class="live" id="live">LANGSUNG</span></div>
     </div>
   </div>
 </header>
@@ -108,13 +119,13 @@ export const PAGE_HTML = `<!doctype html>
     <div id="now"><div class="idle">Memuat...</div></div>
   </div>
   <div class="stats">
-    <div class="stat"><span class="label">⏱ Belajar hari ini</span><b id="minutes">-</b></div>
-    <div class="stat"><span class="label">✅ Jawaban benar</span><b id="correct">-</b></div>
-    <div class="stat"><span class="label">🏆 Lesson selesai</span><b id="lessons">-</b></div>
-    <div class="stat"><span class="label">🔥 Hari beruntun</span><b id="streak">-</b></div>
+    <div class="stat" style="--c:#2F7BEA"><span class="label">Belajar hari ini</span><b id="minutes">-</b></div>
+    <div class="stat" style="--c:#2E9E5B"><span class="label">Jawaban benar</span><b id="correct">-</b></div>
+    <div class="stat" style="--c:#FFB300"><span class="label">Lesson selesai</span><b id="lessons">-</b></div>
+    <div class="stat" style="--c:#FF7A1A"><span class="label">Hari beruntun</span><b id="streak">-</b></div>
   </div>
   <div class="card limit" id="limitCard" style="margin-top:12px; display:none">
-    <div class="label">⏳ Batas waktu belajar hari ini</div>
+    <div class="label">Batas waktu belajar hari ini</div>
     <div id="limitText" style="font-size:20px; font-weight:bold"></div>
     <div class="bar"><div id="limitBar"></div></div>
     <div class="label" id="curfewText"></div>
@@ -157,6 +168,7 @@ export const PAGE_JS = `(() => {
 
   function render(d) {
     $('name').textContent = d.child.name;
+    if (!d.child.avatarUrl) $('avatar').textContent = (d.child.name || 'B').trim().charAt(0).toUpperCase();
     document.title = 'Pantau ' + d.child.name + ' · Bebaca';
     const av = $('avatar');
     if (d.child.avatarUrl && !av.querySelector('img')) {
@@ -171,11 +183,11 @@ export const PAGE_JS = `(() => {
 
     const lock = $('lock');
     lock.className = 'banner lock' + (d.locked ? ' on' : '');
-    lock.textContent = d.locked ? '🔒 Layar Bebaca sedang terkunci: ' + d.locked : '';
+    lock.textContent = d.locked ? 'Layar Bebaca sedang terkunci: ' + d.locked : '';
     const away = $('away');
     const isAway = d.state === 'background';
     away.className = 'banner away' + (isAway ? ' on' : '');
-    away.textContent = isAway ? '💤 Bebaca sedang ditinggalkan (diminimize, pindah ke aplikasi lain, atau layar HP mati) sejak ' + ago(d.lastSeen) : '';
+    away.textContent = isAway ? 'Bebaca sedang ditinggalkan (diminimize, pindah ke aplikasi lain, atau layar HP mati) sejak ' + ago(d.lastSeen) : '';
 
     const lim = d.limits || {};
     $('limitCard').style.display = lim.limitMinutes ? 'block' : 'none';
@@ -199,7 +211,7 @@ export const PAGE_JS = `(() => {
     for (const f of d.feed) {
       const key = f.at + f.text;
       const li = el('li', !first && !seen.has(key) ? 'new' : null);
-      li.appendChild(el('span', 'ic', f.icon));
+      li.appendChild(el('span', 'ic k-' + (f.kind || 'tap')));
       li.appendChild(el('span', 't', f.text));
       li.appendChild(el('span', 'time', ago(f.at)));
       feed.appendChild(li);
@@ -243,10 +255,11 @@ export const PAGE_JS = `(() => {
     return c;
   }
 
-  function head(icon, title, sub, right) {
+  function head(tag, title, sub, right) {
     const h = el('div', 'act-head');
     const left = el('div');
-    left.appendChild(el('div', 'act-title', icon + ' ' + title));
+    left.appendChild(el('span', 'tag ' + tag.toLowerCase(), tag));
+    left.appendChild(el('div', 'act-title', title));
     if (sub) left.appendChild(el('div', 'act-sub', sub));
     h.appendChild(left);
     if (right) h.appendChild(el('div', 'act-step', right));
@@ -272,10 +285,10 @@ export const PAGE_JS = `(() => {
     const sinceText = a.since ? 'mulai ' + ago(a.since) : null;
 
     if (a.kind === 'lesson') {
-      now.appendChild(head('📘', a.title, a.subtitle, a.steps ? 'Langkah ' + a.step + '/' + a.steps : null));
+      now.appendChild(head('Belajar', a.title, a.subtitle, a.steps ? 'Langkah ' + a.step + '/' + a.steps : null));
       if (a.steps) now.appendChild(bar(a.step - 1, a.steps));
       const p = el('div', 'prompt');
-      if (a.letter) p.appendChild(el('div', 'tile', a.letter));
+      if (a.letter) p.appendChild(el('div', 'tile' + (String(a.letter).length > 3 ? ' long' : ''), a.letter));
       const pt = el('div');
       if (a.stepName) pt.appendChild(el('div', 'act-sub', a.stepName));
       if (a.prompt) pt.appendChild(el('div', 'prompt-text', '"' + a.prompt + '"'));
@@ -290,18 +303,18 @@ export const PAGE_JS = `(() => {
         now.appendChild(o);
       }
       const c = el('div', 'chips');
-      c.appendChild(el('span', 'chip', '✅ ' + a.correct + ' benar'));
-      c.appendChild(el('span', 'chip', '❌ ' + a.wrong + ' salah'));
+      c.appendChild(el('span', 'chip good', a.correct + ' benar'));
+      c.appendChild(el('span', 'chip bad', a.wrong + ' salah'));
       if (a.lastAnswer) {
         const la = a.lastAnswer;
-        c.appendChild(el('span', 'chip', 'Jawaban terakhir: ' + (la.correct ? 'benar 👍' :
+        c.appendChild(el('span', 'chip', 'Jawaban terakhir: ' + (la.correct ? 'benar' :
           la.picked ? (la.read ? 'terdengar "' + la.picked + '"' : 'memilih ' + la.picked) : 'belum tepat')));
       }
-      if (a.replays) c.appendChild(el('span', 'chip', '🔊 ' + a.replays + 'x memutar ulang suara'));
-      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      if (a.replays) c.appendChild(el('span', 'chip', a.replays + 'x memutar ulang suara'));
+      if (sinceText) c.appendChild(el('span', 'chip', sinceText));
       now.appendChild(c);
       if (a.heard) {
-        const h = el('div', 'heard', a.heard.live ? '🎤 Sedang terdengar: ' : '🎤 Terdengar: ');
+        const h = el('div', 'heard', a.heard.live ? 'Sedang terdengar: ' : 'Terdengar: ');
         h.appendChild(el('b', null, '"' + a.heard.text + '"'));
         now.appendChild(h);
       }
@@ -315,7 +328,7 @@ export const PAGE_JS = `(() => {
         box.appendChild(t);
         now.appendChild(box);
       }
-      if (a.note) now.appendChild(el('div', 'note', '📝 ' + a.note));
+      if (a.note) now.appendChild(el('div', 'note', a.note));
       if (a.timeline && a.timeline.length) {
         const tl = el('div', 'timeline');
         tl.appendChild(el('div', 'act-sub', 'Perjalanan lesson ini:'));
@@ -323,7 +336,7 @@ export const PAGE_JS = `(() => {
           const row = el('div', 'tl' + (x.current ? ' cur' : ' done'));
           row.appendChild(el('span', 'n', String(x.step)));
           row.appendChild(el('span', 'grow', x.name + (x.letter ? ' ' + x.letter : '') + (x.current ? ' (sekarang)' : '')));
-          const res = [x.correct ? '✅ ' + x.correct : '', x.wrong ? '❌ ' + x.wrong : '', secs(x.seconds)].filter(Boolean).join('  ·  ');
+          const res = [x.correct ? x.correct + ' benar' : '', x.wrong ? x.wrong + ' salah' : '', secs(x.seconds)].filter(Boolean).join('  ·  ');
           row.appendChild(el('span', null, res));
           tl.appendChild(row);
         }
@@ -333,29 +346,29 @@ export const PAGE_JS = `(() => {
     }
 
     if (a.kind === 'video') {
-      now.appendChild(head('🎬', a.title, a.state, a.duration ? mmss(a.position) + ' / ' + mmss(a.duration) : null));
+      now.appendChild(head('Video', a.title, a.state, a.duration ? mmss(a.position) + ' / ' + mmss(a.duration) : null));
       if (a.duration) now.appendChild(bar(a.position, a.duration));
       const c = el('div', 'chips');
-      c.appendChild(el('span', 'chip', a.playing ? '▶️ Sedang diputar' : '⏸ Sedang berhenti'));
-      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      c.appendChild(el('span', 'chip', a.playing ? 'Sedang diputar' : 'Sedang berhenti'));
+      if (sinceText) c.appendChild(el('span', 'chip', sinceText));
       now.appendChild(c);
       return;
     }
 
     if (a.kind === 'story') {
-      now.appendChild(head('📖', a.title, a.mode, a.pages ? 'Halaman ' + a.page + '/' + a.pages : null));
+      now.appendChild(head('Dongeng', a.title, a.mode, a.pages ? 'Halaman ' + a.page + '/' + a.pages : null));
       if (a.pages) now.appendChild(bar(a.page, a.pages));
       if (a.text) now.appendChild(el('div', 'quote', a.text));
       const c = el('div', 'chips');
       if (a.readingLive) {
-        c.appendChild(el('span', 'chip', '🎤 Sedang membaca: ' + a.readingLive.read + '/' + a.readingLive.total + ' kata'));
+        c.appendChild(el('span', 'chip', 'Sedang membaca: ' + a.readingLive.read + '/' + a.readingLive.total + ' kata'));
       }
       if (a.readResult) {
-        c.appendChild(el('span', 'chip', '🎤 Terbaca ' + a.readResult.read + '/' + a.readResult.total + ' kata ' + (a.readResult.good ? '✅' : '— belum lancar')));
+        c.appendChild(el('span', 'chip' + (a.readResult.good ? ' good' : ''), 'Terbaca ' + a.readResult.read + '/' + a.readResult.total + ' kata ' + (a.readResult.good ? '(lancar)' : '(belum lancar)')));
       }
-      if (a.narrationPaused) c.appendChild(el('span', 'chip', '⏸ Narasi dijeda'));
-      if (a.pagesSeen) c.appendChild(el('span', 'chip', '📄 ' + a.pagesSeen + ' halaman sudah dibuka'));
-      if (sinceText) c.appendChild(el('span', 'chip', '⏱ ' + sinceText));
+      if (a.narrationPaused) c.appendChild(el('span', 'chip', 'Narasi dijeda'));
+      if (a.pagesSeen) c.appendChild(el('span', 'chip', a.pagesSeen + ' halaman sudah dibuka'));
+      if (sinceText) c.appendChild(el('span', 'chip', sinceText));
       now.appendChild(c);
       if (a.tappedWords && a.tappedWords.length) {
         now.appendChild(el('div', 'act-sub', 'Kata yang diketuk (minta dibacakan):'));
@@ -366,7 +379,7 @@ export const PAGE_JS = `(() => {
       return;
     }
 
-    now.appendChild(head('👆', a.title, a.detail, null));
+    now.appendChild(head('Menu', a.title, a.detail, null));
   }
 
   // teks "x menit lalu" tetap segar walau belum ada data baru

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
 import 'package:speech_to_text/speech_to_text.dart';
+import 'remote_voice.dart';
 
 /// Suara untuk belajar: membacakan huruf (TTS) dan mendengarkan anak membaca (STT).
 /// Semua method aman dipanggil walau perangkat tidak mendukung (tidak melempar error).
@@ -11,6 +12,8 @@ import 'package:speech_to_text/speech_to_text.dart';
 /// Urutan suara yang dipakai saat membacakan:
 ///  1. Rekaman suara AI (natural, logat Indonesia) di assets/voice/<kunci>.mp3,
 ///     dibuat sekali dengan tool/generate_voice.py. Contoh kunci: "ini huruf a" -> ini_huruf_a
+///     Rekaman dongeng (pesan moral, kuis, ngobrol, kata baru) disimpan di Supabase Storage
+///     dan diputar dari internet bila sudah tercantum di daftarnya (lihat RemoteVoice).
 ///  2. Kalau rekamannya tidak ada: suara bahasa Indonesia terbaik di perangkat
 ///     (Google TTS di Android, Damayanti/Enhanced di iPhone/iPad).
 class SpeechService {
@@ -112,6 +115,16 @@ class SpeechService {
       if ((await _loadClips()).contains(key)) {
         await _voice.play(AssetSource('voice/$key.mp3'));
         return;
+      }
+      // hanya bila daftar rekaman sudah ada di memori, supaya suara tidak tertunda menunggu internet
+      final remote = RemoteVoice.instance;
+      if (remote.hasLoaded(key)) {
+        try {
+          await _voice.play(UrlSource(remote.url(key, 'mp3')!));
+          return;
+        } catch (_) {
+          // gagal memutar dari internet -> suara perangkat
+        }
       }
       await _initTts();
       await _tts.speak(text);
@@ -228,6 +241,65 @@ class SpeechService {
       await _stt.cancel();
     } catch (_) {}
   }
+}
+
+/// Huruf kecil tanpa aksen, lalu dipecah menjadi kata (hanya a-z).
+List<String> _spokenWords(String heard) {
+  const accents = {'é': 'e', 'è': 'e', 'ê': 'e', 'á': 'a', 'à': 'a'};
+  return heard
+      .toLowerCase()
+      .split('')
+      .map((c) => accents[c] ?? c)
+      .join()
+      .split(RegExp(r'[^a-z]+'))
+      .where((w) => w.isNotEmpty)
+      .toList();
+}
+
+/// Jarak edit (Levenshtein) dua kata pendek.
+int _editDistance(String a, String b) {
+  var prev = List<int>.generate(b.length + 1, (i) => i);
+  for (var i = 1; i <= a.length; i++) {
+    final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
+    for (var j = 1; j <= b.length; j++) {
+      final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+      cur[j] = [prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost].reduce((x, y) => x < y ? x : y);
+    }
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/// Apakah ucapan [heard] cocok dengan suku kata [syllable] ("ba")? Pengenal suara sering
+/// menulis suku kata pendek sebagai "bah", "baa", "bak", atau "baba".
+bool spokenSyllableMatches(String heard, String syllable) {
+  final s = syllable.toLowerCase();
+  if (s.isEmpty) return false;
+  final last = s[s.length - 1];
+  for (final w in _spokenWords(heard)) {
+    if (w == s || w == '$s$s') return true;
+    if (w.length <= s.length + 1 && w.startsWith(s)) return true; // "bah", "bak"
+    // vokal dipanjangkan: "baaa", "baah"
+    if (w.startsWith(s) && w.substring(s.length).split('').every((c) => c == last || c == 'h')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// Apakah ucapan [heard] berisi kata [word] ("bola")? Toleran 1 huruf untuk kata
+/// yang lebih panjang, dan kata yang terdengar terpisah ("bo la") tetap dihitung.
+bool spokenWordMatches(String heard, String word) {
+  final target = word.toLowerCase().replaceAll(RegExp(r'[^a-z]'), '');
+  if (target.isEmpty) return false;
+  final words = _spokenWords(heard);
+  if (words.contains(target) || words.join().contains(target)) return true;
+  if (target.length >= 4) {
+    for (final w in words) {
+      if (_editDistance(w, target) <= 1) return true;
+    }
+  }
+  return false;
 }
 
 /// Apakah ucapan [heard] cocok dengan huruf [letter]? Dibuat longgar, karena pengenal

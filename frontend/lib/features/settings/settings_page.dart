@@ -10,6 +10,7 @@ import '../../models/subscription.dart';
 import '../../services/api_client.dart';
 import '../../services/auth_service.dart';
 import '../../services/event_logger.dart';
+import '../../services/parent_mode.dart';
 import '../../services/premium_store.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
@@ -208,7 +209,7 @@ class _SettingsPageState extends State<SettingsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const _SectionTitle('🎧 Pengalaman Belajar'),
+                const _SectionTitle('Pengalaman Belajar', icon: Icons.headphones_rounded),
                 const SizedBox(height: 6),
                 _SwitchRow(
                   label: 'Efek Suara',
@@ -227,9 +228,23 @@ class _SettingsPageState extends State<SettingsPage> {
                 _SwitchRow(
                   label: 'Latihan Mendengar',
                   subtitle:
-                      'Latihan "dengar lalu pilih huruf" di lesson dan kuis',
+                      'Latihan "dengar lalu pilih" untuk huruf dan suku kata',
                   value: s.listeningExercise,
                   onChanged: (v) => _update(s.copyWith(listeningExercise: v)),
+                ),
+                ValueListenableBuilder<bool>(
+                  valueListenable: ParentMode.instance,
+                  builder: (context, on, _) => _SwitchRow(
+                    label: 'Belajar Bersama Ayah/Ibu',
+                    subtitle:
+                        'Tips mendampingi di tiap soal, orang tua bisa menilai bacaan si kecil, '
+                        'dan dongeng berhenti sejenak di pertanyaan ngobrol',
+                    value: on,
+                    onChanged: (v) {
+                      ParentMode.instance.set(v);
+                      EventLogger.instance.ui('parent_mode', {'on': v});
+                    },
+                  ),
                 ),
               ],
             ),
@@ -243,7 +258,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 Row(
                   children: [
                     const Expanded(
-                      child: _SectionTitle('🛡️ Kontrol Orang Tua'),
+                      child: _SectionTitle('Kontrol Orang Tua', icon: Icons.shield_rounded),
                     ),
                     Switch(
                       value: s.parentalControl,
@@ -711,14 +726,7 @@ class _ParentTools extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '👨‍👩‍👧 Untuk Orang Tua',
-          style: GoogleFonts.fredoka(
-            fontSize: 28,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textDark,
-          ),
-        ),
+        const _SectionTitle('Untuk Orang Tua', icon: Icons.family_restroom_rounded),
         const SizedBox(height: 10),
         Row(
           children: [
@@ -797,16 +805,32 @@ class _PinRow extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String text;
-  const _SectionTitle(this.text);
+  final IconData? icon;
+  const _SectionTitle(this.text, {this.icon});
 
   @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: GoogleFonts.fredoka(
-      fontSize: 28,
-      fontWeight: FontWeight.w700,
-      color: AppColors.textDark,
-    ),
+  Widget build(BuildContext context) => Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      if (icon != null) ...[
+        Container(
+          padding: const EdgeInsets.all(7),
+          decoration: const BoxDecoration(color: Color(0xFFE3EEFD), shape: BoxShape.circle),
+          child: Icon(icon, size: 24, color: AppColors.primary),
+        ),
+        const SizedBox(width: 12),
+      ],
+      Flexible(
+        child: Text(
+          text,
+          style: GoogleFonts.fredoka(
+            fontSize: 28,
+            fontWeight: FontWeight.w700,
+            color: AppColors.textDark,
+          ),
+        ),
+      ),
+    ],
   );
 }
 

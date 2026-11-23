@@ -70,6 +70,39 @@ class StoryCategory {
       );
 }
 
+/// Pertanyaan "Ayo ngobrol" di satu halaman (dialogic reading): untuk ditanyakan
+/// orang tua ke anak, mis. "Menurutmu, kenapa Malin pergi merantau?".
+class StoryPrompt {
+  final int page; // mulai 0, sama dengan urutan halaman Baca Bersama
+  final String text;
+  const StoryPrompt(this.page, this.text);
+
+  static StoryPrompt? fromJson(Object? j) {
+    if (j is! Map) return null;
+    final page = (j['page'] as num?)?.toInt();
+    final text = j['text']?.toString().trim() ?? '';
+    return page == null || text.isEmpty ? null : StoryPrompt(page, text);
+  }
+}
+
+/// Kata baru (kosakata) yang bisa diketuk di Baca Bersama untuk melihat artinya.
+class VocabWord {
+  final String word;
+  final String meaning;
+  const VocabWord(this.word, this.meaning);
+
+  static VocabWord? fromJson(Object? j) {
+    if (j is! Map) return null;
+    final word = j['word']?.toString().trim() ?? '';
+    final meaning = j['meaning']?.toString().trim() ?? '';
+    return word.isEmpty || meaning.isEmpty ? null : VocabWord(word, meaning);
+  }
+
+  /// Kunci pencocokan: huruf kecil tanpa tanda baca ("Merantau," -> "merantau").
+  static String keyOf(String w) =>
+      w.toLowerCase().replaceAll(RegExp(r'[^\p{L}\p{N}-]', unicode: true), '');
+}
+
 /// Detail dongeng: isi cerita, video (opsional), pesan moral, kuis, progres.
 class StoryDetail {
   final String id;
@@ -80,6 +113,10 @@ class StoryDetail {
   final String? moral;
   final List<QuizQuestion> quiz;
   final List<String> pageImages; // gambar per halaman (opsional)
+  final List<StoryPrompt> prompts; // pertanyaan ngobrol (opsional)
+  final List<VocabWord> vocab; // kata baru (opsional)
+  /// Alamat folder rekaman suara AI di Supabase Storage (null = server lama).
+  final String? narrationBaseUrl;
   final StoryProgress? progress;
 
   const StoryDetail({
@@ -91,8 +128,19 @@ class StoryDetail {
     this.moral,
     this.quiz = const [],
     this.pageImages = const [],
+    this.prompts = const [],
+    this.vocab = const [],
+    this.narrationBaseUrl,
     this.progress,
   });
+
+  /// Pertanyaan ngobrol untuk halaman [page] (null = tidak ada).
+  StoryPrompt? promptFor(int page) {
+    for (final p in prompts) {
+      if (p.page == page) return p;
+    }
+    return null;
+  }
 
   factory StoryDetail.fromJson(Map<String, dynamic> j) => StoryDetail(
         id: j['id'] as String,
@@ -109,6 +157,15 @@ class StoryDetail {
         pageImages: ((j['pageImages'] as List<dynamic>?) ?? const [])
             .map((e) => e?.toString() ?? '')
             .toList(),
+        prompts: ((j['prompts'] as List<dynamic>?) ?? const [])
+            .map(StoryPrompt.fromJson)
+            .whereType<StoryPrompt>()
+            .toList(),
+        vocab: ((j['vocab'] as List<dynamic>?) ?? const [])
+            .map(VocabWord.fromJson)
+            .whereType<VocabWord>()
+            .toList(),
+        narrationBaseUrl: j['narrationBaseUrl'] as String?,
         progress: StoryProgress.fromJson(j['progress']),
       );
 }

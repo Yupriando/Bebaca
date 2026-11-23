@@ -488,13 +488,20 @@ class _ActiveView extends StatelessWidget {
           ),
           child: Column(
             children: [
-              Text(
-                '⭐ Premium aktif ⭐',
-                style: GoogleFonts.fredoka(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.workspace_premium_rounded, size: 32, color: Color(0xFFFFB81C)),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Premium aktif',
+                    style: GoogleFonts.fredoka(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 8),
               Text(

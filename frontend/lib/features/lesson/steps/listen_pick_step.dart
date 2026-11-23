@@ -11,8 +11,9 @@ import '../widgets/effects.dart';
 import '../widgets/step_common.dart';
 import '../widgets/wood_tile.dart';
 
-/// Dengarkan suara huruf, lalu pilih kotak huruf yang benar.
-/// (Aktif jika pengaturan "Listening Exercise" menyala.)
+/// Dengarkan suara huruf / suku kata, lalu pilih kotak yang benar.
+/// (Huruf: aktif jika "Latihan Mendengar" menyala. Suku kata: kalau latihan mendengar
+/// mati, soalnya menjadi "Mana suku kata BA?" yang dicocokkan dengan tulisan.)
 class ListenPickStep extends StatefulWidget {
   final LessonStep step;
   final StepEnv env;
@@ -33,6 +34,12 @@ class _ListenPickStepState extends State<ListenPickStep>
   late final AnimationController _shake;
 
   String get _target => widget.step.letter.toUpperCase();
+  bool get _syllable => widget.step.type == LessonStepType.syllablePick;
+  bool get _visual => _syllable && widget.step.visual;
+
+  void _speakTarget() => _syllable
+      ? SpeechService.instance.speak(_target.toLowerCase())
+      : SpeechService.instance.speakLetter(_target);
 
   @override
   void initState() {
@@ -44,14 +51,18 @@ class _ListenPickStepState extends State<ListenPickStep>
     final random = Random();
     _letters = [
       _target,
-      ...pickDistractors(_target, widget.step.pool, 2, random),
+      ...(_syllable
+          ? syllableDistractors(_target, widget.step.pool, 2, random)
+          : pickDistractors(_target, widget.step.pool, 2, random)),
     ]..shuffle(random);
     widget.env.report({'options': _letters});
 
     // Latihan mendengar: suara selalu diputar di awal.
-    Future.delayed(const Duration(milliseconds: 450), () {
-      if (mounted) SpeechService.instance.speakLetter(_target);
-    });
+    if (!_visual) {
+      Future.delayed(const Duration(milliseconds: 450), () {
+        if (mounted) _speakTarget();
+      });
+    }
   }
 
   @override
@@ -65,6 +76,7 @@ class _ListenPickStepState extends State<ListenPickStep>
     if (_letters[i] == _target) {
       HapticFeedback.lightImpact();
       widget.env.sfx(Sfx.correct);
+      if (_syllable) _speakTarget(); // dengar lagi bunyi yang benar
       setState(() => _correct = i);
       widget.env.onCorrect();
       widget.env.onDone();
@@ -85,16 +97,25 @@ class _ListenPickStepState extends State<ListenPickStep>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const StepPrompt(
-          text: 'Huruf apa yang kamu dengar?',
-          speech: 'Huruf apa yang kamu dengar?',
+        StepPrompt(
+          text: _visual
+              ? 'Mana suku kata ${_target.toLowerCase()}?'
+              : _syllable
+                  ? 'Suku kata apa yang kamu dengar?'
+                  : 'Huruf apa yang kamu dengar?',
+          speech: _visual
+              ? 'Mana suku kata ${_target.toLowerCase()}?'
+              : _syllable
+                  ? 'Suku kata apa yang kamu dengar?'
+                  : 'Huruf apa yang kamu dengar?',
+          autoSpeak: _visual && widget.env.sound,
         ),
         const SizedBox(height: 16),
         BouncyTap(
           animate: widget.env.animate,
           onTap: () {
             EventLogger.instance.ui('listen_letter', {'letter': '?'});
-            SpeechService.instance.speakLetter(_target);
+            _speakTarget();
           },
           child: Container(
             width: 84,
@@ -132,8 +153,9 @@ class _ListenPickStepState extends State<ListenPickStep>
                       animate: widget.env.animate,
                       onTap: () => _tap(i),
                       child: WoodTile(
-                        letter: _letters[i],
+                        letter: _syllable ? _letters[i].toLowerCase() : _letters[i],
                         size: 104,
+                        width: _syllable ? 150 : null,
                         outline: _correct == i
                             ? _green
                             : (_wrong == i ? _red : null),

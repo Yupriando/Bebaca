@@ -4,12 +4,14 @@ import 'core/routes/app_routes.dart';
 import 'core/theme/app_theme.dart';
 import 'core/widgets/adaptive_scale.dart';
 import 'services/api_client.dart';
+import 'services/parent_mode.dart';
 
 final navigatorKey = GlobalKey<NavigatorState>();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await applyAppSystemUi(); // landscape + layar penuh
+  await ParentMode.instance.load(); // mode belajar bersama Ayah/Ibu (disimpan di HP)
 
   // Sesi habis (refresh token gagal) -> kembali ke halaman awal.
   ApiClient.onSessionExpired = () {

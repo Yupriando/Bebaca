@@ -1,7 +1,10 @@
 enum LessonStatus { locked, unlocked, completed }
 
 /// letter = belajar 1 huruf | review = latihan | quiz = kuis | challenge = tantangan baca
-enum LessonKind { letter, review, quiz, challenge }
+/// syllable = suku kata (letters: konsonan, mis. ["B"] -> ba bi bu be bo)
+/// word = kata (letters: kata dipisah per suku kata, mis. ["bo-la", "bu-ku"])
+/// sentence = kalimat pendek (letters: kalimat, mis. ["Ini bola."])
+enum LessonKind { letter, review, quiz, challenge, syllable, word, sentence }
 
 class Lesson {
   final String id;

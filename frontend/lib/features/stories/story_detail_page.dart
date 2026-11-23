@@ -12,7 +12,7 @@ import 'story_reader_page.dart';
 import 'story_video_player.dart';
 
 /// Halaman depan dongeng: sampul, info singkat, lalu pilih
-/// 📖 Baca Bersama (buku bergambar + narasi) atau ▶ Tonton video.
+/// Baca Bersama (buku bergambar + narasi) atau Tonton Video.
 /// Ditutup dengan `true` jika ada progres baru (supaya daftar dongeng dimuat ulang).
 class StoryDetailPage extends StatefulWidget {
   final String storyId;

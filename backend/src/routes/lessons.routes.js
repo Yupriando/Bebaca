@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin } from '../config/supabase.js';
 import { HttpError, must } from '../utils/errors.js';
-import { buildSections } from '../services/lessonService.js';
+import { buildSections, isLegacyClient } from '../services/lessonService.js';
 import { touchStreak } from '../services/streakService.js';
 import { ensureUserRows } from '../services/userService.js';
 
@@ -10,7 +10,7 @@ const router = Router();
 
 // GET /api/lessons -> [{unit, section, title, guide, isPremium, premiumLocked, lessons:[{id,title,kind,letters,status,stars}]}]
 router.get('/', async (req, res) => {
-  res.json(await buildSections(req.user.id));
+  res.json(await buildSections(req.user.id, { legacy: isLegacyClient(req) }));
 });
 
 const completeSchema = z.object({
@@ -32,7 +32,7 @@ router.post('/:id/complete', async (req, res) => {
   const earned = stars ?? 1;
   const userId = req.user.id;
 
-  const sections = await buildSections(userId);
+  const sections = await buildSections(userId, { legacy: isLegacyClient(req) });
   let lesson = null;
   let section = null;
   for (const s of sections) {

@@ -59,7 +59,7 @@ class _SkyPainter extends CustomPainter {
       i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
     }
     path.close();
-    c.drawPath(path, Paint()..color = AppColors.sun);
+    c.drawPath(path, Paint()..color = AppColors.sun.withAlpha(210));
   }
 
   @override
@@ -72,9 +72,10 @@ class _SkyPainter extends CustomPainter {
     _cloud(canvas, Offset(w * 0.95, h * 0.62), s * 0.09, 0.55);
     _cloud(canvas, Offset(w * 0.03, h * 0.78), s * 0.11, 0.6);
     if (stars) {
-      _star(canvas, Offset(w * 0.30, h * 0.10), s * 0.022);
-      _star(canvas, Offset(w * 0.72, h * 0.20), s * 0.016);
-      _star(canvas, Offset(w * 0.93, h * 0.32), s * 0.012);
+      // kecil & di tepi kanan, supaya tidak menimpa judul atau teks di tengah layar
+      _star(canvas, Offset(w * 0.978, h * 0.24), s * 0.015);
+      _star(canvas, Offset(w * 0.962, h * 0.46), s * 0.010);
+      _star(canvas, Offset(w * 0.985, h * 0.86), s * 0.012);
     }
     if (hills) {
       final back = Path()

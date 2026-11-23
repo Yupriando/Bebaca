@@ -162,7 +162,8 @@ class _ParentReportPageState extends State<ParentReportPage> {
             child: _Letters(letters: r.letters),
           ),
           _Card(
-            title: '💡 Saran untuk Ayah/Ibu',
+            title: 'Saran untuk Ayah/Ibu',
+            icon: Icons.lightbulb_rounded,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -213,13 +214,8 @@ class _ParentReportPageState extends State<ParentReportPage> {
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           child: Row(
                             children: [
-                              SizedBox(
-                                width: 32,
-                                child: Text(
-                                  a.icon,
-                                  style: GoogleFonts.fredoka(fontSize: 20),
-                                ),
-                              ),
+                              _ActivityIcon(kind: a.kind),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   a.text,
@@ -347,8 +343,9 @@ class _ParentReportPageState extends State<ParentReportPage> {
 
 class _Card extends StatelessWidget {
   final String title;
+  final IconData? icon;
   final Widget child;
-  const _Card({required this.title, required this.child});
+  const _Card({required this.title, this.icon, required this.child});
 
   @override
   Widget build(BuildContext context) => Container(
@@ -368,13 +365,23 @@ class _Card extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: GoogleFonts.fredoka(
-            fontSize: 21,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textDark,
-          ),
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, size: 24, color: const Color(0xFFFFB300)),
+              const SizedBox(width: 8),
+            ],
+            Expanded(
+              child: Text(
+                title,
+                style: GoogleFonts.fredoka(
+                  fontSize: 21,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         child,
@@ -390,9 +397,11 @@ class _SummaryTiles extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final diff = s.minutes - s.prevMinutes;
-    final tiles = <(String, String, String?)>[
+    final tiles = <(IconData, Color, String, String, String?)>[
       (
-        '⏱ Waktu belajar',
+        Icons.timer_rounded,
+        AppColors.primary,
+        'Waktu belajar',
         '${s.minutes} menit',
         s.prevMinutes == 0 && s.minutes == 0
             ? null
@@ -400,22 +409,28 @@ class _SummaryTiles extends StatelessWidget {
             ? 'sama dengan minggu lalu'
             : '${diff > 0 ? '▲' : '▼'} ${diff.abs()} mnt dari minggu lalu',
       ),
-      ('📅 Hari belajar', '${s.activeDays} / 7 hari', null),
-      ('🔥 Hari beruntun', '${s.streak} hari', null),
+      (Icons.calendar_month_rounded, const Color(0xFF7B61FF), 'Hari belajar', '${s.activeDays} / 7 hari', null),
+      (Icons.local_fire_department_rounded, const Color(0xFFFF7A1A), 'Hari beruntun', '${s.streak} hari', null),
       (
-        '🏆 Lesson selesai',
+        Icons.emoji_events_rounded,
+        const Color(0xFFFFB300),
+        'Lesson selesai',
         '${s.lessonsCompleted}',
         s.lessonsCompleted > 0
-            ? 'rata-rata ${s.avgStars.toStringAsFixed(1)} ⭐'
+            ? 'rata-rata ${s.avgStars.toStringAsFixed(1)} bintang'
             : null,
       ),
       (
-        '✅ Jawaban benar',
+        Icons.check_circle_rounded,
+        const Color(0xFF2E9E5B),
+        'Jawaban benar',
         s.answers == 0 ? '-' : '${s.accuracy}%',
         s.answers == 0 ? null : 'dari ${s.answers} jawaban',
       ),
       (
-        '📖 Dongeng selesai',
+        Icons.auto_stories_rounded,
+        const Color(0xFFE5533D),
+        'Dongeng selesai',
         '${s.storiesRead}',
         s.storiesOpened > s.storiesRead ? '${s.storiesOpened} dibuka' : null,
       ),
@@ -446,25 +461,33 @@ class _SummaryTiles extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      t.$1,
-                      style: GoogleFonts.fredoka(
-                        fontSize: 15,
-                        color: AppColors.hint,
-                      ),
+                    Row(
+                      children: [
+                        Icon(t.$1, size: 19, color: t.$2),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            t.$3,
+                            style: GoogleFonts.fredoka(
+                              fontSize: 15,
+                              color: AppColors.hint,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      t.$2,
+                      t.$4,
                       style: GoogleFonts.fredoka(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textDark,
                       ),
                     ),
-                    if (t.$3 != null)
+                    if (t.$5 != null)
                       Text(
-                        t.$3!,
+                        t.$5!,
                         style: GoogleFonts.fredoka(
                           fontSize: 13,
                           color: AppColors.hint,
@@ -720,4 +743,45 @@ class _PremiumTeaser extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// Ikon bulat kecil untuk satu baris "Aktivitas terbaru".
+class _ActivityIcon extends StatelessWidget {
+  final String kind;
+  const _ActivityIcon({required this.kind});
+
+  static const _icons = <String, (IconData, Color)>{
+    'lesson': (Icons.school_rounded, AppColors.primary),
+    'complete': (Icons.emoji_events_rounded, Color(0xFFFFB300)),
+    'exit': (Icons.logout_rounded, Color(0xFF8A94A6)),
+    'correct': (Icons.check_circle_rounded, Color(0xFF2E9E5B)),
+    'wrong': (Icons.cancel_rounded, Color(0xFFE5533D)),
+    'parent': (Icons.family_restroom_rounded, Color(0xFF7B61FF)),
+    'story': (Icons.auto_stories_rounded, Color(0xFFE5533D)),
+    'read': (Icons.mic_rounded, Color(0xFF2E9E5B)),
+    'note': (Icons.edit_note_rounded, Color(0xFFB7791F)),
+    'listen': (Icons.volume_up_rounded, AppColors.primary),
+    'word': (Icons.menu_book_rounded, Color(0xFF7B61FF)),
+    'prompt': (Icons.forum_rounded, Color(0xFF7B61FF)),
+    'video': (Icons.smart_display_rounded, Color(0xFFE5533D)),
+    'lock': (Icons.lock_rounded, Color(0xFF8A94A6)),
+    'unlock': (Icons.lock_open_rounded, Color(0xFF2E9E5B)),
+    'premium': (Icons.workspace_premium_rounded, Color(0xFFFFB300)),
+    'warning': (Icons.warning_amber_rounded, Color(0xFFE67E22)),
+    'app': (Icons.phone_android_rounded, AppColors.primary),
+    'away': (Icons.bedtime_rounded, Color(0xFF8A94A6)),
+    'pause': (Icons.pause_circle_rounded, Color(0xFF8A94A6)),
+    'tap': (Icons.touch_app_rounded, Color(0xFF8A94A6)),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final (icon, color) = _icons[kind] ?? _icons['tap']!;
+    return Container(
+      width: 34,
+      height: 34,
+      decoration: BoxDecoration(color: color.withAlpha(30), shape: BoxShape.circle),
+      child: Icon(icon, size: 20, color: color),
+    );
+  }
 }

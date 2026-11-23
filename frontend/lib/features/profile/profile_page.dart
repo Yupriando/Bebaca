@@ -194,13 +194,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   color: const Color(0xFFFFEDE0),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(
-                  '🔥 ${p.hariBerturut} hari beruntun',
-                  style: GoogleFonts.fredoka(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textDark,
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.local_fire_department_rounded, size: 20, color: Color(0xFFFF7A1A)),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${p.hariBerturut} hari beruntun',
+                      style: GoogleFonts.fredoka(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textDark,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 18),

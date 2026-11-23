@@ -11,6 +11,7 @@ import '../../services/speech_service.dart';
 import '../../services/story_service.dart';
 import '../lesson/widgets/confetti.dart';
 import '../lesson/widgets/mascot.dart';
+import 'vocab_dialog.dart';
 
 /// Akhir Baca Bersama: pesan moral -> kuis mini -> bintang + konfeti.
 /// Bintang: 3 jika kuis dijawab tanpa salah, berkurang 1 tiap salah (min. 1).
@@ -155,7 +156,7 @@ class _StoryEndViewState extends State<StoryEndView> {
       children: [
         Mascot(mood: MascotMood.idle, size: 110, animate: _animate),
         const SizedBox(height: 16),
-        Text('Ceritanya selesai! 📖', style: _title(34), textAlign: TextAlign.center),
+        Text('Ceritanya selesai!', style: _title(34), textAlign: TextAlign.center),
         const SizedBox(height: 20),
         Container(
           width: double.infinity,
@@ -167,7 +168,11 @@ class _StoryEndViewState extends State<StoryEndView> {
           ),
           child: Column(
             children: [
-              Text('💡 Pesan dari cerita ini', style: _title(24)),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.lightbulb_rounded, size: 28, color: Color(0xFFFFB300)),
+                const SizedBox(width: 8),
+                Flexible(child: Text('Pesan dari cerita ini', style: _title(24))),
+              ]),
               const SizedBox(height: 10),
               Text(widget.story.moral!,
                   textAlign: TextAlign.center,
@@ -175,6 +180,29 @@ class _StoryEndViewState extends State<StoryEndView> {
             ],
           ),
         ),
+        if (widget.story.vocab.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          Text('Kata baru dari cerita ini',
+              style: GoogleFonts.fredoka(fontSize: 18, color: AppColors.hint, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              for (final v in widget.story.vocab)
+                ActionChip(
+                  avatar: const Icon(Icons.menu_book_rounded, size: 18, color: vocabColor),
+                  label: Text(v.word,
+                      style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w600, color: vocabColor)),
+                  backgroundColor: const Color(0xFFF1ECFF),
+                  side: BorderSide.none,
+                  shape: const StadiumBorder(),
+                  onPressed: () => showVocabDialog(context, v),
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: 28),
         PrimaryButton(
           label: widget.story.quiz.isNotEmpty ? 'Ayo Jawab Kuis!' : 'Selesai',

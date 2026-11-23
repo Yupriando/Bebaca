@@ -2,6 +2,12 @@ import { supabaseAdmin } from '../config/supabase.js';
 import { must } from '../utils/errors.js';
 import { getEntitlement } from './subscriptionService.js';
 
+/** Jenis lesson yang dikenal aplikasi versi 1.x. */
+const LEGACY_KINDS = new Set(['letter', 'review', 'quiz', 'challenge']);
+
+/** Aplikasi baru mengirim header "X-Bebaca-Client: 2" (atau lebih). */
+export const isLegacyClient = (req) => !(Number(req.get('x-bebaca-client')) >= 2);
+
 /**
  * Hitung status tiap lesson (fungsi murni, mudah diuji).
  * completed = sudah selesai | unlocked = lesson berikutnya (hanya 1) | locked = sisanya.
@@ -10,10 +16,16 @@ import { getEntitlement } from './subscriptionService.js';
  * @param isPremium user berlangganan Bebaca Premium?
  * Section premium milik user gratis ditandai premiumLocked (lesson-nya tetap terlihat).
  */
-export function computeSections(sections, doneStars, isPremium = false) {
+export function computeSections(sections, doneStars, isPremium = false, { legacy = false } = {}) {
   let unlockedAssigned = false;
 
-  return sections.map((sec) => {
+  // Aplikasi versi lama belum bisa membuka lesson suku kata / kata / kalimat:
+  // lesson itu (dan section yang jadi kosong) tidak dikirim ke mereka.
+  const visible = sections
+    .map((sec) => ({ ...sec, lessons: (sec.lessons ?? []).filter((l) => !legacy || LEGACY_KINDS.has(l.kind)) }))
+    .filter((sec) => sec.lessons.length > 0);
+
+  return visible.map((sec) => {
     const lessons = [...sec.lessons]
       .sort((a, b) => a.order_index - b.order_index)
       .map((l) => {
@@ -49,8 +61,8 @@ export function computeSections(sections, doneStars, isPremium = false) {
   });
 }
 
-/** Susun daftar section + status lesson untuk 1 user. */
-export async function buildSections(userId) {
+/** Susun daftar section + status lesson untuk 1 user. [legacy] = aplikasi versi lama. */
+export async function buildSections(userId, { legacy = false } = {}) {
   const [secRes, progRes, entitlement] = await Promise.all([
     supabaseAdmin
       .from('sections')
@@ -63,5 +75,5 @@ export async function buildSections(userId) {
 
   const sections = must(secRes);
   const done = new Map(must(progRes).map((r) => [r.lesson_id, r.stars]));
-  return computeSections(sections, done, entitlement.isPremium);
+  return computeSections(sections, done, entitlement.isPremium, { legacy });
 }

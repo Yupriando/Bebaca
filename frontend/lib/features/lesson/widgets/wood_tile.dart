@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Kotak huruf kayu (sesuai desain).
+/// Kotak huruf kayu (sesuai desain). [width] untuk suku kata / kata yang lebih lebar;
+/// tulisan otomatis mengecil bila tidak muat.
 class WoodTile extends StatelessWidget {
   final String letter;
   final double size;
+  final double? width;
   final double rotation; // radian
   final Color? outline;
   final Widget? badge;
@@ -14,20 +16,26 @@ class WoodTile extends StatelessWidget {
     super.key,
     required this.letter,
     this.size = 96,
+    this.width,
     this.rotation = 0,
     this.outline,
     this.badge,
     this.onTap,
   });
 
+  /// Lebar yang pas untuk tulisan [text] pada tinggi [size].
+  static double widthFor(String text, double size) =>
+      text.length <= 1 ? size : size * (0.42 + 0.4 * text.length).clamp(1.0, 3.6);
+
   @override
   Widget build(BuildContext context) {
+    final w = width ?? size;
     return GestureDetector(
       onTap: onTap,
       child: Transform.rotate(
         angle: rotation,
         child: Container(
-          width: size,
+          width: w,
           height: size,
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
@@ -53,19 +61,26 @@ class WoodTile extends StatelessWidget {
             children: [
               Positioned.fill(child: CustomPaint(painter: _GrainPainter())),
               Center(
-                child: Text(
-                  letter,
-                  style: GoogleFonts.itim(
-                    fontSize: size * 0.62,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: const [
-                      Shadow(
-                        color: Color(0x66000000),
-                        blurRadius: 4,
-                        offset: Offset(0, 2),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.08),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      letter,
+                      maxLines: 1,
+                      style: GoogleFonts.itim(
+                        fontSize: size * 0.62,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        shadows: const [
+                          Shadow(
+                            color: Color(0x66000000),
+                            blurRadius: 4,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
               ),

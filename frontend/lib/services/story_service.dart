@@ -1,5 +1,6 @@
 import '../models/story.dart';
 import 'api_client.dart';
+import 'remote_voice.dart';
 
 class StoryService {
   final _api = ApiClient.instance;
@@ -13,7 +14,9 @@ class StoryService {
 
   Future<StoryDetail> getStory(String id) async {
     final data = await _api.get('/api/stories/$id') as Map<String, dynamic>;
-    return StoryDetail.fromJson(data);
+    final story = StoryDetail.fromJson(data);
+    RemoteVoice.instance.setBase(story.narrationBaseUrl); // rekaman suara AI di Supabase Storage
+    return story;
   }
 
   /// Simpan halaman terakhir Baca Bersama (dan tandai selesai + bintang di akhir).

@@ -102,6 +102,8 @@ class ApiClient {
     final headers = <String, String>{
       'Content-Type': 'application/json',
       'Accept': 'application/json',
+      // versi aplikasi: 2 = sudah bisa membuka lesson suku kata, kata & kalimat
+      'X-Bebaca-Client': '2',
     };
     if (auth) {
       final token = await _storage.accessToken;

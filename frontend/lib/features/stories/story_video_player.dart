@@ -152,7 +152,7 @@ class _StoryVideoPlayerState extends State<StoryVideoPlayer> {
 }
 
 /// Halaman full layar: hitam penuh, bar sistem disembunyikan.
-/// Tombol back HP atau tombol ⛶ untuk keluar.
+/// Tombol back HP atau tombol layar penuh untuk keluar.
 class _FullscreenVideoPage extends StatefulWidget {
   final VideoPlayerController controller;
   final String? title;

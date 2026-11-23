@@ -78,7 +78,7 @@ class _IntroStepState extends State<IntroStep> {
     );
   }
 
-  /// Gambar contoh kata yang diawali huruf ini (mis. 🍎 Apel), ketuk -> kata dibacakan.
+  /// Gambar contoh kata yang diawali huruf ini (mis. gambar apel untuk A), ketuk -> kata dibacakan.
   Widget _exampleCard(String upper) {
     final ex = letterExamples[upper];
     if (ex == null) return const SizedBox.shrink();

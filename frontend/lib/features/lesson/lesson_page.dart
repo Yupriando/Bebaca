@@ -8,15 +8,18 @@ import '../../models/lesson.dart';
 import '../../services/api_client.dart';
 import '../../services/event_logger.dart';
 import '../../services/lesson_service.dart';
+import '../../services/parent_mode.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
 import '../../services/speech_service.dart';
 import 'lesson_result_view.dart';
 import 'lesson_steps.dart';
+import 'steps/build_step.dart';
 import 'steps/find_step.dart';
 import 'steps/intro_step.dart';
 import 'steps/listen_pick_step.dart';
 import 'steps/read_step.dart';
+import 'steps/syllable_intro_step.dart';
 import 'steps/trace_step.dart';
 import 'widgets/mascot.dart';
 import 'widgets/step_common.dart';
@@ -47,6 +50,7 @@ class _LessonPageState extends State<LessonPage> {
   int _moodToken = 0;
 
   bool _finished = false;
+  bool _tipOpen = true; // tips Ayah/Ibu terbuka (mode Belajar Bersama)
   bool _saving = false;
   bool _saved = false;
   String? _saveError;
@@ -268,7 +272,17 @@ class _LessonPageState extends State<LessonPage> {
       case LessonStepType.traceLower:
         return TraceStep(step: step, env: env, upper: false);
       case LessonStepType.read:
+      case LessonStepType.syllableRead:
+      case LessonStepType.wordRead:
+      case LessonStepType.sentenceRead:
         return _fit(ReadStep(step: step, env: env));
+      case LessonStepType.syllableIntro:
+        return _fit(SyllableIntroStep(step: step, env: env));
+      case LessonStepType.syllablePick:
+        return _fit(ListenPickStep(step: step, env: env));
+      case LessonStepType.wordBuild:
+      case LessonStepType.sentenceBuild:
+        return _fit(BuildStep(step: step, env: env));
     }
   }
 
@@ -380,7 +394,101 @@ class _LessonPageState extends State<LessonPage> {
             ),
           ),
         ),
+        if (ParentMode.instance.enabled)
+          _ParentTip(
+            tip: parentTipFor(_steps[_index]),
+            open: _tipOpen,
+            onToggle: () => setState(() => _tipOpen = !_tipOpen),
+          ),
       ],
+    );
+  }
+}
+
+/// Tips singkat untuk Ayah/Ibu sesuai soal yang sedang tampil (mode Belajar Bersama).
+String parentTipFor(LessonStep step) => switch (step.type) {
+      LessonStepType.intro =>
+        'Sebutkan bunyinya bersama, lalu ajak si kecil menunjuk benda di rumah yang diawali huruf ini.',
+      LessonStepType.find =>
+        'Biarkan si kecil mencari sendiri dulu. Kalau bingung, tunjuk satu kotak dan tanyakan "Ini huruf apa?"',
+      LessonStepType.listenPick =>
+        'Putar suaranya, minta si kecil menirukan bunyinya dulu, baru memilih.',
+      LessonStepType.traceUpper || LessonStepType.traceLower =>
+        'Bantu pegang jarinya di awal goresan, lalu lepaskan. Tidak perlu rapi, yang penting arahnya benar.',
+      LessonStepType.read =>
+        'Dengarkan si kecil membaca. Tekan "Sudah benar" bila bunyinya tepat, atau "Coba lagi" untuk mendengar contohnya.',
+      LessonStepType.syllableIntro => () {
+          final c = step.letter.toLowerCase();
+          return 'Bacakan pelan lalu cepat: "$c... a... ${c}a!" Tepuk tangan sekali untuk setiap suku kata.';
+        }(),
+      LessonStepType.syllablePick =>
+        'Ucapkan suku katanya bersama, lalu biarkan si kecil memilih sendiri.',
+      LessonStepType.syllableRead =>
+        'Kalau si kecil ragu, sebutkan bunyi hurufnya satu per satu, lalu gabungkan bersama.',
+      LessonStepType.wordBuild =>
+        'Tepuk suku katanya bersama (${step.parts.join('-')} = ${step.parts.length} tepukan), '
+            'lalu minta si kecil memilih potongan pertama.',
+      LessonStepType.wordRead => step.parts.length < 2
+          ? 'Bacakan katanya pelan-pelan, lalu minta si kecil menirukan.'
+          : 'Tutup suku kata berikutnya dengan jari. Baca "${step.parts.first}" dulu, '
+              'lalu buka jarinya dan gabungkan: ${step.parts.join('-')}.',
+      LessonStepType.sentenceBuild =>
+        'Bacakan kalimatnya sambil menunjuk tiap kata, lalu biarkan si kecil menyusunnya.',
+      LessonStepType.sentenceRead =>
+        'Tunjuk tiap kata saat si kecil membaca, lalu tanyakan "Gambarnya apa ya?"',
+    };
+
+class _ParentTip extends StatelessWidget {
+  final String tip;
+  final bool open;
+  final VoidCallback onToggle;
+  const _ParentTip({required this.tip, required this.open, required this.onToggle});
+
+  static const _purple = Color(0xFF7B61FF);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Align(
+        alignment: open ? Alignment.center : Alignment.centerLeft,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 860),
+          child: Material(
+            color: const Color(0xFFF1ECFF),
+            borderRadius: BorderRadius.circular(18),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(18),
+              onTap: onToggle,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: open ? 10 : 6),
+                child: Row(
+                  mainAxisSize: open ? MainAxisSize.max : MainAxisSize.min,
+                  children: [
+                    const Icon(Icons.family_restroom_rounded, color: _purple, size: 24),
+                    const SizedBox(width: 10),
+                    if (open)
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(children: [
+                            const TextSpan(text: 'Tips Ayah/Ibu: ', style: TextStyle(fontWeight: FontWeight.w700)),
+                            TextSpan(text: tip),
+                          ]),
+                          style: GoogleFonts.fredoka(fontSize: 17, color: const Color(0xFF3F2E8C), height: 1.25),
+                        ),
+                      )
+                    else
+                      Text('Tips Ayah/Ibu',
+                          style: GoogleFonts.fredoka(fontSize: 16, fontWeight: FontWeight.w600, color: const Color(0xFF3F2E8C))),
+                    const SizedBox(width: 6),
+                    Icon(open ? Icons.expand_more_rounded : Icons.expand_less_rounded, color: _purple),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

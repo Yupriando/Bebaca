@@ -99,7 +99,8 @@ class _StoriesPageState extends State<StoriesPage> {
                   itemCount: filters.length,
                   separatorBuilder: (_, __) => const SizedBox(width: 10),
                   itemBuilder: (context, i) => _FilterChip(
-                    label: filters[i] == _continue ? '📖 $_continue' : filters[i],
+                    label: filters[i],
+                    icon: filters[i] == _continue ? Icons.bookmark_rounded : null,
                     selected: filters[i] == _filter,
                     onTap: () => setState(() => _filter = filters[i]),
                   ),
@@ -133,9 +134,10 @@ class _StoriesPageState extends State<StoriesPage> {
 
 class _FilterChip extends StatelessWidget {
   final String label;
+  final IconData? icon;
   final bool selected;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.selected, required this.onTap});
+  const _FilterChip({required this.label, this.icon, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) => AnimatedContainer(
@@ -155,11 +157,17 @@ class _FilterChip extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 18),
               child: Center(
-                child: Text(label,
-                    style: GoogleFonts.fredoka(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? Colors.white : AppColors.textDark)),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 19, color: selected ? Colors.white : AppColors.primary),
+                    const SizedBox(width: 5),
+                  ],
+                  Text(label,
+                      style: GoogleFonts.fredoka(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? Colors.white : AppColors.textDark)),
+                ]),
               ),
             ),
           ),
@@ -205,7 +213,11 @@ class _StoryCard extends StatelessWidget {
       ]);
     }
     if (p != null && p.lastPage > 0) {
-      return Text('📖 Lanjut halaman ${p.lastPage + 1}', style: style.copyWith(color: AppColors.primary));
+      return Row(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.bookmark_rounded, size: 17, color: AppColors.primary),
+        const SizedBox(width: 4),
+        Text('Lanjut halaman ${p.lastPage + 1}', style: style.copyWith(color: AppColors.primary)),
+      ]);
     }
     return Text('Belum dibaca', style: style.copyWith(color: AppColors.hint, fontWeight: FontWeight.w500));
   }

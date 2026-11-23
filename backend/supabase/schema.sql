@@ -56,8 +56,9 @@ create table public.lessons (
   order_index int not null,
   title text not null,
   -- letter = belajar 1 huruf | review = latihan | quiz = kuis | challenge = tantangan baca
+  -- syllable = suku kata (letters: konsonan) | word = kata ("bo-la") | sentence = kalimat
   kind text not null default 'letter'
-    check (kind in ('letter', 'review', 'quiz', 'challenge')),
+    check (kind in ('letter', 'review', 'quiz', 'challenge', 'syllable', 'word', 'sentence')),
   letters text[] not null default '{}',
   unique (section_id, order_index)
 );
@@ -89,7 +90,9 @@ create table public.stories (
   is_premium boolean not null default false, -- true = khusus Bebaca Premium
   moral text,                                -- "Pesan dari cerita ini"
   quiz jsonb not null default '[]',          -- [{question, options[], answer(index)}]
-  page_images text[] not null default '{}'   -- gambar per halaman Baca Bersama (URL), opsional
+  page_images text[] not null default '{}',  -- gambar per halaman Baca Bersama (URL), opsional
+  prompts jsonb not null default '[]',       -- [{page, text}] pertanyaan "Ayo ngobrol" untuk orang tua
+  vocab jsonb not null default '[]'          -- [{word, meaning}] kata baru yang bisa diketuk
 );
 create index stories_category_idx on public.stories(category_id);
 

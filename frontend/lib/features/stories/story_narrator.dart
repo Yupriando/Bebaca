@@ -3,15 +3,18 @@ import 'dart:convert';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import '../../services/remote_voice.dart';
 import '../../services/speech_service.dart';
 import 'story_pages.dart';
 
 /// Membacakan satu halaman Baca Bersama dan memberi tahu kata mana yang sedang dibaca
 /// ([wordIndex]) supaya bisa dinyalakan seperti karaoke.
 ///
-/// 1. Rekaman narasi AI: assets/stories/<narrationKey>.mp3 + .json (waktu tiap kata),
-///    dibuat dengan tool/generate_story_voice.py.
-/// 2. Kalau rekaman tidak ada: suara perangkat (TTS) dengan posisi kata dari TTS.
+/// 1. Rekaman narasi AI di dalam aplikasi: assets/stories/<narrationKey>.mp3 + .json
+///    (waktu tiap kata), mis. Malin Kundang.
+/// 2. Rekaman narasi AI di Supabase Storage (bucket "narasi"), diputar langsung dari internet.
+///    Keduanya dibuat dengan tool/generate_story_voice.py.
+/// 3. Kalau rekaman tidak ada: suara perangkat (TTS) dengan posisi kata dari TTS.
 /// Suara yang sedang dipakai narator (ditampilkan saat debug untuk memeriksa).
 enum NarrationSource { none, recording, device }
 
@@ -73,14 +76,21 @@ class StoryNarrator extends ChangeNotifier {
 
     final key = narrationKey(text);
     final clips = await _loadClips();
-    if (!clips.contains(key)) {
-      _lastError = 'Rekaman $key tidak ada di aplikasi (${clips.length} rekaman terdaftar)';
+    final bundled = clips.contains(key);
+    final remote = RemoteVoice.instance;
+    final online = !bundled && (await remote.keys()).contains(key);
+    if (token != _token) return; // sudah dihentikan / pindah halaman saat menunggu
+    if (!bundled && !online) {
+      _lastError = 'Rekaman $key tidak ada (aplikasi: ${clips.length}, internet: belum/tidak ada)';
       debugPrint('[Baca Bersama] $_lastError');
     }
-    if (clips.contains(key)) {
+    if (bundled || online) {
       try {
-        final json = jsonDecode(await rootBundle.loadString('assets/stories/$key.json'))
-            as Map<String, dynamic>;
+        final json = bundled
+            ? jsonDecode(await rootBundle.loadString('assets/stories/$key.json')) as Map<String, dynamic>
+            : await remote.timings(key);
+        if (json == null) throw StateError('waktu kata $key tidak bisa diambil');
+        if (token != _token) return;
         final starts = [
           for (final w in json['words'] as List<dynamic>) ((w as List<dynamic>)[0] as num).toDouble()
         ];
@@ -94,7 +104,7 @@ class StoryNarrator extends ChangeNotifier {
           _setWord(i);
         });
         _doneSub = _player.onPlayerComplete.listen((_) => finish());
-        await _player.play(AssetSource('stories/$key.mp3'));
+        await _player.play(bundled ? AssetSource('stories/$key.mp3') : UrlSource(remote.url(key, 'mp3')!));
         _source = NarrationSource.recording;
         _lastError = null;
         notifyListeners();

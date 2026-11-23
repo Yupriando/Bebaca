@@ -45,7 +45,7 @@ class ParentReport {
       detailed: j['detailed'] == true,
       days: list('days', ReportDay.fromJson),
       letters: list('letters', LetterMastery.fromJson),
-      suggestions: ((j['suggestions'] as List<dynamic>?) ?? const []).map((e) => '$e').toList(),
+      suggestions: ((j['suggestions'] as List<dynamic>?) ?? const []).map((e) => stripEmoji('$e')).toList(),
     );
   }
 }
@@ -112,12 +112,45 @@ class LetterMastery {
 }
 
 class ReportActivity {
-  final String icon, text;
+  /// Jenis aktivitas (lesson, correct, wrong, story, ...) untuk memilih ikon.
+  final String kind;
+  final String text;
   final DateTime? at;
-  const ReportActivity(this.icon, this.text, this.at);
+  const ReportActivity(this.kind, this.text, this.at);
   factory ReportActivity.fromJson(Map<String, dynamic> j) => ReportActivity(
-        (j['icon'] as String?) ?? '•',
-        (j['text'] as String?) ?? '',
+        (j['kind'] as String?) ?? _kindFromEmoji((j['icon'] as String?) ?? ''),
+        stripEmoji((j['text'] as String?) ?? ''),
         DateTime.tryParse((j['at'] as String?) ?? '')?.toLocal(),
       );
+
+  /// Server versi lama masih mengirim emoji sebagai ikon.
+  static String _kindFromEmoji(String icon) => switch (icon) {
+        '📘' => 'lesson',
+        '🏆' || '🌟' => 'complete',
+        '🚪' => 'exit',
+        '✅' => 'correct',
+        '❌' => 'wrong',
+        '📖' => 'story',
+        '🎤' => 'read',
+        '📝' => 'note',
+        '🔊' || '🔈' => 'listen',
+        '🎬' => 'video',
+        '🔒' => 'lock',
+        '🔓' => 'unlock',
+        '🛡️' || '🛡' => 'parent',
+        '⚠️' || '⚠' => 'warning',
+        '📱' => 'app',
+        '💤' => 'away',
+        '⏸' || '⏸️' => 'pause',
+        _ => 'tap',
+      };
 }
+
+/// Hapus emoji dari teks server versi lama (mis. bintang "⭐⭐⭐", "🎉").
+String stripEmoji(String text) => text
+    .replaceAll(
+        RegExp(r'[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B50}\u{2B06}\u{2B07}\u{FE0F}\u{200D}\u{23E9}-\u{23FA}]', unicode: true),
+        '')
+    .replaceAll(RegExp(r'\s{2,}'), ' ')
+    .replaceAllMapped(RegExp(r'\s+([.,!?)])'), (m) => m[1]!)
+    .trim();

@@ -115,7 +115,7 @@ class _LearnPageState extends State<LearnPage> {
   }
 }
 
-/// "Halo, Budi! 👋  Yuk, lanjut belajar hari ini!" + hari beruntun & total bintang.
+/// "Halo, Budi!  Yuk, lanjut belajar hari ini!" + hari beruntun & total bintang.
 class _GreetingCard extends StatelessWidget {
   final UserProfile? profile;
   final int stars;
@@ -125,11 +125,15 @@ class _GreetingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = profile?.nama.split(' ').first ?? 'Kakak';
     final avatar = profile?.avatarUrl;
-    Widget chip(String icon, String text, Color bg) => Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+    Widget chip(IconData icon, Color iconColor, String text, Color bg) => Container(
+          padding: const EdgeInsets.fromLTRB(10, 7, 14, 7),
           decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(18)),
-          child: Text('$icon $text',
-              style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 22, color: iconColor),
+            const SizedBox(width: 5),
+            Text(text,
+                style: GoogleFonts.fredoka(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          ]),
         );
     return SoftCard(
       radius: 28,
@@ -144,12 +148,16 @@ class _GreetingCard extends StatelessWidget {
             border: Border.all(color: AppColors.sun, width: 3),
             image: avatar != null ? DecorationImage(image: NetworkImage(avatar), fit: BoxFit.cover) : null,
           ),
-          child: avatar == null ? Center(child: Text('🧒', style: GoogleFonts.fredoka(fontSize: 34))) : null,
+          child: avatar == null
+              ? Center(
+                  child: Text(name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+                      style: GoogleFonts.fredoka(fontSize: 30, fontWeight: FontWeight.w700, color: const Color(0xFFB7791F))))
+              : null,
         ),
         const SizedBox(width: 14),
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text('Halo, $name! 👋',
+            Text('Halo, $name!',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.fredoka(fontSize: 28, fontWeight: FontWeight.w700, color: AppColors.textDark)),
@@ -158,9 +166,10 @@ class _GreetingCard extends StatelessWidget {
           ]),
         ),
         const SizedBox(width: 10),
-        chip('🔥', '${profile?.hariBerturut ?? 0} hari', const Color(0xFFFFEDE0)),
+        chip(Icons.local_fire_department_rounded, const Color(0xFFFF7A1A), '${profile?.hariBerturut ?? 0} hari',
+            const Color(0xFFFFEDE0)),
         const SizedBox(width: 8),
-        chip('⭐', '$stars', const Color(0xFFFFF4D1)),
+        chip(Icons.star_rounded, AppColors.sunDark, '$stars', const Color(0xFFFFF4D1)),
       ]),
     );
   }
@@ -308,7 +317,7 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(covariant _MapPainter old) => old.pts.length != pts.length || old.pts.first != pts.first;
 }
 
-/// Papan kayu: "Unit 1 / Huruf Vokal / ⭐ 2/8" + tombol panduan (dan gembok Premium).
+/// Papan kayu: "Unit 1 / Huruf Vokal / (bintang) 2/8" + tombol panduan (dan gembok Premium).
 class _Signpost extends StatelessWidget {
   final LessonSection section;
   const _Signpost({required this.section});
@@ -333,7 +342,11 @@ class _Signpost extends StatelessWidget {
               Text('Unit ${section.unit}${section.section > 1 ? ' · Bagian ${section.section}' : ''}',
                   style: ink.copyWith(fontSize: 17)),
               Text(section.title, style: ink.copyWith(fontSize: 24)),
-              Text('⭐ $done/${section.lessons.length}', style: ink.copyWith(fontSize: 17)),
+              Row(mainAxisSize: MainAxisSize.min, children: [
+                const Icon(Icons.star_rounded, size: 19, color: Color(0xFF4A2A0C)),
+                const SizedBox(width: 3),
+                Text('$done/${section.lessons.length}', style: ink.copyWith(fontSize: 17)),
+              ]),
             ]),
             const SizedBox(width: 10),
             if (section.premiumLocked)
@@ -455,6 +468,12 @@ class _LessonNodeState extends State<_LessonNode>
         return Icons.help_rounded;
       case LessonKind.challenge:
         return Icons.emoji_events_rounded;
+      case LessonKind.syllable:
+        return Icons.join_inner_rounded; // dua bunyi digabung
+      case LessonKind.word:
+        return Icons.abc_rounded;
+      case LessonKind.sentence:
+        return Icons.notes_rounded;
     }
   }
 

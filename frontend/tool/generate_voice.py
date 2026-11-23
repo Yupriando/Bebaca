@@ -4,6 +4,8 @@ Membuat rekaman suara AI (natural, logat Indonesia) untuk lesson -> assets/voice
 Cukup dijalankan SEKALI; hasilnya ikut di aplikasi (offline, tanpa biaya saat dipakai anak).
 Tidak perlu pip install apa pun.
 
+API key boleh ditaruh di backend/.env (baris ELEVENLABS_API_KEY=sk_...), tidak perlu diketik ulang.
+
 === ElevenLabs (bawaan) ===
   1. Daftar di elevenlabs.io -> klik profil -> API Keys -> Create API key
      (centang izin "Text to Speech" dan "Voices: Read").
@@ -20,7 +22,11 @@ Tidak perlu pip install apa pun.
   $env:GOOGLE_TTS_API_KEY="AIza..."; python tool/generate_voice.py --provider google
 
 Opsi lain: --force (rekam ulang semua), --only "ini huruf a" (coba 1 kalimat dulu),
-           --letters (rekam ulang 26 huruf tunggal saja: a, be, ce, ...).
+           --letters (rekam ulang 26 huruf tunggal saja: a, be, ce, ...),
+           --no-db (lewati suku kata/kata/kalimat yang diambil dari Supabase).
+
+Suku kata, kata, dan kalimat (lesson syllable/word/sentence) diambil langsung dari
+Supabase (pakai backend/.env), jadi jalankan lagi tool ini setiap ada materi baru.
 
 Daftar kalimat di bawah HARUS sama dengan yang diucapkan aplikasi
 (lib/features/lesson/steps/*.dart dan SpeechService.letterName).
@@ -47,7 +53,13 @@ LETTER_NAMES = {
 # kalimat per huruf (intro_step, find_step, trace_step)
 TEMPLATES = ['Ini huruf {}', 'Carilah huruf {}', 'Gambarkan huruf {}']
 # kalimat tetap (listen_pick_step, read_step)
-FIXED = ['Huruf apa yang kamu dengar?', 'Baca huruf ini']
+FIXED = [
+    'Huruf apa yang kamu dengar?', 'Baca huruf ini',
+    'Suku kata apa yang kamu dengar?', 'Baca suku kata ini', 'Baca kata ini', 'Baca kalimat ini',
+]
+VOWELS = 'aiueo'
+SYLLABLE_CONTEXT = 'Ayo belajar membaca suku kata. Dengarkan baik-baik, ini suku kata'
+BACKEND_ENV = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'backend', '.env')
 
 
 def clip_key(text):
@@ -66,12 +78,79 @@ def spoken(name):
 LETTER_CONTEXT = 'Ayo belajar membaca bersama. Sekarang dengarkan baik-baik, ini huruf'
 
 
-def phrases():
+def api_key(name):
+    """API key dari variabel lingkungan, atau baris NAME=... di backend/.env (tidak ikut ke GitHub)."""
+    if os.environ.get(name):
+        return os.environ[name].strip()
+    if os.path.exists(BACKEND_ENV):
+        for line in open(BACKEND_ENV, encoding='utf-8'):
+            line = line.strip()
+            if line.startswith(name + '='):
+                return line.split('=', 1)[1].strip().strip('"').strip("'")
+    return None
+
+
+def fetch_lessons():
+    """Lesson suku kata / kata / kalimat dari Supabase: [(kind, letters)]."""
+    env = {}
+    if os.path.exists(BACKEND_ENV):
+        for line in open(BACKEND_ENV, encoding='utf-8'):
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                k, v = line.split('=', 1)
+                env[k.strip()] = v.strip().strip('"').strip("'")
+    url, key = env.get('SUPABASE_URL'), env.get('SUPABASE_SERVICE_ROLE_KEY')
+    if not url or not key:
+        print('(lewati suku kata/kata/kalimat: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY tidak ada di backend/.env)')
+        return []
+    req = urllib.request.Request(
+        f'{url}/rest/v1/lessons?select=kind,letters&kind=in.(syllable,word,sentence)',
+        headers={'apikey': key, 'Authorization': f'Bearer {key}'},
+    )
+    with urllib.request.urlopen(req, timeout=30) as res:
+        return [(r['kind'], r['letters'] or []) for r in json.loads(res.read())]
+
+
+def lesson_phrases(lessons):
+    """Kalimat untuk lesson suku kata, kata, dan kalimat (sama dengan yang diucapkan aplikasi)."""
+    out, consonants = [], []
+    for kind, items in lessons:
+        if kind == 'syllable':
+            consonants += [c.strip().upper() for c in items if c.strip()]
+        elif kind == 'word':
+            for w in items:
+                parts = [p for p in w.lower().split('-') if p]
+                word = ''.join(parts)
+                out += [(word, word + '.'), (f'Ayo susun kata {word}', f'Ayo susun kata {word}.')]
+                out += [(p, p + '.') for p in parts]
+        elif kind == 'sentence':
+            for s in items:
+                s = s.strip()
+                out += [(s, s), (f'Ayo susun kalimat. {s}', f'Ayo susun kalimat. {s}')]
+                out += [(w, w + '.') for w in re.findall(r"[A-Za-z]+", s)]
+    for c in dict.fromkeys(consonants):
+        name = LETTER_NAMES.get(c, c.lower())
+        intro = f'Huruf {name}, digabung dengan huruf vokal'
+        out.append((intro, f'Huruf {spoken(name)}, digabung dengan huruf vokal.'))
+        for v in VOWELS:
+            syl = c.lower() + v
+            out += [(syl, spoken(syl) + '.'), (f'Mana suku kata {syl}?', f'Mana suku kata {spoken(syl)}?')]
+    return out
+
+
+def phrases(lessons=()):
     """[(teks untuk nama file, teks yang diucapkan AI)]"""
     out = [(n, spoken(n) + '.') for n in LETTER_NAMES.values()]
     for n in LETTER_NAMES.values():
         out += [(t.format(n), t.format(spoken(n)) + '.') for t in TEMPLATES]
-    return out + [(t, t if t.endswith('?') else t + '.') for t in FIXED]
+    out += [(t, t if t.endswith('?') else t + '.') for t in FIXED]
+    out += lesson_phrases(lessons)
+    seen, unique = set(), []
+    for f, sp in out:  # suku kata "be" = nama huruf B, cukup direkam sekali
+        if clip_key(f) not in seen:
+            seen.add(clip_key(f))
+            unique.append((f, sp))
+    return unique
 
 
 def request(url, body=None, headers=None):
@@ -162,12 +241,13 @@ def main():
     ap.add_argument('--only', help='rekam 1 kalimat saja, mis. "ini huruf a"')
     ap.add_argument('--letters', action='store_true', help='rekam ulang 26 huruf tunggal saja')
     ap.add_argument('--list-voices', action='store_true', help='tampilkan suara yang tersedia')
+    ap.add_argument('--no-db', action='store_true', help='tanpa suku kata/kata/kalimat dari Supabase')
     args = ap.parse_args()
 
     env_name, list_voices, say = PROVIDERS[args.provider]
-    key = os.environ.get(env_name)
+    key = api_key(env_name)
     if not key:
-        sys.exit(f'Isi dulu {env_name} (lihat petunjuk di atas file ini).')
+        sys.exit(f'Isi dulu {env_name}: variabel lingkungan, atau baris {env_name}=... di backend/.env.')
     if args.list_voices:
         return list_voices(key)
     if not args.voice:
@@ -175,7 +255,8 @@ def main():
             sys.exit('Pilih suara dulu: --voice <VOICE_ID>  (lihat --list-voices)')
         args.voice = 'id-ID-Chirp3-HD-Aoede'
 
-    items = phrases()
+    items = phrases([] if args.no_db else fetch_lessons())
+    syllable_files = {c.lower() + v for c in LETTER_NAMES for v in VOWELS}
     if args.only:
         items = [p for p in items if clip_key(p[0]) == clip_key(args.only)]
         if not items:
@@ -192,7 +273,8 @@ def main():
             skipped += 1
             continue
         try:
-            context = LETTER_CONTEXT if file_text in letter_files else None
+            context = (LETTER_CONTEXT if file_text in letter_files
+                       else SYLLABLE_CONTEXT if file_text in syllable_files else None)
             audio = say(say_text, key, args, context)
         except urllib.error.HTTPError as e:
             sys.exit(f'Gagal untuk "{say_text}": {e.code} {e.read().decode(errors="ignore")}')

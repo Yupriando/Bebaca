@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../models/story.dart';
 import '../../services/event_logger.dart';
+import '../../services/parent_mode.dart';
 import '../../services/sound_service.dart';
 import '../../services/speech_service.dart';
 import '../../services/story_service.dart';
@@ -12,12 +13,13 @@ import 'story_cover.dart';
 import 'story_end_view.dart';
 import 'story_narrator.dart';
 import 'story_pages.dart';
+import 'vocab_dialog.dart';
 
 /// "Baca Bersama": dongeng sebagai buku bergambar.
-/// - 🔊 Dengarkan : narasi membacakan halaman, kata yang dibaca menyala (karaoke),
+/// - Dengarkan    : narasi membacakan halaman, kata yang dibaca menyala (karaoke),
 ///                  lalu otomatis pindah ke halaman berikutnya.
-/// - Ketuk kata  : dengar kata itu saja.
-/// - 🎤 Aku baca  : anak membaca sendiri; kata yang sudah terbaca jadi hijau.
+/// - Ketuk kata  : dengar kata itu saja (kata baru: muncul artinya).
+/// - Aku baca     : anak membaca sendiri; kata yang sudah terbaca jadi hijau.
 /// Halaman terakhir disimpan ke server, jadi bisa dilanjutkan nanti.
 class StoryReaderPage extends StatefulWidget {
   final StoryDetail story;
@@ -30,6 +32,10 @@ class StoryReaderPage extends StatefulWidget {
 
 class _StoryReaderPageState extends State<StoryReaderPage> {
   late final List<String> _pages = splitPages(widget.story.content);
+  // kata baru: kunci (huruf kecil tanpa tanda baca) -> arti
+  late final Map<String, VocabWord> _vocab = {
+    for (final v in widget.story.vocab) VocabWord.keyOf(v.word): v,
+  };
   late final PageController _controller;
   final _narrator = StoryNarrator();
   final _service = StoryService();
@@ -135,6 +141,11 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _pages[page],
       onFinished: () {
         if (!mounted || !_autoRead || page != _page) return;
+        // Belajar Bersama: berhenti dulu di halaman berisi pertanyaan ngobrol
+        if (ParentMode.instance.enabled && widget.story.promptFor(page) != null) {
+          setState(() => _autoRead = false);
+          return;
+        }
         Future.delayed(const Duration(milliseconds: 700), () {
           if (mounted && _autoRead && page == _page) _go(1);
         });
@@ -162,6 +173,13 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
       _tappedWord = i;
     });
     _narrator.stop();
+    final vocab = _vocab[VocabWord.keyOf(word)];
+    if (vocab != null) {
+      showVocabDialog(context, vocab).then((_) {
+        if (mounted && _tappedWord == i) setState(() => _tappedWord = null);
+      });
+      return;
+    }
     final clean = word.replaceAll(RegExp(r'[^\p{L}\p{N}-]', unicode: true), '');
     EventLogger.instance.ui('word', {'word': clean, 'page': _page});
     if (clean.isNotEmpty) SpeechService.instance.speak(clean);
@@ -247,7 +265,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
           backgroundColor: good ? const Color(0xFF2E9E5B) : null,
           content: Text(
             good
-                ? 'Hebat! Kamu sudah membaca halaman ini 🎉'
+                ? 'Hebat! Kamu sudah membaca halaman ini.'
                 : 'Hampir! Coba baca lagi pelan-pelan ya',
           ),
         ),
@@ -378,6 +396,40 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
         i < images.length && images[i].isNotEmpty
             ? images[i]
             : widget.story.coverUrl;
+    final hasPicture = image != null && image.isNotEmpty;
+    final prompt = widget.story.promptFor(i);
+
+    final text = AnimatedBuilder(
+      animation: _narrator,
+      builder: (context, _) => _pageText(i, big: !hasPicture),
+    );
+    final body = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        text,
+        if (prompt != null) ...[
+          const SizedBox(height: 18),
+          _PromptBubble(prompt: prompt, highlight: ParentMode.instance.enabled),
+        ],
+      ],
+    );
+
+    // Dongeng tanpa gambar: halaman buku polos, tulisan lebih besar di tengah.
+    if (!hasPicture) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 980),
+            child: SoftCard(
+              radius: 30,
+              padding: const EdgeInsets.fromLTRB(36, 26, 36, 26),
+              child: SingleChildScrollView(child: body),
+            ),
+          ),
+        ),
+      );
+    }
 
     final picture = ClipRRect(
       borderRadius: BorderRadius.circular(24),
@@ -387,10 +439,6 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
         seed: widget.story.id,
         showTitle: false,
       ),
-    );
-    final text = AnimatedBuilder(
-      animation: _narrator,
-      builder: (context, _) => _pageText(i),
     );
 
     return LayoutBuilder(
@@ -410,7 +458,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
                       Expanded(
                         flex: 6,
                         child: Center(
-                          child: SingleChildScrollView(child: text),
+                          child: SingleChildScrollView(child: body),
                         ),
                       ),
                     ],
@@ -429,7 +477,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
                       const SizedBox(height: 16),
                       Expanded(
                         flex: 4,
-                        child: SingleChildScrollView(child: text),
+                        child: SingleChildScrollView(child: body),
                       ),
                     ],
                   ),
@@ -438,46 +486,59 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     );
   }
 
-  Widget _pageText(int i) {
+  Widget _pageText(int i, {bool big = false}) {
     final words = wordsOf(_pages[i]);
     final isCurrent = i == _page;
     final narrating = isCurrent ? _narrator.wordIndex : -1;
-    final size = MediaQuery.of(context).size.width < 500 ? 26.0 : 32.0;
+    final narrow = MediaQuery.of(context).size.width < 500;
+    final size = big ? (narrow ? 30.0 : 38.0) : (narrow ? 26.0 : 32.0);
 
     return Wrap(
       alignment: WrapAlignment.center,
       runSpacing: 6,
       children: [
         for (var w = 0; w < words.length; w++)
-          GestureDetector(
-            onTap: () => _tapWord(w, words[w]),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 140),
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color:
-                    w == narrating || (isCurrent && w == _tappedWord)
-                        ? const Color(0xFFFFD54F)
-                        : isCurrent && w < _readCount
-                        ? const Color(0xFFC8F0D4)
-                        : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                words[w],
-                style: GoogleFonts.fredoka(
-                  fontSize: size,
-                  height: 1.35,
-                  fontWeight: FontWeight.bold,
+          Builder(builder: (context) {
+            final isVocab = _vocab.containsKey(VocabWord.keyOf(words[w]));
+            final read = isCurrent && w < _readCount;
+            return GestureDetector(
+              onTap: () => _tapWord(w, words[w]),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 140),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
                   color:
-                      isCurrent && w < _readCount
-                          ? const Color(0xFF1E7A43)
-                          : AppColors.textDark,
+                      w == narrating || (isCurrent && w == _tappedWord)
+                          ? const Color(0xFFFFD54F)
+                          : read
+                          ? const Color(0xFFC8F0D4)
+                          : isVocab
+                          ? const Color(0xFFF1ECFF)
+                          : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  words[w],
+                  style: GoogleFonts.fredoka(
+                    fontSize: size,
+                    height: 1.35,
+                    fontWeight: FontWeight.bold,
+                    color:
+                        read
+                            ? const Color(0xFF1E7A43)
+                            : isVocab
+                            ? vocabColor
+                            : AppColors.textDark,
+                    decoration: isVocab ? TextDecoration.underline : null,
+                    decorationStyle: TextDecorationStyle.dotted,
+                    decorationColor: vocabColor,
+                    decorationThickness: 2,
+                  ),
                 ),
               ),
-            ),
-          ),
+            );
+          }),
       ],
     );
   }
@@ -590,6 +651,55 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// "Ayo ngobrol": pertanyaan untuk ditanyakan orang tua ke si kecil di halaman ini.
+class _PromptBubble extends StatelessWidget {
+  final StoryPrompt prompt;
+  final bool highlight; // mode Belajar Bersama: lebih menonjol
+  const _PromptBubble({required this.prompt, required this.highlight});
+
+  static const _purple = Color(0xFF7B61FF);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 620),
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+      decoration: BoxDecoration(
+        color: highlight ? const Color(0xFFEDE7FF) : const Color(0xFFF6F3FF),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: _purple.withAlpha(highlight ? 140 : 60), width: 2),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.forum_rounded, color: _purple, size: 28),
+          const SizedBox(width: 12),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text('Ayo ngobrol',
+                    style: GoogleFonts.fredoka(fontSize: 15, fontWeight: FontWeight.w700, color: _purple)),
+                Text(prompt.text,
+                    style: GoogleFonts.fredoka(fontSize: 20, color: const Color(0xFF3F2E8C), height: 1.25)),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: 'Bacakan pertanyaan',
+            onPressed: () {
+              EventLogger.instance.ui('prompt', {'text': prompt.text});
+              SpeechService.instance.speak(prompt.text);
+            },
+            icon: const Icon(Icons.volume_up_rounded, color: _purple, size: 30),
+          ),
+        ],
       ),
     );
   }

@@ -1,12 +1,12 @@
 # Bebaca - Aplikasi Belajar Baca
 
-## 📲 Download aplikasi (Android)
+## Download aplikasi (Android)
 
-**[⬇️ Download Bebaca v1.1.0 (APK, 61 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.1.0.apk)**
+**[Download Bebaca v1.2.0 (APK, 61 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.2.0.apk)**
 
 Cara memasang:
 1. Buka link di atas dari HP Android, tunggu sampai unduhan selesai.
-2. Buka file `Bebaca-v1.1.0.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
+2. Buka file `Bebaca-v1.2.0.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
    untuk browser / File Manager yang dipakai.
 3. Ketuk **Instal**, lalu buka **Bebaca**. Daftar akun baru atau login.
 
@@ -110,8 +110,12 @@ tombol **X** untuk keluar. Anak yang belum lancar membaca bisa mengetuk ikon spe
 | `review` (Latihan) | Carilah huruf, untuk tiap huruf di lesson |
 | `quiz` (Kuis) | Dengar lalu pilih*, untuk tiap huruf |
 | `challenge` (Tantangan) | Baca huruf (mikrofon), untuk tiap huruf |
+| `syllable` (Suku Kata, `letters` = konsonan, mis. `['B']`) | Kenalan suku kata (b + a = ba, ketuk ba bi bu be bo) -> Pilih suku kata yang terdengar* -> Baca suku kata. Beberapa konsonan sekaligus = latihan campuran |
+| `word` (Kata, `letters` = kata per suku kata, mis. `['bo-la', 'bu-ku']`) | Tiap kata: Susun kata dari potongan suku kata (+ gambar) -> Baca kata |
+| `sentence` (Kalimat, `letters` = kalimat, mis. `['Ini bola.']`) | Tiap kalimat: Susun kata sesuai urutan -> Baca kalimat |
 
-\* langkah "dengar lalu pilih" hanya muncul jika **Listening Exercise** di Settings menyala (kalau mati, kuis memakai "Carilah huruf").
+\* langkah "dengar lalu pilih" hanya muncul jika **Latihan Mendengar** di Pengaturan menyala (kalau mati, kuis memakai "Carilah huruf"
+dan pilihan suku kata menjadi "Mana suku kata ba?" yang dicocokkan dengan tulisan).
 **Sound Effect** mengatur suara otomatis (perintah & huruf dibacakan sendiri), **Animation** mengatur animasi & konfeti.
 
 - **Menulis**: jari menelusuri huruf abu-abu. Hasilnya baru BENAR jika **seluruh** huruf tertelusuri dengan tepat:
@@ -126,13 +130,15 @@ tombol **X** untuk keluar. Anak yang belum lancar membaca bisa mengetuk ikon spe
   muncul tombol "Aku sudah membaca".
 - **Bintang**: 0 salah = 3 bintang, 1-2 salah = 2 bintang, lebih = 1 bintang. Lesson yang sudah selesai boleh diulang;
   bintang tersimpan hanya yang terbaik.
-- Huruf pengecoh diambil dari seluruh huruf di section itu (Unit 1 = vokal, Unit 2 = konsonan).
+- Huruf pengecoh diambil dari seluruh huruf di section itu (Unit 1 = vokal, Unit 2 = konsonan). Pengecoh suku kata:
+  satu dengan konsonan sama tetapi vokal beda (ba/bu), satu dengan vokal sama tetapi konsonan beda (bu/du).
+- Gambar untuk kata & kalimat ada di `frontend/lib/features/lesson/word_pictures.dart` (kata tanpa gambar tetap bisa dipakai).
 - Suara huruf memakai **nama huruf** ("be", "ce", "de"), belum bunyi fonetik.
 
-**Menambah lesson/huruf baru** (tanpa mengubah aplikasi) - contoh Huruf H di Unit 2:
+**Menambah lesson baru** (tanpa mengubah aplikasi) - contoh lesson kata di Unit 7:
 ```sql
 insert into public.lessons (section_id, order_index, title, kind, letters)
-select id, 9, 'Huruf H', 'letter', array['H'] from public.sections where unit = 2 and section = 1;
+select id, 10, 'Kata di Rumah 4', 'word', array['pi-pi', 'ta-li', 'pa-ku'] from public.sections where unit = 7 and section = 1;
 ```
 (`order_index` menentukan urutan; lesson berikutnya otomatis terbuka setelah yang sebelumnya selesai.)
 
@@ -140,6 +146,39 @@ select id, 9, 'Huruf H', 'letter', array['H'] from public.sections where unit = 
 
 > Database lama? Jalankan berurutan: `migrations/001_story_video.sql` lalu `migrations/002_lesson_content.sql`
 > (menambah jenis lesson, daftar huruf, dan bintang). Keduanya aman dijalankan ulang.
+
+## Belajar Bersama Ayah/Ibu: suku kata, kata, kalimat
+Migrasi (jalankan berurutan di Supabase -> SQL Editor, keduanya aman dijalankan ulang):
+1. `backend/supabase/migrations/007_belajar_bersama.sql`: jenis lesson baru (`syllable`, `word`, `sentence`),
+   kolom dongeng `prompts` & `vocab`, dan materi Unit 3 sampai 9.
+2. `backend/supabase/migrations/008_isi_dongeng.sql`: isi 35 dongeng (lihat bagian Baca Bersama).
+
+Urutan materi (cocok untuk usia 3-6 tahun, didampingi orang tua):
+
+| Unit | Isi |
+|---|---|
+| 1 | Huruf vokal A I U E O (gratis) |
+| 2 | Konsonan B C D F G |
+| 3 | Suku kata pertama: ba-bi-bu, ca, da, ga + kata pertama (i-bu, da-du, gi-gi, ba-ca, du-a, cu-ci) |
+| 4 | Huruf H J K L M |
+| 5 | Suku kata H sampai M + kata (bo-la, bu-ku, ku-da, ka-ki, ma-ta, ba-ju, ma-du, li-ma, ku-e) |
+| 6 | Huruf N P R S T |
+| 7 | Suku kata N sampai T + kata (na-si, ro-ti, su-su, sa-pi, ru-sa, to-pi, ko-pi, pi-ta, sa-te) |
+| 8 | Huruf Q V W X Y Z |
+| 9 | Kata 3 suku kata (se-pa-tu, ke-re-ta, ...) dan kalimat pendek ("Ini bola.", "Mama baca buku.") |
+
+Suku kata & kata hanya memakai huruf yang sudah dipelajari sebelumnya. Aplikasi versi lama (sebelum 1.2) tidak
+dikirimi lesson jenis baru: aplikasi 1.2 mengirim header `X-Bebaca-Client: 2`, yang lain hanya menerima lesson huruf.
+
+**Mode Belajar Bersama** (Pengaturan -> Pengalaman Belajar -> Belajar Bersama Ayah/Ibu, disimpan di HP):
+- Tiap soal menampilkan **Tips Ayah/Ibu** sesuai soalnya (mis. "c... a... ca!", "tutup suku kata berikutnya dengan jari").
+- Di soal membaca muncul tombol **Sudah benar / Coba lagi** untuk orang tua (mikrofon sering gagal menangkap suara balita).
+  "Coba lagi" memutar contoh bacaan; penilaian orang tua ikut tercatat di laporan & Pantau Langsung.
+- Di Baca Bersama, narasi berhenti di halaman yang punya pertanyaan **Ayo ngobrol**, supaya ada waktu bercakap.
+
+Rekaman suara AI untuk suku kata, kata, dan kalimat baru (diambil otomatis dari Supabase):
+`cd frontend; $env:ELEVENLABS_API_KEY="sk_..."; python tool/generate_voice.py --voice <VOICE_ID>`
+(hanya merekam yang belum ada, sekitar 240 rekaman pendek. Tanpa rekaman, dipakai suara bawaan perangkat.)
 
 ## Video & isi dongeng
 Tiap dongeng punya 3 kolom di tabel `stories` (Supabase -> Table Editor):
@@ -172,11 +211,20 @@ Migrasi: `backend/supabase/migrations/005_story_reader.sql` (kolom `moral`, `qui
   menyala kuning, lalu otomatis pindah halaman. **Ketuk kata** = dengar kata itu. **Aku baca** = anak membaca
   lewat mikrofon, kata yang terbaca jadi hijau.
 - Akhir cerita: kartu **Pesan dari cerita ini** (`moral`), **kuis** (`quiz`: `[{question, options[], answer}]`),
-  bintang + konfeti. Progres & bintang tersimpan; rak dongeng menampilkan ✅ dan baris **Lanjutkan membaca**.
+  bintang + konfeti. Progres & bintang tersimpan; rak dongeng menampilkan tanda selesai dan filter **Lanjutkan**.
+- **Ayo ngobrol** (`prompts`: `[{page, text}]`, `page` mulai 0): pertanyaan untuk orang tua tanyakan ke anak di halaman itu
+  (dialogic reading). **Kata baru** (`vocab`: `[{word, meaning}]`): kata bergaris titik-titik di cerita, diketuk
+  untuk melihat & mendengar artinya; daftarnya muncul lagi di akhir cerita.
+- Isi 35 dongeng (versi ramah anak, pesan moral, 3 soal kuis, pertanyaan ngobrol, kata baru) ada di
+  `migrations/008_isi_dongeng.sql`. Beberapa judul lama yang masih berupa nama kategori diganti cerita sungguhan
+  (mis. "Mitologi Yunani" -> "Raja Midas dan Sentuhan Emas"). Gambar sampul & halaman belum ada: isi `cover_url`
+  dan `page_images` bila ilustrasinya sudah siap (tanpa gambar, halaman tampil sebagai buku bertulisan besar).
 - Gambar per halaman: isi `page_images` (array URL, urut sesuai halaman). Kosong = pakai gambar sampul.
 - Narasi AI (opsional, sekali saja; tanpanya dipakai suara perangkat):
   `cd frontend; $env:ELEVENLABS_API_KEY="sk_..."; python tool/generate_story_voice.py --voice <VOICE_ID> --title "Malin Kundang"`
   Hasil: `frontend/assets/stories/st_*.mp3` + `.json` (waktu tiap kata). Kalau isi cerita diubah, jalankan lagi.
+  Tanpa `--title` semua dongeng direkam (35 dongeng baru sekitar 55.000 karakter: perlu paket ElevenLabs berbayar).
+  Pesan moral, soal kuis, pertanyaan ngobrol, dan arti kata baru ikut direkam.
 
 ## Untuk Orang Tua: Laporan Perkembangan & Pantau Langsung (QR)
 Migrasi: `backend/supabase/migrations/006_parent_report.sql` (tabel `learning_events` & `parent_links`).

@@ -15,7 +15,16 @@ const STEP_NAMES = {
   traceUpper: 'Menulis huruf besar',
   traceLower: 'Menulis huruf kecil',
   read: 'Baca huruf',
+  syllableIntro: 'Kenalan suku kata',
+  syllablePick: 'Pilih suku kata',
+  syllableRead: 'Baca suku kata',
+  wordBuild: 'Susun kata',
+  wordRead: 'Baca kata',
+  sentenceBuild: 'Susun kalimat',
+  sentenceRead: 'Baca kalimat',
 };
+/** Langkah membaca dengan suara (yang "dipilih" = yang terdengar mikrofon). */
+const READ_STEPS = new Set(['read', 'syllableRead', 'wordRead', 'sentenceRead']);
 const TAB_NAMES = { 0: 'Belajar', 1: 'Dongeng', 2: 'Profil', 3: 'Pengaturan' };
 const TAB_ACTIVITY = {
   0: 'Melihat daftar pelajaran',
@@ -23,6 +32,22 @@ const TAB_ACTIVITY = {
   2: 'Melihat halaman profil',
   3: 'Membuka pengaturan',
 };
+
+/** "INI BOLA." -> "Ini bola." (aplikasi mencatat target dengan huruf besar). */
+const sentenceCase = (t) => {
+  const low = String(t ?? '').toLowerCase();
+  return low.charAt(0).toUpperCase() + low.slice(1);
+};
+
+/** Target sesuai tampilan di layar anak: huruf "B", suku kata "ba", kata "bola", kalimat "Ini bola." */
+function displayTarget(step, text) {
+  const t = String(text ?? '');
+  const s = String(step ?? '');
+  if (s === 'syllableIntro') return t.toUpperCase(); // konsonan
+  if (s.startsWith('syllable') || s.startsWith('word')) return t.toLowerCase();
+  if (s.startsWith('sentence')) return sentenceCase(t);
+  return t;
+}
 
 /** Kalimat perintah yang dilihat anak di layar untuk tiap jenis langkah. */
 function stepPrompt(step, letter = '') {
@@ -33,13 +58,23 @@ function stepPrompt(step, letter = '') {
     case 'traceUpper': return `Gambarkan huruf ${letter.toUpperCase()}`;
     case 'traceLower': return `Gambarkan huruf ${letter.toLowerCase()}`;
     case 'read': return `Baca huruf ${letter}`;
+    case 'syllableIntro': {
+      const c = letter.toLowerCase();
+      return `Suku kata ${letter.toUpperCase()}: ${['a', 'i', 'u', 'e', 'o'].map((v) => c + v).join(' ')}`;
+    }
+    case 'syllablePick': return `Suku kata apa yang kamu dengar? (jawabannya ${letter.toLowerCase()})`;
+    case 'syllableRead': return `Baca suku kata ${letter.toLowerCase()}`;
+    case 'wordBuild': return `Susun kata ${letter.toLowerCase()}`;
+    case 'wordRead': return `Baca kata ${letter.toLowerCase()}`;
+    case 'sentenceBuild': return `Susun kalimat: ${sentenceCase(letter)}`;
+    case 'sentenceRead': return `Baca kalimat: ${sentenceCase(letter)}`;
     default: return '';
   }
 }
 const STORY_MODES = {
-  browse: '👀 Melihat-lihat halaman',
-  listen: '🔊 Mendengarkan narasi',
-  read: '🎤 Membaca sendiri (mikrofon)',
+  browse: 'Melihat-lihat halaman',
+  listen: 'Mendengarkan narasi',
+  read: 'Membaca sendiri (mikrofon)',
 };
 
 /** Awal hari (WIB) sebagai ISO UTC, untuk filter kolom timestamptz. */
@@ -61,33 +96,49 @@ function weekDates(weekOffset = 0) {
 
 const pct = (a, b) => (b === 0 ? 0 : Math.round((a / b) * 100));
 const mmss = (sec) => `${Math.floor((sec ?? 0) / 60)}:${String((sec ?? 0) % 60).padStart(2, '0')}`;
+const stars = (n) => (n ? ` (${n} bintang)` : '');
 const VIDEO_STATES = {
-  play: '▶️ Memutar video',
-  pause: '⏸ Menjeda video',
-  back10: '⏪ Mundur 10 detik',
-  forward10: '⏩ Maju 10 detik',
-  fullscreen: '⛶ Layar penuh',
-  ended: '🏁 Video selesai',
+  play: 'Memutar video',
+  pause: 'Menjeda video',
+  back10: 'Mundur 10 detik',
+  forward10: 'Maju 10 detik',
+  fullscreen: 'Layar penuh',
+  ended: 'Video selesai',
 };
+
+// Setiap aktivitas punya "kind" (dipakai aplikasi & halaman pantau untuk memilih ikon/warna):
+// lesson, complete, exit, correct, wrong, parent, story, read, note, listen, word, prompt,
+// video, lock, unlock, premium, warning, app, away, pause, tap.
+// "icon" dikosongkan supaya aplikasi versi lama tidak lagi menampilkan emoji.
+const item = (kind, text) => ({ kind, icon: '', text });
 
 /** Teks untuk interaksi kecil ('ui'). */
 function describeUi(d) {
   switch (d.action) {
-    case 'replay': return { icon: '🔊', text: `Memutar ulang suara "${d.text ?? ''}"` };
-    case 'listen_letter': return { icon: '🔈', text: d.letter && d.letter !== '?' ? `Mendengarkan bunyi huruf ${d.letter}` : 'Memutar ulang suara huruf' };
-    case 'word': return { icon: '👆', text: `Mengetuk kata "${d.word ?? ''}" di dongeng` };
-    case 'narration': return d.on ? null : { icon: '⏸', text: 'Menjeda narasi dongeng' };
+    case 'replay': return item('listen', `Memutar ulang suara "${d.text ?? ''}"`);
+    case 'listen_letter':
+      return item('listen', d.letter && d.letter !== '?' ? `Mendengarkan bunyi ${d.letter}` : 'Memutar ulang suara soal');
+    case 'word': return item('tap', `Mengetuk kata "${d.word ?? ''}"`);
+    case 'vocab': return item('word', `Melihat arti kata baru "${d.word ?? ''}"`);
+    case 'prompt': return item('prompt', `Ngobrol bersama: "${d.text ?? ''}"`);
+    case 'narration': return d.on ? null : item('pause', 'Menjeda narasi dongeng');
     case 'reading': return null; // progres membaca: ditampilkan di kartu "sedang apa"
     case 'video': {
       const st = VIDEO_STATES[d.state] ?? 'Video';
-      return { icon: '🎬', text: `${st}${d.title ? ` "${d.title}"` : ''} (${mmss(d.position)} / ${mmss(d.duration)})` };
+      return item('video', `${st}${d.title ? ` "${d.title}"` : ''} (${mmss(d.position)} / ${mmss(d.duration)})`);
     }
-    case 'premium_prompt': return { icon: '🔒', text: `Mencoba membuka konten Premium: ${d.what ?? ''}` };
-    case 'parent_gate': return { icon: '🛡️', text: 'Membuka menu khusus orang tua (minta PIN)' };
-    case 'pin_wrong': return { icon: '⚠️', text: 'Memasukkan PIN orang tua yang salah' };
+    case 'premium_prompt': return item('premium', `Mencoba membuka konten Premium: ${d.what ?? ''}`);
+    case 'parent_gate': return item('parent', 'Membuka menu khusus orang tua (minta PIN)');
+    case 'parent_mode':
+      return item('parent', d.on ? 'Menyalakan mode Belajar Bersama Ayah/Ibu' : 'Mematikan mode Belajar Bersama Ayah/Ibu');
+    case 'parent_judge':
+      return item(d.correct ? 'correct' : 'parent', d.correct
+        ? `Ayah/Ibu menilai bacaan "${d.text ?? ''}" sudah benar`
+        : `Ayah/Ibu meminta mencoba lagi "${d.text ?? ''}"`);
+    case 'pin_wrong': return item('warning', 'Memasukkan PIN orang tua yang salah');
     case 'locked':
-      return { icon: '🔒', text: d.reason === 'curfew' ? 'Layar terkunci: sudah jam malam' : 'Layar terkunci: batas waktu belajar hari ini habis' };
-    case 'unlocked': return { icon: '🔓', text: 'Layar terbuka lagi' };
+      return item('lock', d.reason === 'curfew' ? 'Layar terkunci: sudah jam malam' : 'Layar terkunci: batas waktu belajar hari ini habis');
+    case 'unlocked': return item('unlock', 'Layar terbuka lagi');
     default: return null;
   }
 }
@@ -97,40 +148,44 @@ export function describe(ev) {
   const d = ev.data || {};
   switch (ev.type) {
     case 'lesson_start':
-      return { icon: '📘', text: `Mulai belajar "${d.title ?? 'lesson'}"` };
+      return item('lesson', `Mulai belajar "${d.title ?? 'lesson'}"`);
     case 'lesson_complete': {
       const extra = [
+        d.stars ? `${d.stars} bintang` : null,
         d.mistakes != null ? `${d.mistakes} salah` : null,
         d.seconds != null ? `${Math.max(1, Math.round(d.seconds / 60))} menit` : null,
       ].filter(Boolean).join(', ');
-      return { icon: '🏆', text: `Selesai "${d.title ?? 'lesson'}" ${'⭐'.repeat(d.stars ?? 0)}${extra ? ` (${extra})` : ''}` };
+      return item('complete', `Selesai "${d.title ?? 'lesson'}"${extra ? ` (${extra})` : ''}`);
     }
     case 'lesson_exit':
-      return { icon: '🚪', text: `Keluar dari "${d.title ?? 'lesson'}" sebelum selesai` };
+      return item('exit', `Keluar dari "${d.title ?? 'lesson'}" sebelum selesai`);
     case 'answer': {
       const step = STEP_NAMES[d.step] ?? 'Soal';
-      if (d.correct) return { icon: '✅', text: `${step} ${d.letter ?? ''}: benar` };
+      const kind = String(d.step ?? '');
+      const shown = displayTarget(kind, d.letter);
+      const target = kind.startsWith('sentence') || kind.startsWith('word') ? `"${shown}"` : shown;
+      if (d.correct) return item('correct', `${step} ${target}: benar`);
       const picked = !d.picked
         ? ''
-        : d.step === 'read' ? ` (terdengar "${d.picked}")` : ` (memilih ${d.picked})`;
-      return { icon: '❌', text: `${step} ${d.letter ?? ''}: belum tepat${picked}` };
+        : READ_STEPS.has(d.step) ? ` (terdengar "${d.picked}")` : ` (memilih ${displayTarget(d.step, d.picked)})`;
+      return item('wrong', `${step} ${target}: belum tepat${picked}`);
     }
     case 'story_open':
-      return { icon: '📖', text: `Membuka dongeng "${d.title ?? ''}"` };
+      return item('story', `Membuka dongeng "${d.title ?? ''}"`);
     case 'step':
-      return d.note ? { icon: '📝', text: `${STEP_NAMES[d.step] ?? 'Soal'} ${d.letter ?? ''}: ${d.note}` } : null;
+      return d.note ? item('note', `${STEP_NAMES[d.step] ?? 'Soal'} ${displayTarget(d.step, d.letter)}: ${d.note}`) : null;
     case 'story_read':
       return d.good
-        ? { icon: '🎤', text: `Membaca sendiri hal. ${(d.page ?? 0) + 1}: ${d.read}/${d.total} kata ✅` }
-        : { icon: '🎤', text: `Membaca sendiri hal. ${(d.page ?? 0) + 1}: baru ${d.read}/${d.total} kata` };
+        ? item('read', `Membaca sendiri hal. ${(d.page ?? 0) + 1}: ${d.read}/${d.total} kata, lancar`)
+        : item('read', `Membaca sendiri hal. ${(d.page ?? 0) + 1}: baru ${d.read}/${d.total} kata`);
     case 'story_complete':
-      return { icon: '🌟', text: `Selesai membaca "${d.title ?? ''}" ${'⭐'.repeat(d.stars ?? 0)}` };
+      return item('complete', `Selesai membaca "${d.title ?? ''}"${stars(d.stars)}`);
     case 'tab':
-      return { icon: '👆', text: `Membuka menu ${TAB_NAMES[d.index] ?? d.name ?? ''}` };
+      return item('tap', `Membuka menu ${TAB_NAMES[d.index] ?? d.name ?? ''}`);
     case 'app_open':
-      return { icon: '📱', text: 'Membuka aplikasi Bebaca' };
+      return item('app', 'Membuka aplikasi Bebaca');
     case 'app_pause':
-      return { icon: '💤', text: 'Meninggalkan aplikasi (diminimize / pindah aplikasi / layar mati)' };
+      return item('away', 'Meninggalkan aplikasi (diminimize / pindah aplikasi / layar mati)');
     case 'ui':
       return describeUi(d);
     default:
@@ -163,6 +218,7 @@ function letterStats(answers) {
     const d = ev.data || {};
     if (!d.letter) continue;
     const letter = String(d.letter).toUpperCase();
+    if (!/^[A-Z]$/.test(letter)) continue; // suku kata / kata / kalimat tidak dihitung di sini
     const s = map.get(letter) ?? { letter, total: 0, correct: 0, confusedWith: {} };
     s.total++;
     if (d.correct) s.correct++;
@@ -203,7 +259,7 @@ function suggestions({ name, days, letters, lessonsDone, prevMinutes }) {
   if (activeDays <= 2) {
     out.push(`Minggu ini ${name} baru belajar ${activeDays} hari. Belajar sebentar tapi rutin (10 menit tiap sore) lebih efektif daripada lama sekali-sekali.`);
   } else if (prevMinutes > 0 && minutes > prevMinutes * 1.2) {
-    out.push(`Waktu belajar naik dibanding minggu lalu (${prevMinutes} → ${minutes} menit). Beri pujian ya! 🎉`);
+    out.push(`Waktu belajar naik dibanding minggu lalu (${prevMinutes} → ${minutes} menit). Beri pujian ya!`);
   }
   const mastered = letters.filter((x) => x.status === 'mastered');
   if (mastered.length >= 3) {
@@ -212,7 +268,7 @@ function suggestions({ name, days, letters, lessonsDone, prevMinutes }) {
   if (lessonsDone === 0 && minutes > 0) {
     out.push(`${name} sudah membuka aplikasi tapi belum menyelesaikan lesson minggu ini. Temani satu lesson sampai selesai agar ${name} merasakan berhasil.`);
   }
-  if (out.length === 0) out.push(`${name} belajar dengan baik minggu ini. Pertahankan kebiasaannya! 👍`);
+  if (out.length === 0) out.push(`${name} belajar dengan baik minggu ini. Pertahankan kebiasaannya!`);
   return out.slice(0, 4);
 }
 
@@ -336,11 +392,12 @@ export function currentActivity(events) {
       );
       optionStates = options.map((o) => {
         const letter = String(o).toUpperCase();
+        const shown = displayTarget(cur.step, letter);
         if (letter === target && correctLeft > 0) {
           correctLeft--;
-          return { letter, state: 'correct' };
+          return { letter: shown, state: 'correct' };
         }
-        return { letter, state: wrong.has(letter) ? 'wrong' : '' };
+        return { letter: shown, state: wrong.has(letter) ? 'wrong' : '' };
       });
     }
     const last = stepAnswers[0];
@@ -361,7 +418,7 @@ export function currentActivity(events) {
       return {
         step: i + 1,
         name: STEP_NAMES[e.data.step] ?? 'Soal',
-        letter: e.data.letter ?? null,
+        letter: e.data.letter ? displayTarget(e.data.step, e.data.letter) : null,
         seconds: Math.max(0, Math.round((endMs - startMs) / 1000)),
         correct: ans.filter((a) => a.data.correct).length,
         wrong: ans.filter((a) => !a.data.correct).length,
@@ -385,11 +442,11 @@ export function currentActivity(events) {
       step: (cur.stepIndex ?? 0) + 1,
       steps: cur.steps ?? start.steps ?? null,
       stepName: STEP_NAMES[cur.step] ?? null,
-      letter: cur.letter ?? null,
+      letter: cur.letter ? displayTarget(cur.step, cur.letter) : null,
       prompt: cur.step ? stepPrompt(cur.step, cur.letter ?? '') : null,
       options: optionStates,
       lastAnswer: last
-        ? { correct: Boolean(last.data.correct), picked: last.data.picked ?? null, read: cur.step === 'read', at: last.created_at }
+        ? { correct: Boolean(last.data.correct), picked: last.data.picked ?? null, read: READ_STEPS.has(cur.step), at: last.created_at }
         : null,
       correct: lessonAnswers.filter((a) => a.data?.correct).length,
       wrong: lessonAnswers.filter((a) => !a.data?.correct).length,

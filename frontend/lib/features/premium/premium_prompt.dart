@@ -31,7 +31,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
           const Mascot(mood: MascotMood.idle, size: 96),
           const SizedBox(height: 16),
           Text(
-            'Khusus Premium ⭐',
+            'Khusus Premium',
             textAlign: TextAlign.center,
             style: GoogleFonts.fredoka(
                 fontSize: 32, fontWeight: FontWeight.bold, color: AppColors.primary),
@@ -65,7 +65,7 @@ Future<void> showPremiumPrompt(BuildContext context, {required String what}) asy
   if (callParent == true && context.mounted) await openPremium(context);
 }
 
-/// Lencana kecil "⭐ Premium" / gembok untuk kartu & jalur lesson.
+/// Lencana kecil "Premium" bergembok untuk kartu & jalur lesson.
 class PremiumBadge extends StatelessWidget {
   final bool compact;
   const PremiumBadge({super.key, this.compact = false});

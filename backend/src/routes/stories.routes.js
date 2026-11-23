@@ -1,10 +1,17 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { supabaseAdmin } from '../config/supabase.js';
+import { env } from '../config/env.js';
 import { HttpError, must } from '../utils/errors.js';
 import { getEntitlement } from '../services/subscriptionService.js';
 
 const router = Router();
+
+// Rekaman suara AI dongeng (narasi halaman, pesan moral, kuis, ngobrol, kata baru) di bucket publik
+// Supabase Storage "narasi"; aplikasi memutarnya langsung dari sini (lihat RemoteVoice di Flutter).
+const NARRATION_BASE_URL = env.supabaseUrl
+  ? `${env.supabaseUrl.replace(/\/+$/, '')}/storage/v1/object/public/narasi/`
+  : null;
 
 const toProgress = (p) =>
   p
@@ -53,7 +60,11 @@ router.get('/', async (req, res) => {
 async function loadStory(req, columns) {
   const { id } = z.object({ id: z.string().uuid('ID dongeng tidak valid') }).parse(req.params);
   const story = must(
-    await supabaseAdmin.from('stories').select(`id, is_premium, ${columns}`).eq('id', id).maybeSingle()
+    await supabaseAdmin
+      .from('stories')
+      .select(columns === '*' ? '*' : `id, is_premium, ${columns}`)
+      .eq('id', id)
+      .maybeSingle()
   );
   if (!story) throw new HttpError(404, 'Dongeng tidak ditemukan');
   if (story.is_premium && !(await getEntitlement(req.user.id)).isPremium) {
@@ -62,10 +73,11 @@ async function loadStory(req, columns) {
   return story;
 }
 
-// GET /api/stories/:id -> detail + isi cerita + pesan moral + kuis + progres
-// (402 jika premium & user belum berlangganan)
+// GET /api/stories/:id -> detail + isi cerita + pesan moral + kuis + pertanyaan ngobrol
+// + kata baru + progres (402 jika premium & user belum berlangganan).
+// Pakai '*': kolom prompts & vocab (migration 007) belum tentu ada; kalau belum, dikirim [].
 router.get('/:id', async (req, res) => {
-  const story = await loadStory(req, 'title, cover_url, video_url, content, moral, quiz, page_images');
+  const story = await loadStory(req, '*');
   const progress = must(
     await supabaseAdmin
       .from('story_progress')
@@ -84,6 +96,9 @@ router.get('/:id', async (req, res) => {
     moral: story.moral,
     quiz: story.quiz ?? [],
     pageImages: story.page_images ?? [],
+    prompts: story.prompts ?? [], // [{page, text}] pertanyaan untuk orang tua tanyakan
+    vocab: story.vocab ?? [], // [{word, meaning}] kata baru yang bisa diketuk
+    narrationBaseUrl: NARRATION_BASE_URL,
     progress: toProgress(progress),
   });
 });

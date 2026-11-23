@@ -175,12 +175,12 @@ class _Brand extends StatelessWidget {
             'Aplikasi belajar membaca untuk anak dengan pembelajaran interaktif, '
             'latihan menulis, dan dongeng edukatif.',
             textAlign: big ? TextAlign.start : TextAlign.center,
+            // teks gelap: tetap terbaca jelas di atas langit yang terang
             style: GoogleFonts.fredoka(
               fontSize: big ? 21 : 17,
-              color: Colors.white,
+              color: AppColors.textDark.withAlpha(220),
               fontWeight: FontWeight.w500,
               height: 1.35,
-              shadows: const [Shadow(color: Color(0x551C5FC7), blurRadius: 6)],
             ),
           ),
         ),
