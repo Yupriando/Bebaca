@@ -196,7 +196,11 @@ class _SectionMap extends StatelessWidget {
   Widget build(BuildContext context) {
     final n = section.lessons.length;
     final height = _top + (n - 1) * _gap + _node / 2 + 40;
-    final pts = [for (var i = 0; i < n; i++) center(i, _width)];
+    final xs = _nodeX[section.unit];
+    final pts = [
+      for (var i = 0; i < n; i++)
+        Offset(xs != null && i < xs.length ? xs[i] : center(i, _width).dx, _top + i * _gap),
+    ];
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
       child: FittedBox(
@@ -225,6 +229,22 @@ class _SectionMap extends StatelessWidget {
     );
   }
 }
+
+/// Posisi x titik pelajaran per unit (ukuran rancangan, lebar 820), mengikuti jalan yang
+/// tergambar di peta_unit_N.webp. Diukur dari gambarnya; baris y tetap 150 + 104 × i.
+/// Unit tanpa data memakai rumus kelok bawaan ([_SectionMap.center]).
+/// Kalau gambar peta diganti, ukur ulang angkanya.
+const _nodeX = <int, List<double>>{
+  1: [467, 557, 528, 404, 288, 276, 378, 469],
+  2: [470, 559, 538, 414, 295, 270, 356, 474],
+  3: [481, 560, 514, 393, 291, 292, 320],
+  4: [410, 543, 565, 457, 310, 246, 320, 469],
+  5: [451, 568, 595, 479, 336, 262, 328, 461, 569],
+  6: [410, 544, 566, 456, 311, 246, 322, 468],
+  7: [411, 547, 572, 462, 312, 246, 321, 470, 569],
+  8: [416, 550, 574, 461, 312, 246, 322, 469, 572],
+  9: [455, 548, 534, 422, 310],
+};
 
 /// Gambar peta unit (assets/latar/peta_unit_N.webp), jalannya sudah ikut tergambar.
 /// Kalau gambar untuk unit itu belum ada, peta digambar kode seperti sebelumnya.
