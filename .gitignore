@@ -21,3 +21,7 @@ CLAUDE.md
 *.log
 .DS_Store
 Thumbs.db
+
+# Bahan desain & promosi: disimpan di laptop saja, tidak dibutuhkan aplikasi
+design/
+product-images/
