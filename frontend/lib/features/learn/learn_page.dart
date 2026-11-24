@@ -188,19 +188,25 @@ class _SectionMap extends StatelessWidget {
   /// Posisi tengah node ke-i (berkelok kiri-kanan).
   static Offset center(int i, double w) => Offset(w / 2 + sin(i * 0.95) * w * 0.2, _top + i * _gap);
 
+  /// Lebar rancangan peta (sama dengan gambar peta). Di layar yang lebih sempit, seluruh
+  /// peta (gambar, titik, papan) dikecilkan utuh supaya titik tetap berada di atas jalan.
+  static const _width = 820.0;
+
   @override
   Widget build(BuildContext context) {
     final n = section.lessons.length;
     final height = _top + (n - 1) * _gap + _node / 2 + 40;
+    final pts = [for (var i = 0; i < n; i++) center(i, _width)];
     return ClipRRect(
       borderRadius: BorderRadius.circular(32),
-      child: LayoutBuilder(builder: (context, c) {
-        final w = c.maxWidth;
-        final pts = [for (var i = 0; i < n; i++) center(i, w)];
-        return SizedBox(
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        alignment: Alignment.topCenter,
+        child: SizedBox(
+          width: _width,
           height: height,
           child: Stack(children: [
-            Positioned.fill(child: CustomPaint(painter: _MapPainter(pts))),
+            Positioned.fill(child: _MapArt(unit: section.unit, pts: pts)),
             Positioned(left: 18, top: 16, child: _Signpost(section: section)),
             for (var i = 0; i < n; i++)
               Positioned(
@@ -214,13 +220,34 @@ class _SectionMap extends StatelessWidget {
                 ),
               ),
           ]),
-        );
-      }),
+        ),
+      ),
     );
   }
 }
 
-/// Latar peta: langit tipis di atas, rumput, pohon-pohon, jalan setapak krem bergaris putus-putus.
+/// Gambar peta unit (assets/latar/peta_unit_N.webp), jalannya sudah ikut tergambar.
+/// Kalau gambar untuk unit itu belum ada, peta digambar kode seperti sebelumnya.
+class _MapArt extends StatelessWidget {
+  final int unit;
+  final List<Offset> pts;
+  const _MapArt({required this.unit, required this.pts});
+
+  @override
+  Widget build(BuildContext context) => ColoredBox(
+        color: const Color(0xFF9CD559),
+        child: Image.asset(
+          'assets/latar/peta_unit_$unit.webp',
+          fit: BoxFit.cover,
+          alignment: Alignment.topCenter,
+          gaplessPlayback: true,
+          filterQuality: FilterQuality.medium,
+          errorBuilder: (context, error, stack) => CustomPaint(painter: _MapPainter(pts)),
+        ),
+      );
+}
+
+/// Peta cadangan (dipakai kalau gambar unit belum ada): rumput, pohon, jalan setapak krem.
 class _MapPainter extends CustomPainter {
   final List<Offset> pts;
   _MapPainter(this.pts);

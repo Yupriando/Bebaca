@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/routes/app_routes.dart';
+import '../../core/widgets/sky_background.dart';
 import '../../services/auth_service.dart';
 import '../../services/settings_store.dart';
 import '../../services/sound_service.dart';
@@ -32,8 +33,8 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     duration: const Duration(seconds: 6),
   );
 
-  late final List<_Sparkle> _sparkles;
   bool _started = false;
+  bool _precached = false;
   bool _animate = true;
 
   static const _tiles = <_FloatTile>[
@@ -48,18 +49,15 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   void initState() {
     super.initState();
-    final r = Random(42);
-    _sparkles = List.generate(
-      40,
-      (_) => _Sparkle(
-        r.nextDouble(),
-        r.nextDouble(),
-        3 + r.nextDouble() * 7,
-        r.nextDouble(),
-        1 + r.nextInt(2), // bilangan bulat -> animasi mulus saat berulang
-      ),
-    );
     _prepare();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_precached) return;
+    _precached = true;
+    SkyBackground.precache(context); // latar halaman berikutnya sudah siap saat pindah
   }
 
   @override
@@ -120,15 +118,9 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF08123A), Color(0xFF123A8C), Color(0xFF50A5DB)],
-            stops: [0.0, 0.55, 1.0],
-          ),
-        ),
+      backgroundColor: Latar.pembuka.color,
+      body: SkyBackground(
+        latar: Latar.pembuka,
         child: AnimatedBuilder(
           animation: Listenable.merge([_intro, _loop]),
           builder: (context, _) {
@@ -136,7 +128,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
             return Stack(
               fit: StackFit.expand,
               children: [
-                CustomPaint(painter: _SparklePainter(_sparkles, _loop.value)),
                 LayoutBuilder(
                   builder:
                       (context, box) => Stack(
@@ -344,40 +335,3 @@ class _FloatTile {
   );
 }
 
-class _Sparkle {
-  final double x, y, size, phase;
-  final int speed;
-  const _Sparkle(this.x, this.y, this.size, this.phase, this.speed);
-}
-
-/// Bintang kecil berkelap-kelip (bentuk berlian 4 sudut).
-class _SparklePainter extends CustomPainter {
-  final List<_Sparkle> sparkles;
-  final double t;
-  _SparklePainter(this.sparkles, this.t);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    for (final s in sparkles) {
-      final twinkle = 0.5 + 0.5 * sin(2 * pi * (t * s.speed + s.phase));
-      final r = s.size * (0.4 + 0.6 * twinkle);
-      final cx = s.x * size.width;
-      final cy = s.y * size.height;
-      final path =
-          Path()
-            ..moveTo(cx, cy - r)
-            ..quadraticBezierTo(cx, cy, cx + r, cy)
-            ..quadraticBezierTo(cx, cy, cx, cy + r)
-            ..quadraticBezierTo(cx, cy, cx - r, cy)
-            ..quadraticBezierTo(cx, cy, cx, cy - r)
-            ..close();
-      canvas.drawPath(
-        path,
-        Paint()..color = Colors.white.withAlpha((60 + 190 * twinkle).round()),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SparklePainter old) => old.t != t;
-}

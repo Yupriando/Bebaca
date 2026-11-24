@@ -60,14 +60,21 @@ class _LessonPageState extends State<LessonPage> {
   @override
   void initState() {
     super.initState();
+    _setShellLatar(Latar.belajar);
     _init();
   }
 
   @override
   void dispose() {
     SpeechService.instance.stopSpeaking();
+    _setShellLatar(Latar.utama);
     super.dispose();
   }
+
+  /// Latar di sekitar sidebar ikut berganti selama lesson. Diubah sesudah frame ini,
+  /// karena initState dan dispose berjalan di tengah proses build.
+  static void _setShellLatar(Latar latar) =>
+      WidgetsBinding.instance.addPostFrameCallback((_) => SkyBackground.shell.value = latar);
 
   Future<void> _init() async {
     try {
@@ -306,7 +313,7 @@ class _LessonPageState extends State<LessonPage> {
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: SkyBackground(
-          stars: false,
+          latar: Latar.belajar,
           child:
               _settings == null
                   ? const Center(child: CircularProgressIndicator())

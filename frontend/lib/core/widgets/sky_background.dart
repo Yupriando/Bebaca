@@ -1,107 +1,97 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
 
-/// Latar ala banner Bebaca: langit biru bergradasi, awan putih lembut,
-/// bintang kecil, dan (opsional) bukit hijau di bawah.
+/// Gambar latar Bebaca (assets/latar/latar_<nama>.webp, 16:9).
+enum Latar {
+  utama(Color(0xFFA7D9EA)),
+  masuk(Color(0xFFB2DEDB)),
+  belajar(Color(0xFFC3E8F3)),
+  dongeng(Color(0xFFE6D4CD)),
+  pembuka(Color(0xFF0A215D)),
+  terkunci(Color(0xFF2E4684));
+
+  /// Warna rata-rata gambar, tampil sesaat selama gambar dimuat.
+  final Color color;
+  const Latar(this.color);
+
+  String get asset => 'assets/latar/latar_$name.webp';
+
+  /// Latar bergambar tanah menempel ke bawah (yang terpotong bagian langit);
+  /// latar yang memusat (pembuka, terkunci) menempel di tengah.
+  Alignment get alignment =>
+      this == Latar.pembuka || this == Latar.terkunci ? Alignment.center : Alignment.bottomCenter;
+}
+
+/// Latar halaman: gambar latar menutupi layar, konten di atasnya.
 class SkyBackground extends StatelessWidget {
   final Widget child;
-  final bool hills;
-  final bool stars;
-  const SkyBackground({super.key, required this.child, this.hills = false, this.stars = true});
+  final Latar latar;
+  const SkyBackground({super.key, required this.child, this.latar = Latar.utama});
+
+  /// Latar di belakang sidebar dan semua tab. Selama lesson berjalan diganti ke
+  /// [Latar.belajar], supaya latar di sekitar sidebar menyambung dengan latar lesson.
+  static final shell = ValueNotifier<Latar>(Latar.utama);
+
+  /// Muat latar yang sering dipakai lebih awal (dari layar pembuka) supaya tidak berkedip.
+  static Future<void> precache(BuildContext context) => Future.wait([
+        for (final l in const [Latar.utama, Latar.belajar, Latar.dongeng, Latar.masuk])
+          precacheImage(AssetImage(l.asset), context),
+      ]);
 
   @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.skyTop, Color(0xFFB8E2FF), AppColors.skyBottom],
-          stops: [0.0, 0.45, 1.0],
-        ),
-      ),
-      child: Stack(
+  Widget build(BuildContext context) => Stack(
         fit: StackFit.expand,
         children: [
           Positioned.fill(
-            child: IgnorePointer(child: CustomPaint(painter: _SkyPainter(hills: hills, stars: stars))),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: LatarImage(latar, key: ValueKey(latar)),
+            ),
           ),
           child,
         ],
-      ),
-    );
+      );
+}
+
+/// Gambar latar yang ditempatkan seolah-olah menutupi layar penuh (BoxFit.cover), lalu
+/// hanya bagian di bawah widget ini yang digambar. Widget dianggap menempel di kanan-bawah
+/// layar (halaman penuh, atau area konten di kanan sidebar), jadi latar lesson menyambung
+/// mulus dengan latar di sekitar sidebar.
+class LatarImage extends StatelessWidget {
+  final Latar latar;
+  const LatarImage(this.latar, {super.key});
+
+  static const _aspect = 16 / 9;
+
+  @override
+  Widget build(BuildContext context) {
+    final screen = MediaQuery.sizeOf(context);
+    return LayoutBuilder(builder: (context, box) {
+      final w = box.maxWidth.isFinite ? box.maxWidth : screen.width;
+      final h = box.maxHeight.isFinite ? box.maxHeight : screen.height;
+      final drawnHeight = max(screen.width / _aspect, screen.height);
+      final full = latar.alignment.inscribe(Size(drawnHeight * _aspect, drawnHeight), Offset.zero & screen);
+      final rect = full.shift(Offset(w - screen.width, h - screen.height));
+      return Stack(
+        clipBehavior: Clip.hardEdge,
+        children: [
+          Positioned.fill(child: ColoredBox(color: latar.color)),
+          Positioned.fromRect(
+            rect: rect,
+            child: Image.asset(
+              latar.asset,
+              fit: BoxFit.fill,
+              gaplessPlayback: true,
+              filterQuality: FilterQuality.medium,
+            ),
+          ),
+        ],
+      );
+    });
   }
 }
 
-class _SkyPainter extends CustomPainter {
-  final bool hills;
-  final bool stars;
-  _SkyPainter({required this.hills, required this.stars});
-
-  void _cloud(Canvas c, Offset o, double s, double opacity) {
-    final p = Paint()..color = Colors.white.withAlpha((255 * opacity).round());
-    c.drawCircle(o.translate(-0.55 * s, 0.1 * s), 0.38 * s, p);
-    c.drawCircle(o, 0.5 * s, p);
-    c.drawCircle(o.translate(0.55 * s, 0.12 * s), 0.36 * s, p);
-    c.drawRRect(
-      RRect.fromRectAndRadius(Rect.fromLTWH(o.dx - 0.95 * s, o.dy + 0.05 * s, 1.9 * s, 0.42 * s), Radius.circular(0.21 * s)),
-      p,
-    );
-  }
-
-  void _star(Canvas c, Offset o, double r) {
-    final path = Path();
-    for (var i = 0; i < 10; i++) {
-      final rad = i.isEven ? r : r * 0.45;
-      final a = -pi / 2 + i * pi / 5;
-      final pt = o + Offset(cos(a) * rad, sin(a) * rad);
-      i == 0 ? path.moveTo(pt.dx, pt.dy) : path.lineTo(pt.dx, pt.dy);
-    }
-    path.close();
-    c.drawPath(path, Paint()..color = AppColors.sun.withAlpha(210));
-  }
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width, h = size.height;
-    final s = min(w, h);
-    _cloud(canvas, Offset(w * 0.08, h * 0.12), s * 0.10, 0.9);
-    _cloud(canvas, Offset(w * 0.86, h * 0.08), s * 0.13, 0.85);
-    _cloud(canvas, Offset(w * 0.55, h * 0.04), s * 0.07, 0.6);
-    _cloud(canvas, Offset(w * 0.95, h * 0.62), s * 0.09, 0.55);
-    _cloud(canvas, Offset(w * 0.03, h * 0.78), s * 0.11, 0.6);
-    if (stars) {
-      // kecil & di tepi kanan, supaya tidak menimpa judul atau teks di tengah layar
-      _star(canvas, Offset(w * 0.978, h * 0.24), s * 0.015);
-      _star(canvas, Offset(w * 0.962, h * 0.46), s * 0.010);
-      _star(canvas, Offset(w * 0.985, h * 0.86), s * 0.012);
-    }
-    if (hills) {
-      final back = Path()
-        ..moveTo(0, h * 0.86)
-        ..quadraticBezierTo(w * 0.25, h * 0.74, w * 0.5, h * 0.84)
-        ..quadraticBezierTo(w * 0.78, h * 0.94, w, h * 0.80)
-        ..lineTo(w, h)
-        ..lineTo(0, h)
-        ..close();
-      canvas.drawPath(back, Paint()..color = AppColors.grass.withAlpha(170));
-      final front = Path()
-        ..moveTo(0, h * 0.93)
-        ..quadraticBezierTo(w * 0.35, h * 0.84, w * 0.62, h * 0.93)
-        ..quadraticBezierTo(w * 0.85, h * 0.99, w, h * 0.90)
-        ..lineTo(w, h)
-        ..lineTo(0, h)
-        ..close();
-      canvas.drawPath(front, Paint()..color = AppColors.grassDark.withAlpha(200));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SkyPainter old) => old.hills != hills || old.stars != stars;
-}
-
-/// Kartu putih membulat dengan bayangan lembut (dipakai di atas latar langit).
+/// Kartu putih membulat dengan bayangan lembut (dipakai di atas latar).
 class SoftCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;

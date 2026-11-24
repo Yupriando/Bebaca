@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/primary_button.dart';
+import '../../core/widgets/sky_background.dart';
 import '../../services/api_client.dart';
 import '../../services/settings_store.dart';
 import '../lesson/widgets/effects.dart';
@@ -63,59 +64,67 @@ class ParentalLockScreen extends StatelessWidget {
     final s = SettingsStore.instance.value;
     final isCurfew = reason == LockReason.curfew;
 
+    // latar malam yang gelap: isi ditaruh di kartu putih supaya teks tetap terbaca
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Bob(
-                  enabled: s.animation,
-                  amplitude: 10,
-                  child: Container(
-                    width: 130,
-                    height: 130,
-                    decoration: const BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: AppColors.primary,
+      backgroundColor: Latar.terkunci.color,
+      body: SkyBackground(
+        latar: Latar.terkunci,
+        child: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: SoftCard(
+                radius: 32,
+                padding: const EdgeInsets.fromLTRB(40, 32, 40, 32),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Bob(
+                      enabled: s.animation,
+                      amplitude: 10,
+                      child: Container(
+                        width: 130,
+                        height: 130,
+                        decoration: const BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: AppColors.primary,
+                        ),
+                        child: Icon(
+                          isCurfew ? Icons.bedtime_rounded : Icons.hourglass_bottom_rounded,
+                          size: 76,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
-                    child: Icon(
-                      isCurfew ? Icons.bedtime_rounded : Icons.hourglass_bottom_rounded,
-                      size: 76,
-                      color: Colors.white,
+                    const SizedBox(height: 28),
+                    Text(
+                      isCurfew ? 'Waktunya istirahat' : 'Waktu belajar habis',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.fredoka(
+                          fontSize: 38,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textDark),
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 460),
+                      child: Text(
+                        isCurfew
+                            ? 'Sekarang sudah lewat jam malam (${s.curfew}). Belajar lagi besok pagi ya!'
+                            : 'Hari ini kamu sudah belajar ${formatDuration(s.timespentMinutes)} dari batas ${formatMinutes(s.timeLimitMinutes)}. Sampai jumpa besok!',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.fredoka(fontSize: 22, color: const Color(0xFF555555)),
+                      ),
+                    ),
+                    const SizedBox(height: 36),
+                    PrimaryButton(
+                      label: 'Untuk orang tua',
+                      onPressed: () => _parentOptions(context),
+                      width: 260,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 28),
-                Text(
-                  isCurfew ? 'Waktunya istirahat' : 'Waktu belajar habis',
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.fredoka(
-                      fontSize: 38,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textDark),
-                ),
-                const SizedBox(height: 12),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 460),
-                  child: Text(
-                    isCurfew
-                        ? 'Sekarang sudah lewat jam malam (${s.curfew}). Belajar lagi besok pagi ya!'
-                        : 'Hari ini kamu sudah belajar ${formatDuration(s.timespentMinutes)} dari batas ${formatMinutes(s.timeLimitMinutes)}. Sampai jumpa besok!',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.fredoka(fontSize: 22, color: const Color(0xFF555555)),
-                  ),
-                ),
-                const SizedBox(height: 36),
-                PrimaryButton(
-                  label: 'Untuk orang tua',
-                  onPressed: () => _parentOptions(context),
-                  width: 260,
-                ),
-              ],
+              ),
             ),
           ),
         ),

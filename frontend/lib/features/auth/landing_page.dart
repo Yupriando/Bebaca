@@ -15,7 +15,7 @@ class LandingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SkyBackground(
-        hills: true,
+        latar: Latar.masuk,
         child: SafeArea(
           child: LayoutBuilder(
             builder: (context, c) {

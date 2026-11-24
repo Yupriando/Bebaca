@@ -294,6 +294,7 @@ class _StoryReaderPageState extends State<StoryReaderPage> {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: SkyBackground(
+        latar: Latar.dongeng,
         child: SafeArea(
           child:
               _ended

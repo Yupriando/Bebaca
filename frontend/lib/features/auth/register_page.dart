@@ -63,7 +63,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return SkyBackground(
-      hills: true,
+      latar: Latar.masuk,
       child: Scaffold(
         backgroundColor: Colors.transparent,
         appBar: AppHeader(

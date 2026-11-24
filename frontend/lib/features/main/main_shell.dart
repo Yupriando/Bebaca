@@ -125,8 +125,10 @@ class _MainShellState extends State<MainShell> with WidgetsBindingObserver {
 
       final shell = Scaffold(
         backgroundColor: Colors.transparent,
-        // langit berawan di belakang semua tab (gaya banner)
-        body: SkyBackground(
+        // latar di belakang sidebar & semua tab (berganti ke latar belajar selama lesson)
+        body: ValueListenableBuilder<Latar>(
+          valueListenable: SkyBackground.shell,
+          builder: (context, latar, child) => SkyBackground(latar: latar, child: child!),
           child: SafeArea(
             child: wide
                 ? Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [

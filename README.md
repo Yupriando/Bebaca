@@ -2,11 +2,11 @@
 
 ## Download aplikasi (Android)
 
-**[Download Bebaca v1.2.1 (APK, 66 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.2.1.apk)**
+**[Download Bebaca v1.2.2 (APK, 68 MB)](https://github.com/Yupriando/Bebaca/raw/main/release/Bebaca-v1.2.2.apk)**
 
 Cara memasang:
 1. Buka link di atas dari HP Android, tunggu sampai unduhan selesai.
-2. Buka file `Bebaca-v1.2.1.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
+2. Buka file `Bebaca-v1.2.2.apk`. Kalau muncul peringatan, izinkan **"Instal aplikasi tidak dikenal"**
    untuk browser / File Manager yang dipakai.
 3. Ketuk **Instal**, lalu buka **Bebaca**. Daftar akun baru atau login.
 
